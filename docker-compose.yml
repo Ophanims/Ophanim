@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # 数据库：时序数据库 TimescaleDB
+  db:
+    image: timescale/timescaledb:latest-pg15
+    container_name: ophanim_db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  # 后端：仿真引擎 (Python + Skyfield)
+  backend:
+    build: ./backend
+    container_name: ophanim_backend
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    ports:
+      - "${BACKEND_PORT}:8000"
+    volumes:
+      - ./backend:/app
+
+  # 前端：3D 可视化 (Next.js + Three.js)
+  frontend:
+    build: ./frontend
+    container_name: ophanim_frontend
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # 关键：防止本地 node_modules 冲突
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
