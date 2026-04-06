@@ -14,14 +14,53 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
 
+  # 配置数据库：MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: ophanim_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  # MySQL 可视化：Adminer Web UI
+  adminer:
+    image: adminer:latest
+    container_name: ophanim_adminer
+    depends_on:
+      - mysql
+    ports:
+      - "${ADMINER_PORT}:8080"
+
+  # 数据库可视化：pgAdmin Web UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ophanim_pgadmin
+    depends_on:
+      - db
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "${PGADMIN_PORT}:80"
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin
+
   # 后端：仿真引擎 (Python + Skyfield)
   backend:
     build: ./backend
     container_name: ophanim_backend
     depends_on:
       - db
+      - mysql
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - MYSQL_URL=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
     ports:
       - "${BACKEND_PORT}:8000"
     volumes:
