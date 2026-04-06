@@ -179,11 +179,13 @@ class Link:
 
     def get_state(self) -> dict:
         return {
-            "link_id": f"{self.src.id}-{self.dst.id}",
+            "id": f"({self.src.id},{self.dst.id})",
             "src": self.src.id,
             "dst": self.dst.id,
+            "type": self.type,
             "status": self.status,
-            "distance": round(self.distance, 2),
             "snr": round(self.snr, 2),
-            "loss": round(self.loss, 2)
+            "loss": round(self.loss, 2),
+            "distance": round(self.distance, 2),
+            "capacity": round(self.data_rate, 2),
         }
