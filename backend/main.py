@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from controller.project_controller import ensure_projects_table, router as project_router
+from controller.record_controller import ensure_record_schema
 from controller.simulation_controller import router as simulation_router
 
 app = FastAPI(title="OPHANIM API", version="0.1.0")
@@ -31,6 +32,10 @@ async def startup_init_db():
     for attempt in range(max_retries):
         try:
             ensure_projects_table()
+            try:
+                await ensure_record_schema()
+            except Exception as rec_err:
+                print(f"Timescale schema init skipped: {rec_err}")
             print("Database connected and initialized successfully")
             break
         except Exception as e:

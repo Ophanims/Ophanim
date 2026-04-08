@@ -111,9 +111,9 @@ class SimulatorEngine:
         self.state.entities = self._collect_entity_snapshots()
         self.status = EngineStatus.IDLE
         
-        if self.on_render_hook:
-            # 执行回调，将 state 发送到 WebSocket
-            await self.on_render_hook(self.state.model_dump())
+        # if self.on_render_hook:
+        #     # 执行回调，将 state 发送到 WebSocket
+        #     await self.on_render_hook(self.state.model_dump())
 
     async def _handle_outside_commannd(self):
         """非阻塞处理外部指令"""
