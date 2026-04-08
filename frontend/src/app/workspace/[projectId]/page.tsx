@@ -10,6 +10,7 @@ export default function ProjectPage() {
   const wsRef = useRef<WebSocket | null>(null);
   const [simStatus, setSimStatus] = useState("idle");
   const [tickCount, setTickCount] = useState(0);
+  const [simError, setSimError] = useState<string | null>(null);
 
   const wsBase = useMemo(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -22,12 +23,20 @@ export default function ProjectPage() {
       return wsRef.current;
     }
 
-    const ws = new WebSocket(`${wsBase}/ws/simulation/${projectId}`);
-    ws.onopen = () => setSimStatus("connected");
+    const ws = new WebSocket(`${wsBase}/api/simulation/ws/${projectId}`);
+    ws.onopen = () => {
+      setSimStatus("connected");
+      setSimError(null);
+    };
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
         console.log("Received message:", msg);
+        if (msg?.type === "error") {
+          setSimStatus("error");
+          setSimError(msg?.message ?? "Simulation engine error");
+          return;
+        }
         if (msg?.type === "ready") {
           setSimStatus("connected");
           return;
@@ -35,6 +44,7 @@ export default function ProjectPage() {
         if (msg?.type === "state") {
           setTickCount(msg.state?.tick_count ?? 0);
           setSimStatus("running");
+          setSimError(null);
         }
       } catch {
         // ignore invalid payload
@@ -101,6 +111,7 @@ export default function ProjectPage() {
             </h1>
             <p className="text-sm opacity-80">(Project ID: {projectId})</p>
             <p className="text-sm opacity-80">(Simulation: {simStatus}, tick: {tickCount})</p>
+            {simError ? <p className="text-sm text-red-600">(Error: {simError})</p> : null}
           </div>
 
           <div className="flex items-center gap-3">

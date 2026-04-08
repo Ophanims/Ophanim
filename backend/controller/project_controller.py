@@ -9,82 +9,30 @@ from pydantic import BaseModel, Field
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-class ProjectCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    timeSlot: Optional[float] = None
-    startTime: Optional[str] = None
-    endTime: Optional[str] = None
-
-    altitude: Optional[float] = None
-    inclination: Optional[float] = None
-    planeCount: Optional[int] = None
-    constellationSize: Optional[int] = None
-    phaseFactor: Optional[float] = None
-
-    imageryWidthPx: Optional[int] = None
-    imageryLengthPx: Optional[int] = None
-    cameraFocalLengthMm: Optional[float] = None
-    cameraSensorUnitLengthUm: Optional[float] = None
-    channelsPerPixel: Optional[int] = None
-    bitsPerChannel: Optional[int] = None
-
-    processorClockFrequency: Optional[float] = None
-    processorCoreQuantity: Optional[int] = None
-    processorEnergyFactor: Optional[float] = None
-    maxTaskProcessingNumber: Optional[int] = None
-
-    transmitAntennaGain: Optional[float] = None
-    receiveAntennaGain: Optional[float] = None
-    transmitSignalPower: Optional[float] = None
-    maxTaskTransmittingNumber: Optional[int] = None
-
-    batteryCapacity: Optional[float] = None
-    solarPanelArea: Optional[float] = None
-    solarPanelEfficiency: Optional[float] = None
-    dynamicPowerComputing: Optional[float] = None
-    dynamicPowerTransmitting: Optional[float] = None
-    staticPowerComputing: Optional[float] = None
-    staticPowerTransmitting: Optional[float] = None
-    staticPowerOthers: Optional[float] = None
-
-    stationTransmitAntennaGain: Optional[float] = None
-    stationReceiveAntennaGain: Optional[float] = None
-    stationTransmitSignalPower: Optional[float] = None
-
-    # backward-compatible fields
-    description: Optional[str] = Field(default="", max_length=2000)
-    status: str = Field(default="active", max_length=50)
-
-
-class ProjectUpdate(BaseModel):
+class ProjectBase(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=120)
     timeSlot: Optional[float] = None
     startTime: Optional[str] = None
     endTime: Optional[str] = None
-
     altitude: Optional[float] = None
     inclination: Optional[float] = None
     planeCount: Optional[int] = None
     constellationSize: Optional[int] = None
     phaseFactor: Optional[float] = None
-
     imageryWidthPx: Optional[int] = None
     imageryLengthPx: Optional[int] = None
     cameraFocalLengthMm: Optional[float] = None
     cameraSensorUnitLengthUm: Optional[float] = None
     channelsPerPixel: Optional[int] = None
     bitsPerChannel: Optional[int] = None
-
     processorClockFrequency: Optional[float] = None
     processorCoreQuantity: Optional[int] = None
     processorEnergyFactor: Optional[float] = None
     maxTaskProcessingNumber: Optional[int] = None
-
     transmitAntennaGain: Optional[float] = None
     receiveAntennaGain: Optional[float] = None
     transmitSignalPower: Optional[float] = None
     maxTaskTransmittingNumber: Optional[int] = None
-
     batteryCapacity: Optional[float] = None
     solarPanelArea: Optional[float] = None
     solarPanelEfficiency: Optional[float] = None
@@ -93,14 +41,21 @@ class ProjectUpdate(BaseModel):
     staticPowerComputing: Optional[float] = None
     staticPowerTransmitting: Optional[float] = None
     staticPowerOthers: Optional[float] = None
-
     stationTransmitAntennaGain: Optional[float] = None
     stationReceiveAntennaGain: Optional[float] = None
     stationTransmitSignalPower: Optional[float] = None
-
-    # backward-compatible fields
     description: Optional[str] = Field(default=None, max_length=2000)
     status: Optional[str] = Field(default=None, max_length=50)
+
+
+class ProjectCreate(ProjectBase):
+    name: str = Field(min_length=1, max_length=120)
+    description: str = Field(default="", max_length=2000)
+    status: str = Field(default="active", max_length=50)
+
+
+class ProjectUpdate(ProjectBase):
+    pass
 
 
 PROJECT_FIELDS = [

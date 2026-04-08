@@ -1,21 +1,22 @@
 from typing import List
 import numpy as np
-from skyfield.api import EarthSatellite, Time, wgs84, load
+
+from entity.sat import Satellite
 
 def generate_constellation(
         alt: float,        # m
         inc: float,        # deg
-        P: int, 
-        T: int, 
-        F: float
-    ) -> List[EarthSatellite]:
+        P: int,            # 平面数
+        T: int,            # 卫星总数
+        F: float           # 相位因子
+    ) -> List[Satellite]:
     """
     按Walker参数生成卫星列表（轨道高度单位：米）
     """
     R_EARTH = 6371000.0
     MU = 3.986004418e14  # 地球引力常数，单位：m^3/s^2
     
-    satellites: List[EarthSatellite] = []
+    satellites: List[Satellite] = []
     num_ord = T // P  # 每个平面卫星数
     # 轨道半长轴a（米）
     a: float = R_EARTH + alt
@@ -33,7 +34,6 @@ def generate_constellation(
         
         for s in range(num_ord):
             id: int = p * num_ord + s
-            name = f"{p:02d}-{s:02d}"
             
             # Walker星座相位角，度
             phase: float = (360.0 / num_ord) * s + (360.0 / T) * p * F
@@ -42,7 +42,8 @@ def generate_constellation(
             phase = phase % 360.0
             sat = generate_satellite_model(
                 id=id,                      # 卫星的ID
-                name=name,                  # 卫星序列号=卫星名称
+                plane=p,                   # 平面编号
+                order=s,                   # 平面内卫星编号
                 inc=inc,                    # 倾角，度
                 raan=raan,                  # 升交点赤经，度
                 mean_anomaly=phase,         # 平近点角，度
@@ -54,14 +55,15 @@ def generate_constellation(
 
 def generate_satellite_model(
         id: int,
-        name: str, 
+        plane: int,
+        order: int,
         inc: float, 
         raan: float, 
         mean_anomaly: float, 
         mean_motion: float, 
         epoch_year=2020, 
         epoch_day=153.0, 
-    ):
+    ) -> Satellite:
     """
     生成一个 EarthSatellite 对象的 TLE，近地点幅角、偏心率等参数使用默认或0值。
     """
@@ -98,7 +100,7 @@ def generate_satellite_model(
         f"{rev_number:5s}"
     )
     line2 = line2_body.ljust(68) + tle_checksum(line2_body)
-    return EarthSatellite(line1, line2, name)
+    return Satellite(line1, line2, str(id), plane, order)
 
 def tle_checksum(line: str) -> str:
     total = 0
