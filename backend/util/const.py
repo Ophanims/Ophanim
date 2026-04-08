@@ -18,3 +18,6 @@ DEFAULT_INCLINATION = 55.0  # degrees
 DEFAULT_CONSTELLATION_SIZE = 1  # satellites
 DEFAULT_PLANE_COUNT = 1  # planes
 DEFAULT_PHASE_FACTOR = 0.0  # radians
+
+R_EARTH = 6371000.0
+MU = 3.986004418e14  # 地球引力常数，单位：m^3/s^2

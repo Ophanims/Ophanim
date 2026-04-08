@@ -7,7 +7,7 @@ from skyfield.timelib import Time
 from controller.project_controller import ProjectBase
 
 class EntityType:
-    SAT = "satellite"
+    SAT = "earth_satellite"
     GS = "ground_station"
     ROI = "region_of_interest"
 
@@ -22,7 +22,7 @@ class Entity:
     @classmethod
     def _next_unique_id(cls, type_name: str) -> str:
         # 使用统一递增计数，确保当前进程内全局唯一。
-        return f"{type_name}-{next(cls._id_counter):08d}"
+        return f"@{next(cls._id_counter):08d}"
 
     def setup(self, project: ProjectBase): pass
     def tick(self, t: Time): pass

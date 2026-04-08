@@ -1,6 +1,7 @@
 from typing import List
 import numpy as np
 
+from util.const import MU, R_EARTH
 from entity.sat import Satellite
 
 def generate_constellation(
@@ -13,8 +14,6 @@ def generate_constellation(
     """
     按Walker参数生成卫星列表（轨道高度单位：米）
     """
-    R_EARTH = 6371000.0
-    MU = 3.986004418e14  # 地球引力常数，单位：m^3/s^2
     
     satellites: List[Satellite] = []
     num_ord = T // P  # 每个平面卫星数

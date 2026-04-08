@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from util.const import R_EARTH
 from entity.node import Node
 
 class Link:
@@ -64,7 +65,6 @@ class Link:
     
     def calc_line_of_sight(self) -> float:
         """计算两节点间的视距"""
-        R_EARTH = 6371000.0
         
         s = self.src.geographic_coordinates
         d = self.dst.geographic_coordinates
