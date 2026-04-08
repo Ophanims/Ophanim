@@ -315,7 +315,7 @@ export default function ProjectPage() {
             : currentIndex + 1;
         return frameSlots[nextIndex] ?? currentSlot;
       });
-    }, 600);
+    }, 100);
 
     return () => window.clearInterval(timer);
   }, [frameSlots, isFramePlaying]);
@@ -401,9 +401,9 @@ export default function ProjectPage() {
         </div>
 
         {recordsOpen ? (
-          <section className="w-full flex flex-col p-4 text-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold">Simulation Records</h2>
+          <section className="w-full flex flex-col text-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Simulation Records</h2>
               <button className="px-2 py-1" onClick={() => loadRecords(true)}>
                 <ArrowPathIcon className="h-4 w-4" />
               </button>
