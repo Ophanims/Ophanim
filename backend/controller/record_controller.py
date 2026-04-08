@@ -61,3 +61,16 @@ async def get_record(record_id: int) -> Optional[Dict[str, Any]]:
 async def list_records(project_id: int, limit: int = 50) -> List[Dict[str, Any]]:
     recorder = _get_recorder()
     return await recorder.list_records(project_id=project_id, limit=limit)
+
+
+async def get_record_series(
+    record_id: int,
+    state_limit: int = 5000,
+    entity_limit: int = 50000,
+) -> Dict[str, Any]:
+    recorder = _get_recorder()
+    return await recorder.get_record_series(
+        record_id=record_id,
+        state_limit=state_limit,
+        entity_limit=entity_limit,
+    )

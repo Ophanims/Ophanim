@@ -530,7 +530,7 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       setError("");
-      const resp = await fetch(`${API_BASE}/projects`, { cache: "no-store" });
+      const resp = await fetch(`${API_BASE}/api/projects`, { cache: "no-store" });
       if (!resp.ok) throw new Error(`Load failed: ${resp.status}`);
       const data = (await resp.json()) as Project[];
       setProjects(data);
@@ -655,8 +655,8 @@ export default function DashboardPage() {
       const payload = buildPayload();
 
       const url = isEditing
-        ? `${API_BASE}/projects/${editingId}`
-        : `${API_BASE}/projects`;
+        ? `${API_BASE}/api/projects/${editingId}`
+        : `${API_BASE}/api/projects`;
       const method = isEditing ? "PUT" : "POST";
 
       const resp = await fetch(url, {
@@ -696,7 +696,7 @@ export default function DashboardPage() {
 
     try {
       setError("");
-      const resp = await fetch(`${API_BASE}/projects/${id}`, {
+      const resp = await fetch(`${API_BASE}/api/projects/${id}`, {
         method: "DELETE",
       });
       if (!resp.ok) throw new Error(`Delete failed: ${resp.status}`);

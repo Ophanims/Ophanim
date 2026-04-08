@@ -133,6 +133,52 @@ class TimescaleRecorder:
                 cur.execute(sql, (project_id, limit))
                 return cur.fetchall()
 
+    async def get_record_series(
+        self,
+        record_id: int,
+        state_limit: int = 5000,
+        entity_limit: int = 50000,
+    ) -> Dict[str, Any]:
+        return await asyncio.to_thread(self._get_record_series_sync, record_id, state_limit, entity_limit)
+
+    def _get_record_series_sync(
+        self,
+        record_id: int,
+        state_limit: int,
+        entity_limit: int,
+    ) -> Dict[str, Any]:
+        sql_record = (
+            "SELECT id, project_id, status, started_at, ended_at, run_config, error_message "
+            "FROM simulation_records WHERE id = %s"
+        )
+        sql_state = (
+            "SELECT ts, slot_count, timeslot, now_iso, maximum_slot, status, payload "
+            "FROM simulation_state_points WHERE record_id = %s "
+            "ORDER BY ts ASC, slot_count ASC LIMIT %s"
+        )
+        sql_entity = (
+            "SELECT ts, slot_count, entity_id, entity_type, payload "
+            "FROM simulation_entity_points WHERE record_id = %s "
+            "ORDER BY ts ASC, slot_count ASC, entity_id ASC LIMIT %s"
+        )
+
+        with self._connect() as conn:
+            with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+                cur.execute(sql_record, (record_id,))
+                record = cur.fetchone()
+
+                cur.execute(sql_state, (record_id, state_limit))
+                state_points = cur.fetchall()
+
+                cur.execute(sql_entity, (record_id, entity_limit))
+                entity_points = cur.fetchall()
+
+        return {
+            "record": record,
+            "state_points": state_points,
+            "entity_points": entity_points,
+        }
+
     def _finish_record_sync(self, record_id: int, status: str, error_message: Optional[str]) -> None:
         sql = (
             "UPDATE simulation_records "

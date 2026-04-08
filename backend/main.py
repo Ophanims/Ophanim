@@ -52,6 +52,6 @@ def health_check():
     return {"ok": True}
 
 
-app.include_router(project_router, prefix="/api/projects", tags=["projects"])
+app.include_router(project_router, prefix="/api", tags=["projects"])
 app.include_router(simulation_router, prefix="/api/simulation", tags=["simulation"])
 

@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from fastapi.encoders import jsonable_encoder
 
 from core.simulation_engine import SimulatorEngine
-from controller.record_controller import create_record, append_record_state, finish_record, list_records
+from controller.record_controller import create_record, append_record_state, finish_record, get_record_series, list_records
 from controller.project_controller import ProjectBase, fetch_project_by_id, get_mysql_conn
 
 router = APIRouter(tags=["simulation"])
@@ -18,6 +18,23 @@ async def list_project_records(project_id: int, limit: int = Query(default=100, 
         return {"projectId": project_id, "records": jsonable_encoder(rows)}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to query records: {exc}")
+
+
+@router.get("/record-series/{record_id}")
+async def get_record_series_detail(
+    record_id: int,
+    state_limit: int = Query(default=5000, ge=1, le=200000),
+    entity_limit: int = Query(default=50000, ge=1, le=500000),
+):
+    try:
+        payload = await get_record_series(
+            record_id=record_id,
+            state_limit=state_limit,
+            entity_limit=entity_limit,
+        )
+        return {"recordId": record_id, **jsonable_encoder(payload)}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to query record series: {exc}")
 
 
 @router.websocket("/ws/{project_id}")
