@@ -1,8 +1,11 @@
 import os
 import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from controller.project_controller import ensure_projects_table, router as project_router
+from controller.simulation_controller import router as simulation_router
 
 app = FastAPI(title="OPHANIM API", version="0.1.0")
 
@@ -14,5 +17,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(predict.router)
+
+@app.on_event("startup")
+def startup_init_db():
+    ensure_projects_table()
+
+
+@app.get("/health")
+def health_check():
+    return {"ok": True}
+
+
+app.include_router(project_router)
+app.include_router(simulation_router)
 

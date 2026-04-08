@@ -1,7 +1,7 @@
 import math
 
 import numpy as np
-from .node import Node
+from backend.model.node import Node
 
 class Link:
     """
