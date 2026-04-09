@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { ArrowLeftIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import type { SatellitePoint } from "./simulation.model";
 import FrameWidget from "@/app/workspace/[projectId]/FrameWidget";
-import { PauseIcon, PlayIcon, StopIcon } from "@heroicons/react/24/solid";
+import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
+import {
+  EARTH_MODE,
+  LATLON_MODE,
+  SATELLITE_MODE,
+  useFrameWidgetSettings,
+} from "@/app/workspace/[projectId]/useFrameWidgetSettings";
+import EntitySettingsWidget from "@/app/shared/EntitySettingsWidget";
 
 type SimulationViewProps = {
   projectId: string;
@@ -27,6 +34,19 @@ export default function SimulationView({
   onPause,
   onStop,
 }: SimulationViewProps) {
+  const {
+    settings,
+    earthMode,
+    setEarthMode,
+    latLonMode,
+    setLatLonMode,
+    satelliteMode,
+    setSatelliteMode,
+  } = useFrameWidgetSettings({
+    earthMode: EARTH_MODE.REALISTIC,
+    latLonMode: LATLON_MODE.HIDDEN,
+    satelliteMode: SATELLITE_MODE.SHOW,
+  });
   const totalSlot = maxSlot && maxSlot > 0 ? maxSlot : Math.max(tickCount, 1);
   const boundedTick = Math.min(Math.max(tickCount, 0), totalSlot);
   const progressPercent = Math.min(
@@ -48,42 +68,28 @@ export default function SimulationView({
               </h1>
             </div>
           </div>
-
-          <div className="absolute bottom-0 w-full mb-4 pointer-events-auto">
-            <div className="flex items-center justify-between text-sm opacity-80">
-              <p>Status: {status}</p>
-            </div>
-            <div className="flex items-center justify-center gap-4">
-              <div className="h-1 w-full overflow-hidden rounded-full bg-gray-200">
-                <div
-                  className="h-full bg-black transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <div className="flex gap-2">
-                {status !== "running" ? (
-                  <button onClick={onPlay} className="p-2 text-sm">
-                    <PlayIcon className="h-5 w-5" />
-                  </button>
-                ) : (
-                  <button onClick={onPause} className="p-2 text-sm">
-                    <PauseIcon className="h-5 w-5" />
-                  </button>
-                )}
-                <button onClick={onStop} className="p-2 text-sm">
-                  <StopIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs opacity-70">
-              <p>
-                Slot: {boundedTick} / {totalSlot}{" "}
-              </p>
-            </div>
-            {error ? (
-              <p className="text-sm text-red-600">Error: {error}</p>
-            ) : null}
-          </div>
+          <PlaybackControlWidget
+            status={status}
+            playing={status === "running"}
+            progressPercent={progressPercent}
+            progressLabel={`Slot: ${boundedTick} / ${totalSlot}`}
+            onPlay={onPlay}
+            onPause={onPause}
+            onStop={onStop}
+            error={error}
+            barTrackClassName="bg-gray-200"
+            barFillClassName="bg-black"
+            rightHeader={
+              <EntitySettingsWidget
+                earthMode={earthMode}
+                latLonMode={latLonMode}
+                satelliteMode={satelliteMode}
+                onEarthModeChange={setEarthMode}
+                onLatLonModeChange={setLatLonMode}
+                onSatelliteModeChange={setSatelliteMode}
+              />
+            }
+          />
         </div>
       </div>
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">

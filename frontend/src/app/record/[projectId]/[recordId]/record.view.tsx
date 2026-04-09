@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { ArrowPathIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import FrameWidget from "../../../workspace/[projectId]/FrameWidget";
+import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
+import EntitySettingsWidget from "@/app/shared/EntitySettingsWidget";
 import {
   EARTH_MODE,
-  EARTH_MODE_OPTIONS,
   LATLON_MODE,
-  LATLON_MODE_OPTIONS,
   SATELLITE_MODE,
-  SATELLITE_MODE_OPTIONS,
   useFrameWidgetSettings,
 } from "../../../workspace/[projectId]/useFrameWidgetSettings";
 import type { SatellitePoint } from "./record.model";
@@ -60,78 +58,28 @@ export default function RecordView({
               <h1 className="text-2xl font-semibold">Record / Project {projectId} / Record {recordId}</h1>
             </div>
           </div>
+          <PlaybackControlWidget
+            status={status}
+            playing={playing}
+            progressPercent={progressPercent}
+            progressLabel={`Frame: ${frameIndex < 0 ? "-" : frameIndex + 1} / ${frameSlots.length}`}
+            onPlay={onTogglePlay}
+            onPause={onTogglePlay}
+            onRefresh={onRefresh}
+            error={error}
+            rightHeader={
+              <EntitySettingsWidget
+                earthMode={earthMode}
+                latLonMode={latLonMode}
+                satelliteMode={satelliteMode}
+                onEarthModeChange={setEarthMode}
+                onLatLonModeChange={setLatLonMode}
+                onSatelliteModeChange={setSatelliteMode}
+              />
+            }
+          />
 
-          <div className="absolute bottom-0 w-full mb-4 pointer-events-auto">
-            <div className="flex items-center justify-between text-sm opacity-80">
-              <p>Status: {status}</p>
-              <div className="flex items-center gap-3 text-xs">
-                <label className="flex items-center gap-2">
-                  <span>Earth</span>
-                  <select
-                    className="rounded bg-white/10 px-2 py-1 text-white"
-                    value={earthMode}
-                    onChange={(e) => setEarthMode(e.target.value as (typeof EARTH_MODE_OPTIONS)[number]["value"])}
-                  >
-                    {EARTH_MODE_OPTIONS.map((mode) => (
-                      <option key={mode.value} value={mode.value} className="text-black">
-                        {mode.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex items-center gap-2">
-                  <span>Lat/Lon</span>
-                  <select
-                    className="rounded bg-white/10 px-2 py-1 text-white"
-                    value={latLonMode}
-                    onChange={(e) => setLatLonMode(e.target.value as (typeof LATLON_MODE_OPTIONS)[number]["value"])}
-                  >
-                    {LATLON_MODE_OPTIONS.map((mode) => (
-                      <option key={mode.value} value={mode.value} className="text-black">
-                        {mode.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                  <label className="flex items-center gap-2">
-                    <span>Satellites</span>
-                    <select
-                      className="rounded bg-white/10 px-2 py-1 text-white"
-                      value={satelliteMode}
-                      onChange={(e) => setSatelliteMode(e.target.value as (typeof SATELLITE_MODE_OPTIONS)[number]["value"])}
-                    >
-                      {SATELLITE_MODE_OPTIONS.map((mode) => (
-                        <option key={mode.value} value={mode.value} className="text-black">
-                          {mode.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center gap-4">
-              <div className="h-1 w-full overflow-hidden rounded-full bg-white/20">
-                <div className="h-full bg-white transition-all" style={{ width: `${progressPercent}%` }} />
-              </div>
-
-              <div className="flex gap-2">
-                <button onClick={onRefresh} className="p-2 text-sm" title="Refresh Frames">
-                  <ArrowPathIcon className="h-5 w-5" />
-                </button>
-                <button onClick={onTogglePlay} className="p-2 text-sm" title={playing ? "Pause" : "Play"}>
-                  {playing ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-xs opacity-70">
-              <p>Frame: {frameIndex < 0 ? "-" : frameIndex + 1} / {frameSlots.length}</p>
-            </div>
-
-            {loading ? <p className="text-sm opacity-80">Loading record...</p> : null}
-            {error ? <p className="text-sm text-red-600">Error: {error}</p> : null}
-          </div>
+          {loading ? <p className="absolute bottom-0 mb-1 text-sm opacity-80 pointer-events-none">Loading record...</p> : null}
         </div>
       </div>
 
