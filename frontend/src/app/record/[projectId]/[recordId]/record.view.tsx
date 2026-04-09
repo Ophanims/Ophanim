@@ -7,6 +7,7 @@ import {
   EARTH_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
+  STATION_MODE,
   useFrameWidgetSettings,
 } from "../../../workspace/[projectId]/useFrameWidgetSettings";
 import type { SatellitePoint } from "./record.model";
@@ -36,10 +37,21 @@ export default function RecordView({
   onTogglePlay,
   onRefresh,
 }: RecordViewProps) {
-  const { settings, earthMode, setEarthMode, latLonMode, setLatLonMode, satelliteMode, setSatelliteMode } = useFrameWidgetSettings({
+  const {
+    settings,
+    earthMode,
+    setEarthMode,
+    latLonMode,
+    setLatLonMode,
+    satelliteMode,
+    setSatelliteMode,
+    stationMode,
+    setStationMode,
+  } = useFrameWidgetSettings({
     earthMode: EARTH_MODE.REALISTIC,
     latLonMode: LATLON_MODE.HIDDEN,
     satelliteMode: SATELLITE_MODE.SHOW,
+    stationMode: STATION_MODE.SHOW,
   });
   const totalFrameCount = Math.max(frameSlots.length, 1);
   const currentFrame = frameIndex < 0 ? 0 : Math.min(frameIndex + 1, totalFrameCount);
@@ -72,9 +84,11 @@ export default function RecordView({
                 earthMode={earthMode}
                 latLonMode={latLonMode}
                 satelliteMode={satelliteMode}
+                stationMode={stationMode}
                 onEarthModeChange={setEarthMode}
                 onLatLonModeChange={setLatLonMode}
                 onSatelliteModeChange={setSatelliteMode}
+                onStationModeChange={setStationMode}
               />
             }
           />
@@ -84,7 +98,7 @@ export default function RecordView({
       </div>
 
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <FrameWidget satellites={satellites} settings={settings} />
+        <FrameWidget satellites={satellites} slotCount={Math.max(frameIndex, 0)} settings={settings} />
       </div>
     </main>
   );

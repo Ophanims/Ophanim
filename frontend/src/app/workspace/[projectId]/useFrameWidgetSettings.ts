@@ -19,14 +19,21 @@ export const SATELLITE_MODE = {
   HIDDEN: "hidden",
 } as const;
 
+export const STATION_MODE = {
+  SHOW: "show",
+  HIDDEN: "hidden",
+} as const;
+
 export type EarthMode = (typeof EARTH_MODE)[keyof typeof EARTH_MODE];
 export type LatLonMode = (typeof LATLON_MODE)[keyof typeof LATLON_MODE];
 export type SatelliteMode = (typeof SATELLITE_MODE)[keyof typeof SATELLITE_MODE];
+export type StationMode = (typeof STATION_MODE)[keyof typeof STATION_MODE];
 
 export type FrameWidgetSettings = {
   earthMode: EarthMode;
   latLonMode: LatLonMode;
   satelliteMode: SatelliteMode;
+  stationMode: StationMode;
   earthRotationSpeed: number;
   earthTransitionDuration: number;
 };
@@ -48,12 +55,18 @@ export const SATELLITE_MODE_OPTIONS: Array<{ value: SatelliteMode; label: string
   { value: SATELLITE_MODE.HIDDEN, label: "HIDDEN" },
 ];
 
+export const STATION_MODE_OPTIONS: Array<{ value: StationMode; label: string }> = [
+  { value: STATION_MODE.SHOW, label: "SHOW" },
+  { value: STATION_MODE.HIDDEN, label: "HIDDEN" },
+];
+
 type UseFrameWidgetSettingsArgs = Partial<FrameWidgetSettings>;
 
 export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
   const [earthMode, setEarthMode] = useState<EarthMode>(initial?.earthMode ?? EARTH_MODE.REALISTIC);
   const [latLonMode, setLatLonMode] = useState<LatLonMode>(initial?.latLonMode ?? LATLON_MODE.HIDDEN);
   const [satelliteMode, setSatelliteMode] = useState<SatelliteMode>(initial?.satelliteMode ?? SATELLITE_MODE.SHOW);
+  const [stationMode, setStationMode] = useState<StationMode>(initial?.stationMode ?? STATION_MODE.SHOW);
   const [earthRotationSpeed, setEarthRotationSpeed] = useState<number>(initial?.earthRotationSpeed ?? 0.0012);
   const [earthTransitionDuration, setEarthTransitionDuration] = useState<number>(
     initial?.earthTransitionDuration ?? 0.35,
@@ -64,10 +77,11 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
       earthMode,
       latLonMode,
       satelliteMode,
+      stationMode,
       earthRotationSpeed,
       earthTransitionDuration,
     }),
-    [earthMode, latLonMode, satelliteMode, earthRotationSpeed, earthTransitionDuration],
+    [earthMode, latLonMode, satelliteMode, stationMode, earthRotationSpeed, earthTransitionDuration],
   );
 
   return {
@@ -78,6 +92,8 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
     setLatLonMode,
     satelliteMode,
     setSatelliteMode,
+    stationMode,
+    setStationMode,
     earthRotationSpeed,
     setEarthRotationSpeed,
     earthTransitionDuration,

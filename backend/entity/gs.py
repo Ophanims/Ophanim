@@ -50,8 +50,8 @@ class GroundStation(Entity):
     def tick(self, t: Time):
         # 更新 ECEF 坐标
         topos = wgs84.latlon(self.lat, self.lon, self.alt)
-        geocentric = topos.at(t)
-        self.x, self.y, self.z = geocentric.position.m
+        geocentric = topos.at(t).position.m
+        self.x, self.y, self.z = geocentric
 
     def snapshot(self) -> GroundStationSnapshot:
         return GroundStationSnapshot(

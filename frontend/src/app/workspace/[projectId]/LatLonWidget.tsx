@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useMemo } from "react";
 import { Line } from "@react-three/drei";
-import { Group } from "three";
 
 const DEFAULT_ROTATION_Y = Math.PI;
+const INITIAL_ROTATION_OFFSET_Y = 0.06;
+const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
 
 type LatLonLineSpec = {
   points: Array<[number, number, number]>;
@@ -53,10 +53,10 @@ type LatLonWidgetProps = {
   visible: boolean;
   radius: number;
   rotationSpeed?: number;
+  slotCount?: number;
 };
 
-export default function LatLonWidget({ visible, radius, rotationSpeed = 0.0012 }: LatLonWidgetProps) {
-  const groupRef = useRef<Group>(null);
+export default function LatLonWidget({ visible, radius, rotationSpeed = 0.004178074, slotCount = 0 }: LatLonWidgetProps) {
 
   const lines = useMemo(() => {
     if (!visible) return [] as LatLonLineSpec[];
@@ -87,29 +87,28 @@ export default function LatLonWidget({ visible, radius, rotationSpeed = 0.0012 }
     return groupLines;
   }, [radius, visible]);
 
-  useFrame(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += rotationSpeed;
-      groupRef.current.rotation.y %= Math.PI * 2;
-    }
-  });
-
   if (!visible) return null;
 
+  const twoPi = Math.PI * 2;
+  const safeSlotCount = Number.isFinite(slotCount) ? slotCount : 0;
+  const rotationY = (DEFAULT_ROTATION_Y + INITIAL_ROTATION_OFFSET_Y + safeSlotCount * ((rotationSpeed * Math.PI) / 180)) % twoPi;
+
   return (
-    <group ref={groupRef} rotation={[0, DEFAULT_ROTATION_Y, 0]} renderOrder={3}>
-      {lines.map((line, index) => (
-        <Line
-          key={index}
-          points={line.points}
-          color={line.color}
-          lineWidth={line.lineWidth}
-          transparent
-          opacity={line.opacity}
-          depthWrite={false}
-          depthTest
-        />
-      ))}
+    <group rotation={[0, rotationY, 0]}>
+      <group rotation={[AXIAL_TILT_RAD, 0, 0]} renderOrder={3}>
+        {lines.map((line, index) => (
+          <Line
+            key={index}
+            points={line.points}
+            color={line.color}
+            lineWidth={line.lineWidth}
+            transparent
+            opacity={line.opacity}
+            depthWrite={false}
+            depthTest
+          />
+        ))}
+      </group>
     </group>
   );
 }

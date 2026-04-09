@@ -4,6 +4,8 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
+from entity.eth import Earth
+from entity.sun import Sun
 from util.gs_generator import generate_stations
 from util.const import DEFAULT_ALTITUDE, DEFAULT_CONSTELLATION_SIZE, DEFAULT_INCLINATION, DEFAULT_PHASE_FACTOR, DEFAULT_PLANE_COUNT, DEFAULT_SIMULATION_TIMESLOT
 from util.sat_generator import generate_constellation
@@ -26,7 +28,7 @@ class SimulationState(BaseModel):
 
 class SimulatorEngine:
     def __init__(self):
-        self.hz = 10
+        self.hz = 50
         self.dt = 1.0 / self.hz
 
         self.status = EngineStatus.IDLE
@@ -95,6 +97,12 @@ class SimulatorEngine:
         
         satellites = generate_constellation(alt=ALT, inc=INC, P=P_NUM, T=CON_SIZE, F=PF)
         stations = generate_stations(gs_models=ground_stations)
+        
+        sun = Sun()
+        self.entities.append(sun)  # 添加太阳实体
+        
+        earth = Earth()
+        self.entities.append(earth) # 添加地球实体
 
         for sat in satellites:
             self.entities.append(sat)

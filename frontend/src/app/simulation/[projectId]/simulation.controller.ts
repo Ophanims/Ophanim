@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SatellitePoint, SimulationStatus, StationPoint } from "./simulation.model";
+import type { EarthPoint, SatellitePoint, SimulationStatus, StationPoint, SunPoint } from "@/app/simulation/[projectId]/simulation.model";
 
 type UseSimulationControllerArgs = {
   projectId: string;
@@ -14,6 +14,8 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
   const [error, setError] = useState<string | null>(null);
   const [satellites, setSatellites] = useState<SatellitePoint[]>([]);
   const [stations, setStations] = useState<StationPoint[]>([]);
+  const [sun, setSun] = useState<SunPoint | null>(null);
+  const [earth, setEarth] = useState<EarthPoint | null>(null);
 
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000", []);
   const wsBase = useMemo(() => {
@@ -35,7 +37,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
-        console.debug("Received WebSocket message:", msg);
+        // console.debug("Received WebSocket message:", msg);
         if (msg?.type === "error") {
           setStatus("error");
           setError(msg?.message ?? "Simulation engine error");
@@ -49,33 +51,57 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
           setMaxSlot(Number.isFinite(nextMaxSlot) && nextMaxSlot > 0 ? nextMaxSlot : null);
           setStatus("running");
 
-          const nextSatellites: SatellitePoint[] = [];
           const nextStations: StationPoint[] = [];
+          const nextSatellites: SatellitePoint[] = [];
+
           for (const entity of state.entities ?? []) {
             if (!entity || typeof entity !== "object") continue;
             const entityType = entity.type;
-            if (entityType !== "earth_satellite") continue;
 
-            const x = Number(entity.x);
-            const y = Number(entity.y);
-            const z = Number(entity.z);
-            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+            if (entityType === "the_earth") {
+              const x0 = Number(entity.null_island_x);
+              const y0 = Number(entity.null_island_y);
+              const z0 = Number(entity.null_island_z);
+              const r = Number(entity.rotational_angular_velocity)
+              if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(z0)) continue;
+              setEarth({
+                id: String(entity.id ?? "earth"),
+                nullIslandX: Number.isFinite(x0) ? x0 : 0,
+                nullIslandY: Number.isFinite(y0) ? y0 : 0,
+                nullIslandZ: Number.isFinite(z0) ? z0 : 0,
+                rotationalAngularVelocity: Number.isFinite(r) ? r : 0,
+              });
+              continue;
+            } else if (entityType === "the_sun") {
+              const x = Number(entity.x);
+              const y = Number(entity.y);
+              const z = Number(entity.z);
+              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+              setSun({
+                id: String(entity.id ?? "sun"),
+                x: Number.isFinite(x) ? x : 0,
+                y: Number.isFinite(y) ? y : 0,
+                z: Number.isFinite(z) ? z : 0,
+              });
+              continue;
+            } else if (entityType === "earth_satellite") {
+              const x = Number(entity.x);
+              const y = Number(entity.y);
+              const z = Number(entity.z);
+              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+              nextSatellites.push({ id: String(entity.id ?? entity.address ?? "unknown"), x, y, z });
+              continue;
+            } else if (entityType === "ground_station") {
+              const x = Number(entity.x);
+              const y = Number(entity.y);
+              const z = Number(entity.z);
+              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
 
-            nextSatellites.push({ id: String(entity.id ?? entity.address ?? "unknown"), x, y, z });
+              nextStations.push({ id: String(entity.id ?? entity.name ?? "unknown"), x, y, z });
+            }
           }
+
           setSatellites(nextSatellites);
-          for (const entity of state.entities ?? []) {
-            if (!entity || typeof entity !== "object") continue;
-            const entityType = entity.type;
-            if (entityType !== "ground_station") continue;
-
-            const x = Number(entity.x);
-            const y = Number(entity.y);
-            const z = Number(entity.z);
-            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
-
-            nextStations.push({ id: String(entity.id ?? entity.name ?? "unknown"), x, y, z });
-          }
           setStations(nextStations);
         }
       } catch {
@@ -152,6 +178,8 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     tickCount,
     maxSlot,
     error,
+    earth,
+    sun,
     satellites,
     stations,
     play,

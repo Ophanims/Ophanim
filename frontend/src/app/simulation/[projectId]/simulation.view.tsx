@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import type { SatellitePoint, StationPoint } from "./simulation.model";
+import type { EarthPoint, SatellitePoint, StationPoint, SunPoint } from "./simulation.model";
 import FrameWidget from "@/app/workspace/[projectId]/FrameWidget";
 import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
 import {
   EARTH_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
+  STATION_MODE,
   useFrameWidgetSettings,
 } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
 import EntitySettingsWidget from "@/app/shared/EntitySettingsWidget";
@@ -17,6 +18,8 @@ type SimulationViewProps = {
   tickCount: number;
   maxSlot: number | null;
   error: string | null;
+  sun: SunPoint | null;
+  earth: EarthPoint | null;
   satellites: SatellitePoint[];
   stations: StationPoint[];
   onPlay: () => void;
@@ -30,6 +33,8 @@ export default function SimulationView({
   tickCount,
   maxSlot,
   error,
+  sun,
+  earth,
   satellites,
   stations,
   onPlay,
@@ -44,10 +49,13 @@ export default function SimulationView({
     setLatLonMode,
     satelliteMode,
     setSatelliteMode,
+    stationMode,
+    setStationMode,
   } = useFrameWidgetSettings({
     earthMode: EARTH_MODE.REALISTIC,
     latLonMode: LATLON_MODE.HIDDEN,
     satelliteMode: SATELLITE_MODE.SHOW,
+    stationMode: STATION_MODE.SHOW,
   });
   const totalSlot = maxSlot && maxSlot > 0 ? maxSlot : Math.max(tickCount, 1);
   const boundedTick = Math.min(Math.max(tickCount, 0), totalSlot);
@@ -86,16 +94,18 @@ export default function SimulationView({
                 earthMode={earthMode}
                 latLonMode={latLonMode}
                 satelliteMode={satelliteMode}
+                stationMode={stationMode}
                 onEarthModeChange={setEarthMode}
                 onLatLonModeChange={setLatLonMode}
                 onSatelliteModeChange={setSatelliteMode}
+                onStationModeChange={setStationMode}
               />
             }
           />
         </div>
       </div>
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <FrameWidget satellites={satellites} stations={stations} />
+        <FrameWidget sun={sun} earth={earth} satellites={satellites} stations={stations} slotCount={boundedTick} settings={settings} />
       </div>
     </main>
   );

@@ -10,6 +10,8 @@ class EntityType:
     SAT = "earth_satellite"
     GS = "ground_station"
     ROI = "region_of_interest"
+    SUN = "the_sun"
+    ETH = "the_earth"
 
 class Entity:
     """所有仿真逻辑（如轨道、能量、计算任务）必须继承此类"""

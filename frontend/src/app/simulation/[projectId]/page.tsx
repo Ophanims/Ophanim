@@ -15,6 +15,8 @@ export default function SimulationPage() {
       tickCount={controller.tickCount}
       maxSlot={controller.maxSlot}
       error={controller.error}
+      sun={controller.sun}
+      earth={controller.earth}
       satellites={controller.satellites}
       stations={controller.stations}
       onPlay={controller.play}
