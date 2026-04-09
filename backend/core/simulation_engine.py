@@ -4,13 +4,14 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
+from util.gs_generator import generate_stations
 from util.const import DEFAULT_ALTITUDE, DEFAULT_CONSTELLATION_SIZE, DEFAULT_INCLINATION, DEFAULT_PHASE_FACTOR, DEFAULT_PLANE_COUNT, DEFAULT_SIMULATION_TIMESLOT
 from util.sat_generator import generate_constellation
 from util.time_utils import parse_datetime, to_iso_string, to_skyfield_time
 
 from entity.entity import Entity
 from status.engine_status import EngineStatus
-from controller.project_controller import ProjectBase
+from controller.project_controller import GroundStationBase, ProjectBase
 
 class SimulationState(BaseModel):
     """全局快照，用于前端渲染"""
@@ -57,7 +58,7 @@ class SimulatorEngine:
         return snapshots
 
     # --- 生命周期控制 ---
-    async def initialize(self, project: ProjectBase):
+    async def initialize(self, project: ProjectBase, ground_stations: List[GroundStationBase]):
         print("[Engine] Initializing components...")
         self.entities.clear()
 
@@ -93,10 +94,14 @@ class SimulatorEngine:
         PF = project.phaseFactor if project.phaseFactor else DEFAULT_PHASE_FACTOR
         
         satellites = generate_constellation(alt=ALT, inc=INC, P=P_NUM, T=CON_SIZE, F=PF)
+        stations = generate_stations(gs_models=ground_stations)
 
         for sat in satellites:
             self.entities.append(sat)
         
+        for station in stations:
+            self.entities.append(station)
+
         # 调用每个组件的 setup 方法，传入整个项目数据
         for e in self.entities:
             e.setup(project)

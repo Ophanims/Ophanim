@@ -209,6 +209,41 @@ def ensure_projects_table():
                 """
             )
 
+            cursor.execute(
+                """
+                SELECT rc.CONSTRAINT_NAME, rc.DELETE_RULE
+                FROM information_schema.REFERENTIAL_CONSTRAINTS rc
+                WHERE rc.CONSTRAINT_SCHEMA = %s
+                  AND rc.TABLE_NAME = 'ground_stations'
+                  AND rc.REFERENCED_TABLE_NAME = 'projects'
+                """,
+                (db_name,),
+            )
+            fk_row = cursor.fetchone()
+
+            if fk_row is None:
+                cursor.execute(
+                    """
+                    ALTER TABLE ground_stations
+                    ADD CONSTRAINT fk_ground_station_project
+                    FOREIGN KEY (project_id) REFERENCES projects(id)
+                    ON DELETE CASCADE
+                    """
+                )
+            elif fk_row.get("DELETE_RULE") != "CASCADE":
+                fk_name = fk_row["CONSTRAINT_NAME"]
+                cursor.execute(
+                    f"ALTER TABLE ground_stations DROP FOREIGN KEY `{fk_name}`"
+                )
+                cursor.execute(
+                    """
+                    ALTER TABLE ground_stations
+                    ADD CONSTRAINT fk_ground_station_project
+                    FOREIGN KEY (project_id) REFERENCES projects(id)
+                    ON DELETE CASCADE
+                    """
+                )
+
 
 def project_select_fields() -> str:
     columns = ["id"] + PROJECT_FIELDS + ["created_at", "updated_at"]

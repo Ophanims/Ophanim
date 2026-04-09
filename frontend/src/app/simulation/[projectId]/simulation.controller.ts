@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SatellitePoint, SimulationStatus } from "./simulation.model";
+import type { SatellitePoint, SimulationStatus, StationPoint } from "./simulation.model";
 
 type UseSimulationControllerArgs = {
   projectId: string;
@@ -13,6 +13,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
   const [maxSlot, setMaxSlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [satellites, setSatellites] = useState<SatellitePoint[]>([]);
+  const [stations, setStations] = useState<StationPoint[]>([]);
 
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000", []);
   const wsBase = useMemo(() => {
@@ -34,6 +35,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
+        console.debug("Received WebSocket message:", msg);
         if (msg?.type === "error") {
           setStatus("error");
           setError(msg?.message ?? "Simulation engine error");
@@ -48,6 +50,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
           setStatus("running");
 
           const nextSatellites: SatellitePoint[] = [];
+          const nextStations: StationPoint[] = [];
           for (const entity of state.entities ?? []) {
             if (!entity || typeof entity !== "object") continue;
             const entityType = entity.type;
@@ -61,6 +64,19 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
             nextSatellites.push({ id: String(entity.id ?? entity.address ?? "unknown"), x, y, z });
           }
           setSatellites(nextSatellites);
+          for (const entity of state.entities ?? []) {
+            if (!entity || typeof entity !== "object") continue;
+            const entityType = entity.type;
+            if (entityType !== "ground_station") continue;
+
+            const x = Number(entity.x);
+            const y = Number(entity.y);
+            const z = Number(entity.z);
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+
+            nextStations.push({ id: String(entity.id ?? entity.name ?? "unknown"), x, y, z });
+          }
+          setStations(nextStations);
         }
       } catch {
         // ignore invalid payload
@@ -113,6 +129,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     setStatus("stopped");
     setTickCount(0);
     setSatellites([]);
+    setStations([]);
   };
 
   useEffect(() => {
@@ -136,6 +153,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     maxSlot,
     error,
     satellites,
+    stations,
     play,
     pause,
     stop,

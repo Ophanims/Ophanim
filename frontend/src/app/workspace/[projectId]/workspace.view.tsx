@@ -142,6 +142,12 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
     setIsEditingProject(false);
   };
 
+  const canAddGroundStation =
+    newStationName.trim().length > 0 &&
+    Number.isFinite(newStationLat) &&
+    Number.isFinite(newStationLon) &&
+    Number.isFinite(newStationAlt);
+
   return (
     <main className="w-full min-h-screen py-20 px-40">
       <div className="mx-auto max-w-6xl">
@@ -981,7 +987,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                 />
                 <button
                   onClick={onAddGroundStation}
-                  disabled={saving}
+                  disabled={saving || !canAddGroundStation}
                   className="col-span-2 rounded border px-3 py-2 text-sm"
                 >
                   Add Ground Station

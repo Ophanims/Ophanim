@@ -95,6 +95,16 @@ export function useWorkspaceController({ projectId }: UseWorkspaceControllerArgs
   };
 
   const addGroundStation = async () => {
+    const hasName = newStationName.trim().length > 0;
+    const hasLat = Number.isFinite(newStationLat);
+    const hasLon = Number.isFinite(newStationLon);
+    const hasAlt = Number.isFinite(newStationAlt);
+
+    if (!hasName || !hasLat || !hasLon || !hasAlt) {
+      setError("Please provide name, latitude, longitude, and altitude before adding a station");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {

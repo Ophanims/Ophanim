@@ -1,12 +1,13 @@
 import asyncio
 from contextlib import suppress
 from datetime import datetime
+from typing import List
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 
 from core.simulation_engine import SimulatorEngine
 from controller.record_controller import create_record, append_record_state, finish_record, get_record_series, list_records, delete_record
-from controller.project_controller import ProjectBase, fetch_project_by_id, get_mysql_conn
+from controller.project_controller import GroundStationBase, ProjectBase, fetch_project_by_id, get_mysql_conn
 
 router = APIRouter(tags=["simulation"])
 
@@ -53,12 +54,24 @@ async def delete_project_record(record_id: int):
 @router.websocket("/ws/{project_id}")
 async def simulation_ws(websocket: WebSocket, project_id: int):
     await websocket.accept()
+    ground_stations: List[GroundStationBase] = []
     
     # 加载项目数据
     try:
         with get_mysql_conn() as conn:
             with conn.cursor() as cursor:
                 project = fetch_project_by_id(cursor, project_id)
+                if project:
+                    cursor.execute(
+                        """
+                        SELECT id, project_id, name, latitude, longitude, altitude, created_at, updated_at
+                        FROM ground_stations
+                        WHERE project_id = %s
+                        ORDER BY id DESC
+                        """,
+                        (project_id,),
+                    )
+                    ground_stations = [GroundStationBase(**row) for row in cursor.fetchall()]
     except Exception as exc:
         await websocket.send_json({
             "type": "error",
@@ -111,7 +124,7 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
     engine.set_render_hook(render_hook)
     
     # 传递整个项目数据，供引擎内部解析使用
-    await engine.initialize(project_model)
+    await engine.initialize(project_model, ground_stations)
     
     run_task = asyncio.create_task(engine.run())
 
@@ -120,7 +133,8 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
             "type": "connected",
             "projectId": project_id,
             "recordId": record_id,
-            "project": jsonable_encoder(project_model)
+            "project": jsonable_encoder(project_model),
+            "groundStations": jsonable_encoder(ground_stations),
         })
         while True:
             recv_task = asyncio.create_task(websocket.receive_json())

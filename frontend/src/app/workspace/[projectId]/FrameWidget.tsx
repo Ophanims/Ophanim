@@ -13,11 +13,20 @@ type SatellitePoint = {
   z: number;
 };
 
+type StationPoint = {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+};
+
 export default function FrameWidget({
   satellites,
+  stations,
   settings,
 }: {
   satellites: SatellitePoint[];
+  stations?: StationPoint[];
   settings?: Partial<FrameWidgetSettings>;
 }) {
   // const scale = useMemo(() => {
@@ -61,6 +70,18 @@ export default function FrameWidget({
                   color="#ffffff"
                   emissive="#ffffff"
                   emissiveIntensity={0.35}
+                />
+              </mesh>
+            ))
+          : null}
+        {satelliteMode === SATELLITE_MODE.SHOW && stations
+          ? stations.map((st) => (
+              <mesh key={st.id} position={[st.x * scale, st.z * scale, -st.y * scale]}>
+                <sphereGeometry args={[0.03, 10, 10]} />
+                <meshStandardMaterial
+                  color="#ffff00"
+                  emissive="#ffff00"
+                  emissiveIntensity={0.25}
                 />
               </mesh>
             ))

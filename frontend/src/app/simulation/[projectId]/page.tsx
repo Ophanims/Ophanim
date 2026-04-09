@@ -16,6 +16,7 @@ export default function SimulationPage() {
       maxSlot={controller.maxSlot}
       error={controller.error}
       satellites={controller.satellites}
+      stations={controller.stations}
       onPlay={controller.play}
       onPause={controller.pause}
       onStop={controller.stop}

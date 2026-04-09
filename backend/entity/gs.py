@@ -7,7 +7,7 @@ from skyfield.timelib import Time
 class GroundStationSnapshot(BaseModel):
     addr: str
     type: str
-    id: int
+    name: str
     x: float
     y: float
     z: float
@@ -18,15 +18,15 @@ class GroundStationSnapshot(BaseModel):
     onDownload: bool
 
 class GroundStation(Entity):
-    def __init__(self, id: int, lon: float, lat: float, alt: float):
-        super().__init__(EntityType.GS)
+    def __init__(self, name: str, lon: float, lat: float, alt: float):
+        super().__init__(type=EntityType.GS)
         
-        self.id: int = id
+        self.name: str = name
         
         # 地理坐标
-        self.lat: float = 0.0
-        self.lon: float = 0.0
-        self.alt: float = 0.0  # 高度 (m)
+        self.lat: float = lat
+        self.lon: float = lon
+        self.alt: float = alt  # 高度 (m)
         
         # ECEF 坐标
         self.x: float = 0.0
@@ -57,7 +57,7 @@ class GroundStation(Entity):
         return GroundStationSnapshot(
             addr=self.address,
             type=self.type,
-            id=self.id,
+            name=self.name,
             x=self.x,
             y=self.y,
             z=self.z,
