@@ -1,4 +1,4 @@
-import { FormEvent, ReactNode } from "react";
+import { FormEvent, ReactNode, useState } from "react";
 import {
   ArrowPathIcon,
   PencilSquareIcon,
@@ -435,22 +435,27 @@ export default function DashboardView(props: DashboardViewProps) {
     setField,
   } = props;
 
+  const [showButtons, setShowButtons] = useState<boolean>(false);
+
   return (
-    <main className="w-full h-screen relative font-sans overflow-hidden">
-      {/* <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
+    <main className="w-full h-screen bg-black text-white relative font-sans overflow-hidden">
+      <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
         <Earth isFull={false} />
-      </div> */}
-      <div className="absolute inset-0 flex flex-col py-20 px-40 z-20">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-6xl font-bold tracking-tight">OPHANIM</h1>
-            <p className="text-xl tracking-tight">
-              Lightweight Satellite Constellation Simulator
-            </p>
-          </div>
-        </div>
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-40 z-20">
         <div className="flex w-full">
-          <section className="w-1/2 p-4">
+          <section className="w-1/2 px-12">
+            <div className="w-full flex items-start justify-start gap-4">
+              <div>
+                <h1 className="text-6xl font-bold tracking-tight">OPHANIM</h1>
+                <p className="text-xl tracking-tight">
+                  Lightweight Satellite Constellation Simulator
+                </p>
+              </div>
+            </div>
+          </section>
+          <div className="h-full w-[1px] bg-white"></div>
+          <section className="w-1/2 px-12">
             <div className="flex flex-col gap-2 mb-8 text-sm">
               <h2 className="text-lg font-semibold">Start</h2>
               <button
@@ -515,12 +520,25 @@ export default function DashboardView(props: DashboardViewProps) {
                       <div
                         key={p.id}
                         className={`flex cursor-pointer gap-3 ${selectedProjectId === p.id ? "bg-white/10" : ""}`}
-                        onClick={() => selectProject(p.id)}
+                        // onClick={() => selectProject(p.id)}
+                        onClick={() => toProject(p.id)}
+                        onMouseEnter={() => setShowButtons(true)}
+                        onMouseLeave={() => setShowButtons(false)}
                       >
                         <span className="py-3 font-bold">{p.name}</span>
                         <span className="py-3">
                           {new Date(p.updated_at).toLocaleString()}
                         </span>
+                        {showButtons && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => removeProject(p.id)}
+                              className="p-1 text-red-600 hover:cursor-pointer"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -529,9 +547,7 @@ export default function DashboardView(props: DashboardViewProps) {
             </div>
           </section>
 
-          <div className="h-full w-[1px] bg-black"></div>
-
-          <section className="w-1/2 p-4">
+          {/* <section className="w-1/2 p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Project Detail</h3>
               {selectedProject ? (
@@ -606,7 +622,7 @@ export default function DashboardView(props: DashboardViewProps) {
                 </p>
               </div>
             ) : null}
-          </section>
+          </section> */}
         </div>
       </div>
     </main>

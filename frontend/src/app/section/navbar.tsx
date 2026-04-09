@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function Navbar() {
 
   return (
-    <nav className="absolute top-0 left-0 w-full px-8 py-4 flex items-center justify-between z-50">
+    <nav className="absolute text-white top-0 left-0 w-full px-8 py-4 flex items-center justify-between z-50">
       <div className="text-2xl font-semibold tracking-wide select-none">
         <Link href="/" className="relative">
           OPHANIM
