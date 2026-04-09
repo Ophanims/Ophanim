@@ -36,9 +36,9 @@ export default function SimulationView({
 
   return (
     <main className="w-full h-screen text-white relative font-sans overflow-hidden">
-      <div className="absolute inset-0 flex flex-col py-12 px-20 z-20">
+      <div className="absolute inset-0 flex flex-col py-12 px-20 z-20 pointer-events-none">
         <div className="relative h-full w-full flex flex-col">
-          <div className="w-full flex items-center justify-between mb-6">
+          <div className="w-full flex items-center justify-between mb-6 pointer-events-auto">
             <div className="flex items-center gap-3">
               <Link href={`/workspace/${projectId}`} className="px-3 py-2">
                 <ChevronLeftIcon className="h-6 w-6" />
@@ -49,7 +49,7 @@ export default function SimulationView({
             </div>
           </div>
 
-          <div className="absolute bottom-0 w-full mb-4">
+          <div className="absolute bottom-0 w-full mb-4 pointer-events-auto">
             <div className="flex items-center justify-between text-sm opacity-80">
               <p>Status: {status}</p>
             </div>

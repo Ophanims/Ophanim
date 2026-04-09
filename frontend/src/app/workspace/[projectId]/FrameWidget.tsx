@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import EarthWidget from "@/app/workspace/[projectId]/EarthWidget";
 import LatLonWidget from "@/app/workspace/[projectId]/LatLonWidget";
 import { EARTH_MODE, LATLON_MODE, SATELLITE_MODE, type FrameWidgetSettings } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
@@ -39,8 +39,8 @@ export default function FrameWidget({
   const earthTransitionDuration = settings?.earthTransitionDuration ?? 0.35;
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-black">
-      <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+    <div className="h-screen w-full overflow-hidden bg-black pointer-events-auto">
+      <Canvas className="pointer-events-auto touch-none" camera={{ position: [0, 0, 8], fov: 45 }}>
         <ambientLight intensity={0.8} />
         <directionalLight position={[4, 3, 6]} intensity={1.2} />
         <EarthWidget
@@ -65,6 +65,7 @@ export default function FrameWidget({
               </mesh>
             ))
           : null}
+        <OrbitControls enablePan={false} enableDamping dampingFactor={0.08} />
       </Canvas>
     </div>
   );
