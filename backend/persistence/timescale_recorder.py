@@ -122,6 +122,9 @@ class TimescaleRecorder:
     async def list_records(self, project_id: int, limit: int = 50) -> list[Dict[str, Any]]:
         return await asyncio.to_thread(self._list_records_sync, project_id, limit)
 
+    async def delete_record(self, record_id: int) -> int:
+        return await asyncio.to_thread(self._delete_record_sync, record_id)
+
     def _list_records_sync(self, project_id: int, limit: int) -> list[Dict[str, Any]]:
         sql = (
             "SELECT id, project_id, status, started_at, ended_at, run_config, error_message "
@@ -132,6 +135,16 @@ class TimescaleRecorder:
             with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
                 cur.execute(sql, (project_id, limit))
                 return cur.fetchall()
+
+    def _delete_record_sync(self, record_id: int) -> int:
+        # simulation_state_points and simulation_entity_points are deleted by FK cascade.
+        sql = "DELETE FROM simulation_records WHERE id = %s"
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (record_id,))
+                deleted = cur.rowcount
+            conn.commit()
+        return int(deleted)
 
     async def get_record_series(
         self,

@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from fastapi.encoders import jsonable_encoder
 
 from core.simulation_engine import SimulatorEngine
-from controller.record_controller import create_record, append_record_state, finish_record, get_record_series, list_records
+from controller.record_controller import create_record, append_record_state, finish_record, get_record_series, list_records, delete_record
 from controller.project_controller import ProjectBase, fetch_project_by_id, get_mysql_conn
 
 router = APIRouter(tags=["simulation"])
@@ -35,6 +35,19 @@ async def get_record_series_detail(
         return {"recordId": record_id, **jsonable_encoder(payload)}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to query record series: {exc}")
+
+
+@router.delete("/records/{record_id}")
+async def delete_project_record(record_id: int):
+    try:
+        deleted = await delete_record(record_id=record_id)
+        if deleted == 0:
+            raise HTTPException(status_code=404, detail="Record not found")
+        return {"recordId": record_id, "deleted": True}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to delete record: {exc}")
 
 
 @router.websocket("/ws/{project_id}")

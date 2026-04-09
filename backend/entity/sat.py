@@ -77,8 +77,8 @@ class Satellite(EarthSatellite, Entity):
         self.id = id
         self.status = NodeStatus.ACTIVE
         
-        self.plane = 0
-        self.order = 0
+        self.plane = plane
+        self.order = order
         self.inc = 0.0
         self.azimuth = 0.0
         
