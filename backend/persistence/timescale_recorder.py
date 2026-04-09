@@ -151,14 +151,25 @@ class TimescaleRecorder:
         record_id: int,
         state_limit: int = 5000,
         entity_limit: int = 50000,
+        start_slot: Optional[int] = None,
+        slot_limit: Optional[int] = None,
     ) -> Dict[str, Any]:
-        return await asyncio.to_thread(self._get_record_series_sync, record_id, state_limit, entity_limit)
+        return await asyncio.to_thread(
+            self._get_record_series_sync,
+            record_id,
+            state_limit,
+            entity_limit,
+            start_slot,
+            slot_limit,
+        )
 
     def _get_record_series_sync(
         self,
         record_id: int,
         state_limit: int,
         entity_limit: int,
+        start_slot: Optional[int] = None,
+        slot_limit: Optional[int] = None,
     ) -> Dict[str, Any]:
         sql_record = (
             "SELECT id, project_id, status, started_at, ended_at, run_config, error_message "
@@ -174,6 +185,52 @@ class TimescaleRecorder:
             "FROM simulation_entity_points WHERE record_id = %s "
             "ORDER BY ts ASC, slot_count ASC, entity_id ASC LIMIT %s"
         )
+
+        if start_slot is not None or slot_limit is not None:
+            window_start = max(0, int(start_slot or 0))
+            window_limit = max(1, int(slot_limit or 200))
+            window_end = window_start + window_limit - 1
+
+            sql_state = (
+                "SELECT ts, slot_count, timeslot, now_iso, maximum_slot, status, payload "
+                "FROM simulation_state_points WHERE record_id = %s AND slot_count BETWEEN %s AND %s "
+                "ORDER BY slot_count ASC, ts ASC"
+            )
+            sql_entity = (
+                "SELECT ts, slot_count, entity_id, entity_type, payload "
+                "FROM simulation_entity_points WHERE record_id = %s AND slot_count BETWEEN %s AND %s "
+                "ORDER BY slot_count ASC, ts ASC, entity_id ASC"
+            )
+            sql_has_more = (
+                "SELECT 1 FROM simulation_state_points WHERE record_id = %s AND slot_count > %s LIMIT 1"
+            )
+
+            with self._connect() as conn:
+                with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+                    cur.execute(sql_record, (record_id,))
+                    record = cur.fetchone()
+
+                    cur.execute(sql_state, (record_id, window_start, window_end))
+                    state_points = cur.fetchall()
+
+                    cur.execute(sql_entity, (record_id, window_start, window_end))
+                    entity_points = cur.fetchall()
+
+                    cur.execute(sql_has_more, (record_id, window_end))
+                    has_more = cur.fetchone() is not None
+
+            loaded_slot_count = len({int(point["slot_count"]) for point in state_points})
+            return {
+                "record": record,
+                "state_points": state_points,
+                "entity_points": entity_points,
+                "window": {
+                    "start_slot": window_start,
+                    "end_slot": window_end,
+                    "loaded_slot_count": loaded_slot_count,
+                    "has_more": has_more,
+                },
+            }
 
         with self._connect() as conn:
             with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:

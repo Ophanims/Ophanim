@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RecordSeriesPayload, SatellitePoint } from "./record.model";
+
+const INITIAL_WINDOW_SLOT_LIMIT = 120;
+const PREFETCH_TRIGGER_RATIO = 0.7;
+const WINDOW_SLOT_LIMIT = 120;
 
 type UseRecordPlaybackControllerArgs = {
   recordId: string;
@@ -7,37 +11,84 @@ type UseRecordPlaybackControllerArgs = {
 
 export function useRecordPlaybackController({ recordId }: UseRecordPlaybackControllerArgs) {
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000", []);
+  const requestVersionRef = useRef(0);
 
   const [loading, setLoading] = useState(false);
+  const [buffering, setBuffering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recordSeries, setRecordSeries] = useState<RecordSeriesPayload | null>(null);
   const [selectedFrameSlot, setSelectedFrameSlot] = useState<number | null>(null);
   const [playing, setPlaying] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
 
-  const loadSeries = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const resp = await fetch(
-        `${apiBase}/api/simulation/record-series/${recordId}?state_limit=5000&entity_limit=50000`,
-        { cache: "no-store" },
-      );
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const payload = (await resp.json()) as RecordSeriesPayload;
-      setRecordSeries(payload);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load record series");
-    } finally {
-      setLoading(false);
-    }
+  const mergeRecordSeries = (previous: RecordSeriesPayload, next: RecordSeriesPayload): RecordSeriesPayload => {
+    const mergedStatePoints = [...(previous.state_points ?? []), ...(next.state_points ?? [])].sort(
+      (left, right) => left.slot_count - right.slot_count,
+    );
+    const mergedEntityPoints = [...(previous.entity_points ?? []), ...(next.entity_points ?? [])].sort(
+      (left, right) => left.slot_count - right.slot_count || left.entity_id.localeCompare(right.entity_id),
+    );
+
+    return {
+      ...previous,
+      ...next,
+      state_points: mergedStatePoints,
+      entity_points: mergedEntityPoints,
+      window: next.window ?? previous.window,
+    };
   };
+
+  const loadSeriesWindow = useCallback(
+    async (startSlot: number, slotLimit: number, mode: "initial" | "append") => {
+      const requestVersion = ++requestVersionRef.current;
+
+      if (mode === "initial") {
+        setLoading(true);
+        setError(null);
+        setHasMore(true);
+        setRecordSeries(null);
+        setSelectedFrameSlot(null);
+      } else {
+        setBuffering(true);
+      }
+
+      try {
+        const resp = await fetch(
+          `${apiBase}/api/simulation/record-series/${recordId}?start_slot=${startSlot}&slot_limit=${slotLimit}`,
+          { cache: "no-store" },
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const payload = (await resp.json()) as RecordSeriesPayload;
+
+        if (requestVersion !== requestVersionRef.current) return;
+
+        setRecordSeries((previous) => (previous && mode === "append" ? mergeRecordSeries(previous, payload) : payload));
+        setHasMore(payload.window?.has_more ?? false);
+      } catch (err) {
+        if (requestVersion === requestVersionRef.current) {
+          setError(err instanceof Error ? err.message : "Failed to load record series");
+          setPlaying(false);
+        }
+      } finally {
+        if (requestVersion === requestVersionRef.current) {
+          setLoading(false);
+          setBuffering(false);
+        }
+      }
+    },
+    [apiBase, recordId],
+  );
+
+  const loadSeries = useCallback(async () => {
+    await loadSeriesWindow(0, INITIAL_WINDOW_SLOT_LIMIT, "initial");
+  }, [loadSeriesWindow]);
 
   useEffect(() => {
     void loadSeries();
-  }, [recordId]);
+  }, [loadSeries, recordId]);
 
   const frameSlots = useMemo(() => {
-    const points = recordSeries?.entity_points ?? [];
+    const points = recordSeries?.state_points ?? [];
     const slots = new Set<number>();
     for (const p of points) {
       if (typeof p.slot_count === "number") slots.add(p.slot_count);
@@ -50,7 +101,10 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
       setSelectedFrameSlot(null);
       return;
     }
-    setSelectedFrameSlot(frameSlots[0]);
+    setSelectedFrameSlot((currentSlot) => {
+      if (currentSlot === null) return frameSlots[0] ?? null;
+      return frameSlots.includes(currentSlot) ? currentSlot : frameSlots[0] ?? null;
+    });
   }, [frameSlots]);
 
   const satellites = useMemo(() => {
@@ -77,27 +131,46 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
   }, [frameSlots, selectedFrameSlot]);
 
   useEffect(() => {
-    if (!playing || frameSlots.length <= 1) return;
+    if (!playing || loading || buffering || !hasMore || frameSlots.length === 0 || selectedFrameSlot === null) {
+      return;
+    }
+
+    const currentIndex = frameSlots.indexOf(selectedFrameSlot);
+    if (currentIndex < 0) return;
+
+    const triggerIndex = Math.floor(Math.max(frameSlots.length - 1, 1) * PREFETCH_TRIGGER_RATIO);
+    if (currentIndex < triggerIndex) return;
+
+    const nextStartSlot = frameSlots[frameSlots.length - 1] + 1;
+    void loadSeriesWindow(nextStartSlot, WINDOW_SLOT_LIMIT, "append");
+  }, [buffering, frameSlots, hasMore, loadSeriesWindow, loading, playing, selectedFrameSlot]);
+
+  useEffect(() => {
+    if (!playing || frameSlots.length === 0) return;
     const timer = window.setInterval(() => {
       setSelectedFrameSlot((currentSlot) => {
         if (currentSlot === null) return frameSlots[0] ?? null;
         const idx = frameSlots.indexOf(currentSlot);
-        const next = idx < 0 || idx >= frameSlots.length - 1 ? 0 : idx + 1;
-        return frameSlots[next] ?? currentSlot;
+        if (idx < 0) return frameSlots[0] ?? null;
+        if (idx < frameSlots.length - 1) return frameSlots[idx + 1] ?? currentSlot;
+        if (hasMore) return currentSlot;
+        return frameSlots[0] ?? currentSlot;
       });
     }, 100);
 
     return () => window.clearInterval(timer);
-  }, [playing, frameSlots]);
+  }, [frameSlots, hasMore, playing]);
 
   return {
     loading,
+    buffering,
     error,
     recordSeries,
     frameSlots,
     satellites,
     frameIndex,
     playing,
+    hasMore,
     setPlaying,
     loadSeries,
   };

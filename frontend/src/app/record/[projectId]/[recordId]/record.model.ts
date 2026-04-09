@@ -21,6 +21,12 @@ export type RecordSeriesPayload = {
   } | null;
   state_points: Array<{ slot_count: number }>;
   entity_points: RecordSeriesEntityPoint[];
+  window?: {
+    start_slot: number;
+    end_slot: number;
+    loaded_slot_count: number;
+    has_more: boolean;
+  };
 };
 
 export type SatellitePoint = {

@@ -13,11 +13,13 @@ export default function RecordPage() {
       projectId={projectId}
       recordId={recordId}
       loading={controller.loading}
+      buffering={controller.buffering}
       error={controller.error}
       frameSlots={controller.frameSlots}
       frameIndex={controller.frameIndex}
       satellites={controller.satellites}
       playing={controller.playing}
+      hasMore={controller.hasMore}
       onTogglePlay={() => controller.setPlaying(!controller.playing)}
       onRefresh={() => {
         void controller.loadSeries();

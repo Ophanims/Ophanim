@@ -72,10 +72,14 @@ async def get_record_series(
     record_id: int,
     state_limit: int = 5000,
     entity_limit: int = 50000,
+    start_slot: Optional[int] = None,
+    slot_limit: Optional[int] = None,
 ) -> Dict[str, Any]:
     recorder = _get_recorder()
     return await recorder.get_record_series(
         record_id=record_id,
         state_limit=state_limit,
         entity_limit=entity_limit,
+        start_slot=start_slot,
+        slot_limit=slot_limit,
     )

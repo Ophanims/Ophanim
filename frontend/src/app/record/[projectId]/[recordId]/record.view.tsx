@@ -16,11 +16,13 @@ type RecordViewProps = {
   projectId: string;
   recordId: string;
   loading: boolean;
+  buffering: boolean;
   error: string | null;
   frameSlots: number[];
   frameIndex: number;
   satellites: SatellitePoint[];
   playing: boolean;
+  hasMore: boolean;
   onTogglePlay: () => void;
   onRefresh: () => void;
 };
@@ -29,11 +31,13 @@ export default function RecordView({
   projectId,
   recordId,
   loading,
+  buffering,
   error,
   frameSlots,
   frameIndex,
   satellites,
   playing,
+  hasMore,
   onTogglePlay,
   onRefresh,
 }: RecordViewProps) {
@@ -56,7 +60,7 @@ export default function RecordView({
   const totalFrameCount = Math.max(frameSlots.length, 1);
   const currentFrame = frameIndex < 0 ? 0 : Math.min(frameIndex + 1, totalFrameCount);
   const progressPercent = Math.min(100, Math.max(0, (currentFrame / totalFrameCount) * 100));
-  const status = loading ? "loading" : playing ? "playing" : "paused";
+  const status = loading ? "loading" : buffering ? "buffering" : playing ? "playing" : "paused";
 
   return (
     <main className="w-full h-screen text-white relative font-sans overflow-hidden">
@@ -74,11 +78,11 @@ export default function RecordView({
             status={status}
             playing={playing}
             progressPercent={progressPercent}
-            progressLabel={`Frame: ${frameIndex < 0 ? "-" : frameIndex + 1} / ${frameSlots.length}`}
             onPlay={onTogglePlay}
             onPause={onTogglePlay}
             onRefresh={onRefresh}
             error={error}
+            progressLabel={`Frame: ${frameIndex < 0 ? "-" : frameIndex + 1} / ${frameSlots.length}${hasMore ? "+" : ""}`}
             rightHeader={
               <EntitySettingsWidget
                 earthMode={earthMode}
@@ -93,7 +97,11 @@ export default function RecordView({
             }
           />
 
-          {loading ? <p className="absolute bottom-0 mb-1 text-sm opacity-80 pointer-events-none">Loading record...</p> : null}
+          {loading || buffering ? (
+            <p className="absolute bottom-0 mb-1 text-sm opacity-80 pointer-events-none">
+              {loading ? "Loading record..." : "Buffering next segment..."}
+            </p>
+          ) : null}
         </div>
       </div>
 

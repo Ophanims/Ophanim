@@ -40,6 +40,9 @@ SELECT create_hypertable(
 CREATE INDEX IF NOT EXISTS idx_state_points_record_ts
     ON simulation_state_points (record_id, ts DESC);
 
+CREATE INDEX IF NOT EXISTS idx_state_points_record_slot
+    ON simulation_state_points (record_id, slot_count, ts ASC);
+
 CREATE INDEX IF NOT EXISTS idx_state_points_project_ts
     ON simulation_state_points (project_id, ts DESC);
 
@@ -63,6 +66,9 @@ SELECT create_hypertable(
 
 CREATE INDEX IF NOT EXISTS idx_entity_points_record_ts
     ON simulation_entity_points (record_id, ts DESC);
+
+CREATE INDEX IF NOT EXISTS idx_entity_points_record_slot
+    ON simulation_entity_points (record_id, slot_count, ts ASC, entity_id ASC);
 
 CREATE INDEX IF NOT EXISTS idx_entity_points_project_entity_ts
     ON simulation_entity_points (project_id, entity_id, ts DESC);

@@ -26,12 +26,16 @@ async def get_record_series_detail(
     record_id: int,
     state_limit: int = Query(default=5000, ge=1, le=200000),
     entity_limit: int = Query(default=50000, ge=1, le=500000),
+    start_slot: int | None = Query(default=None, ge=0),
+    slot_limit: int | None = Query(default=None, ge=1, le=5000),
 ):
     try:
         payload = await get_record_series(
             record_id=record_id,
             state_limit=state_limit,
             entity_limit=entity_limit,
+            start_slot=start_slot,
+            slot_limit=slot_limit,
         )
         return {"recordId": record_id, **jsonable_encoder(payload)}
     except Exception as exc:
