@@ -38,6 +38,22 @@ export type SatellitePoint = {
   onCOM: boolean;
 };
 
+export type LinkPoint = {
+  id: string;
+  type: string;
+  status: string;
+  distance: number;
+  capacity: number;
+  srcId: string;
+  dstId: string;
+  srcX: number;
+  srcY: number;
+  srcZ: number;
+  dstX: number;
+  dstY: number;
+  dstZ: number;
+};
+
 export type StationPoint = {
   addr: string;
   x: number;

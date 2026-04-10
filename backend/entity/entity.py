@@ -20,6 +20,9 @@ class Entity:
     def __init__(self, type: str, address: str | None = None):
         self.type: str = type  # 实体类型（如 "satellite"、"ground_station"）
         self.address: str = address or self._next_unique_id(type)
+        self.x: float = 0.0
+        self.y: float = 0.0
+        self.z: float = 0.0
 
     @classmethod
     def _next_unique_id(cls, type_name: str) -> str:

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { EarthPoint, SatellitePoint, SimulationStatus, StationPoint, SunPoint } from "@/app/simulation/[projectId]/simulation.model";
+import type { EarthPoint, LinkPoint, SatellitePoint, SimulationStatus, StationPoint, SunPoint } from "@/app/simulation/[projectId]/simulation.model";
 
 type UseSimulationControllerArgs = {
   projectId: string;
@@ -14,6 +14,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
   const [error, setError] = useState<string | null>(null);
   const [satellites, setSatellites] = useState<SatellitePoint[]>([]);
   const [stations, setStations] = useState<StationPoint[]>([]);
+  const [links, setLinks] = useState<LinkPoint[]>([]);
   const [sun, setSun] = useState<SunPoint | null>(null);
   const [earth, setEarth] = useState<EarthPoint | null>(null);
 
@@ -55,6 +56,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
 
           const nextStations: StationPoint[] = [];
           const nextSatellites: SatellitePoint[] = [];
+          const nextLinks: LinkPoint[] = [];
 
           for (const entity of state.entities ?? []) {
             if (!entity || typeof entity !== "object") continue;
@@ -138,8 +140,32 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
             }
           }
 
+          for (const link of state.links ?? []) {
+            if (!link || typeof link !== "object") continue;
+            // 目前仅将链路数据作为卫星的属性进行展示，后续可增加链路组件进行专门展示
+            const id = String(link.id ?? "unknown");
+            const type = String(link.type ?? "unknown");
+            const status = String(link.status ?? "unknown");
+            const distance = Number(link.distance ?? 0);
+            const capacity = Number(link.capacity ?? 0);
+            const srcId = String(link.srcId ?? "unknown");
+            const dstId = String(link.dstId ?? "unknown");
+            const src = nextSatellites.find((s) => s.id === srcId);
+            const dst = nextSatellites.find((s) => s.id === dstId);
+            if (src && dst) {
+              const srcX = Number(src.x ?? 0);
+              const srcY = Number(src.y ?? 0);
+              const srcZ = Number(src.z ?? 0);
+              const dstX = Number(dst.x ?? 0);
+              const dstY = Number(dst.y ?? 0);
+              const dstZ = Number(dst.z ?? 0);
+              nextLinks.push({ id, type, status, distance, capacity, srcId, dstId, srcX: srcX, srcY: srcY, srcZ: srcZ, dstX: dstX, dstY: dstY, dstZ: dstZ });
+            }
+          }
+
           setSatellites(nextSatellites);
           setStations(nextStations);
+          setLinks(nextLinks);
         }
       } catch {
         // ignore invalid payload
@@ -193,6 +219,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     setTickCount(0);
     setSatellites([]);
     setStations([]);
+    setLinks([]);
   };
 
   useEffect(() => {
@@ -219,6 +246,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     sun,
     satellites,
     stations,
+    links,
     play,
     pause,
     stop,

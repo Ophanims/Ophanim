@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import EarthWidget from "@/app/workspace/[projectId]/EarthWidget";
@@ -16,16 +17,19 @@ import {
 } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
 import {
   EarthPoint,
+  LinkPoint,
   SatellitePoint,
   StationPoint,
   SunPoint,
 } from "@/app/simulation/[projectId]/simulation.model";
+import { link } from "fs";
 
 export default function FrameWidget({
   sun,
   earth,
   satellites,
   stations,
+  links,
   slotCount,
   settings,
 }: {
@@ -33,6 +37,7 @@ export default function FrameWidget({
   earth?: EarthPoint | null;
   satellites: SatellitePoint[];
   stations?: StationPoint[];
+  links: LinkPoint[];
   slotCount?: number;
   settings?: Partial<FrameWidgetSettings>;
 }) {
@@ -127,6 +132,37 @@ export default function FrameWidget({
                 />
               </mesh>
             ))
+          : null}
+        {links
+          ? links.map((link) => {
+              const startVec = new THREE.Vector3(
+                link.srcX * scale,
+                link.srcY * scale,
+                link.srcZ * scale,
+              );
+              const endVec = new THREE.Vector3(
+                link.dstX * scale,
+                link.dstY * scale,
+                link.dstZ * scale,
+              );
+              const geometry = new THREE.BufferGeometry().setFromPoints([
+                startVec,
+                endVec,
+              ]);
+              const linkColor = link.type === "ISL" ? "#ffffff" : "red";
+              return (
+                <line key={link.id}>
+                  <primitive object={geometry} attach="geometry" />
+                  <lineBasicMaterial
+                    attach="material"
+                    transparent
+                    opacity={0.2}
+                    color={linkColor}
+                    linewidth={2}
+                  />
+                </line>
+              );
+            })
           : null}
         <OrbitControls enablePan={false} enableDamping dampingFactor={0.08} />
       </Canvas>

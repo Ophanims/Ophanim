@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
+from entity.link import Link
 from entity.eth import Earth
 from entity.sun import Sun
 from util.gs_generator import generate_stations
@@ -25,6 +26,7 @@ class SimulationState(BaseModel):
     now: Optional[str] = None
     maximum_slot: Optional[int] = None
     entities: List[Dict[str, Any]] = Field(default_factory=list)  # 每个实体的快照数据列表
+    links: List[Dict[str, Any]] = Field(default_factory=list)     # 每个链路的快照数据列表
 
 class SimulatorEngine:
     def __init__(self):
@@ -34,6 +36,7 @@ class SimulatorEngine:
         self.status = EngineStatus.IDLE
         self.state = SimulationState()
         self.entities: List[Entity] = []
+        self.links: List[Link] = []
 
         # 逻辑时间配置（由 project.timeSlot/startTime/endTime 驱动）
         self.SLOT: float = 0.0
@@ -51,6 +54,20 @@ class SimulatorEngine:
     def set_render_hook(self, callback):
         """注入 WebSocket 发送逻辑"""
         self.on_render_hook = callback
+
+    def _collect_entity_snapshots(self) -> List[Dict[str, Any]]:
+        snapshots: List[Dict[str, Any]] = []
+        for e in self.entities:
+            data = e.serialize()
+            snapshots.append(data)
+        return snapshots
+
+    def _collect_link_snapshots(self) -> List[Dict[str, Any]]:
+        snapshots: List[Dict[str, Any]] = []
+        for l in self.links:
+            data = l.serialize()
+            snapshots.append(data)
+        return snapshots
 
     def _collect_entity_snapshots(self) -> List[Dict[str, Any]]:
         snapshots: List[Dict[str, Any]] = []
@@ -103,16 +120,28 @@ class SimulatorEngine:
         
         earth = Earth()
         self.entities.append(earth) # 添加地球实体
-
+        
+        nodes: List[Entity] = satellites + stations
+        
         for sat in satellites:
             self.entities.append(sat)
         
         for station in stations:
             self.entities.append(station)
+            
 
         # 调用每个组件的 setup 方法，传入整个项目数据
         for e in self.entities:
             e.setup(project)
+            
+        # 根据实体列表生成链路（全连接，后续可优化为基于距离或其他规则）
+        for u in nodes:
+            for v in nodes:
+                if u != v:
+                    l = Link(src=u, dst=v)
+                    l.setup(project)
+                    self.links.append(l)
+                    
             
         self.state.timestamp = 0.0
         self.state.slot_count = 0
@@ -162,11 +191,15 @@ class SimulatorEngine:
                 
                 for e in self.entities:
                     e.tick(skyfield_time)
+                    
+                for l in self.links:
+                    l.refresh()
                 
                 self.state.timestamp += self.SLOT
                 self.state.slot_count += 1
                 self.state.now = to_iso_string(now)
                 self.state.entities = self._collect_entity_snapshots()
+                self.state.links = self._collect_link_snapshots()
 
                 # 3. 数据导出/渲染
                 if self.on_render_hook:

@@ -19,6 +19,7 @@ export default function SimulationPage() {
       earth={controller.earth}
       satellites={controller.satellites}
       stations={controller.stations}
+      links={controller.links}
       onPlay={controller.play}
       onPause={controller.pause}
       onStop={controller.stop}

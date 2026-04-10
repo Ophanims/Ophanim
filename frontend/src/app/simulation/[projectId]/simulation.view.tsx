@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import type { EarthPoint, SatellitePoint, StationPoint, SunPoint } from "./simulation.model";
+import type { EarthPoint, LinkPoint, SatellitePoint, StationPoint, SunPoint } from "./simulation.model";
 import FrameWidget from "@/app/workspace/[projectId]/FrameWidget";
 import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
 import {
@@ -23,6 +23,7 @@ type SimulationViewProps = {
   earth: EarthPoint | null;
   satellites: SatellitePoint[];
   stations: StationPoint[];
+  links: LinkPoint[];
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
@@ -38,6 +39,7 @@ export default function SimulationView({
   earth,
   satellites,
   stations,
+  links,
   onPlay,
   onPause,
   onStop,
@@ -111,7 +113,7 @@ export default function SimulationView({
         </div>
       </div>
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <FrameWidget sun={sun} earth={earth} satellites={satellites} stations={stations} slotCount={boundedTick} settings={settings} />
+        <FrameWidget sun={sun} earth={earth} satellites={satellites} stations={stations} links={links} slotCount={boundedTick} settings={settings} />
       </div>
     </main>
   );
