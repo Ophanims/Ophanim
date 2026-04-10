@@ -5,7 +5,7 @@ import { TextureLoader } from "three";
 import type { EarthMode } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
 
 const INITIAL_ROTATION_OFFSET_Y = -2.63;
-const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
+// const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
 
 type EarthWidgetProps = {
   mode: EarthMode;
@@ -19,12 +19,12 @@ function TextureEarth({ radius, rotationY }: { radius: number; rotationY: number
 
   return (
     <group rotation={[0, rotationY, 0]}>
-      <group rotation={[AXIAL_TILT_RAD, 0, 0]}>
+      {/* <group rotation={[AXIAL_TILT_RAD, 0, 0]}> */}
         <mesh>
           <sphereGeometry args={[radius, 64, 64]} />
           <meshStandardMaterial map={texture} roughness={0.8} metalness={0.02} />
         </mesh>
-      </group>
+      {/* </group> */}
     </group>
   );
 }
@@ -35,7 +35,7 @@ function RealisticEarth({ radius, earthRotationY, cloudRotationY }: { radius: nu
 
   return (
     <group rotation={[0, earthRotationY, 0]}>
-      <group rotation={[AXIAL_TILT_RAD, 0, 0]}>
+      {/* <group rotation={[AXIAL_TILT_RAD, 0, 0]}> */}
         <mesh>
           <sphereGeometry args={[radius * 1.04, 64, 64]} />
           <meshBasicMaterial color={0xffffff} transparent opacity={0.1} depthWrite={false} />
@@ -56,7 +56,7 @@ function RealisticEarth({ radius, earthRotationY, cloudRotationY }: { radius: nu
           <sphereGeometry args={[radius, 64, 64]} />
           <meshStandardMaterial map={texture} roughness={0.8} metalness={0.02} />
         </mesh>
-      </group>
+      {/* </group> */}
     </group>
   );
 }
@@ -73,12 +73,12 @@ export default function EarthWidget({ mode, radius, rotationSpeed = 0.004178074,
   if (mode === "sphere") {
     return (
       <group rotation={[0, earthRotationY, 0]}>
-        <group rotation={[AXIAL_TILT_RAD, 0, 0]}>
+        {/* <group rotation={[AXIAL_TILT_RAD, 0, 0]}> */}
           <mesh>
             <sphereGeometry args={[radius, 64, 64]} />
             <meshStandardMaterial color="#1d4ed8" roughness={0.7} metalness={0.05} />
           </mesh>
-        </group>
+        {/* </group> */}
       </group>
     );
   }
