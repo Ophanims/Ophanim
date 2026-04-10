@@ -49,7 +49,9 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
           setTickCount(state.slot_count ?? 0);
           const nextMaxSlot = Number(state.maximum_slot);
           setMaxSlot(Number.isFinite(nextMaxSlot) && nextMaxSlot > 0 ? nextMaxSlot : null);
-          setStatus("running");
+          setStatus((prevStatus) =>
+            prevStatus === "paused" || prevStatus === "stopped" ? prevStatus : "running"
+          );
 
           const nextStations: StationPoint[] = [];
           const nextSatellites: SatellitePoint[] = [];
