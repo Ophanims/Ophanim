@@ -2,29 +2,10 @@
 
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import type { SatellitePoint as SimulationSatellitePoint } from "@/app/simulation/[projectId]/simulation.model";
-
-export type RenderSatellitePoint = Pick<SimulationSatellitePoint, "x" | "y" | "z"> & {
-  id?: string;
-  addr?: string;
-  onSUN?: boolean;
-  velocityVector?: [number, number, number] | number[];
-  corX1?: number;
-  corY1?: number;
-  corZ1?: number;
-  corX2?: number;
-  corY2?: number;
-  corZ2?: number;
-  corX3?: number;
-  corY3?: number;
-  corZ3?: number;
-  corX4?: number;
-  corY4?: number;
-  corZ4?: number;
-};
+import type { SatellitePoint } from "@/app/simulation/[projectId]/simulation.model";
 
 type SatelliteWidgetProps = {
-  satellite: RenderSatellitePoint;
+  satellite: SatellitePoint;
   scale: number;
   showFootprint?: boolean;
 };
@@ -73,9 +54,9 @@ export default function SatelliteWidget({ satellite, scale, showFootprint = true
     const zAxis = pos.clone().negate().normalize();
 
     const velocity = new THREE.Vector3(
-      Number(satellite.velocityVector?.[0] ?? 0),
-      Number(satellite.velocityVector?.[1] ?? 0),
-      Number(satellite.velocityVector?.[2] ?? 0),
+      satellite.velocityVector[0],
+      satellite.velocityVector[1],
+      satellite.velocityVector[2],
     );
 
     // Use velocity projected onto the tangent plane as local +X axis.
@@ -95,10 +76,10 @@ export default function SatelliteWidget({ satellite, scale, showFootprint = true
   }, [position, satellite.velocityVector]);
 
   const corners = useMemo<Vec3[]>(() => {
-    const c1 = toScenePosition(Number(satellite.corX1), Number(satellite.corY1), Number(satellite.corZ1), scale);
-    const c2 = toScenePosition(Number(satellite.corX2), Number(satellite.corY2), Number(satellite.corZ2), scale);
-    const c3 = toScenePosition(Number(satellite.corX3), Number(satellite.corY3), Number(satellite.corZ3), scale);
-    const c4 = toScenePosition(Number(satellite.corX4), Number(satellite.corY4), Number(satellite.corZ4), scale);
+    const c1 = toScenePosition(satellite.corX1, satellite.corY1, satellite.corZ1, scale);
+    const c2 = toScenePosition(satellite.corX2, satellite.corY2, satellite.corZ2, scale);
+    const c3 = toScenePosition(satellite.corX3, satellite.corY3, satellite.corZ3, scale);
+    const c4 = toScenePosition(satellite.corX4, satellite.corY4, satellite.corZ4, scale);
 
     const all = [c1, c2, c3, c4];
     return all.filter((p) => p.every((v) => Number.isFinite(v)));

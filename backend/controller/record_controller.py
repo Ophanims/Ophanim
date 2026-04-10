@@ -68,6 +68,11 @@ async def delete_record(record_id: int) -> int:
     return await recorder.delete_record(record_id=record_id)
 
 
+async def delete_records_by_project(project_id: int) -> int:
+    recorder = _get_recorder()
+    return await recorder.delete_records_by_project(project_id=project_id)
+
+
 async def get_record_series(
     record_id: int,
     state_limit: int = 5000,

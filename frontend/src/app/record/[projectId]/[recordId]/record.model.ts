@@ -1,3 +1,5 @@
+import type { SatellitePoint } from "@/app/simulation/[projectId]/simulation.model";
+
 export type RecordSeriesEntityPoint = {
   slot_count: number;
   entity_id: string;
@@ -29,9 +31,4 @@ export type RecordSeriesPayload = {
   };
 };
 
-export type SatellitePoint = {
-  id: string;
-  x: number;
-  y: number;
-  z: number;
-};
+export type { SatellitePoint };

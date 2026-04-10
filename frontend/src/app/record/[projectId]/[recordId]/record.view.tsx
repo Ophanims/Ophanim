@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import FrameWidget from "../../../workspace/[projectId]/FrameWidget";
-import type { RenderSatellitePoint } from "../../../workspace/[projectId]/SatelliteWidget";
 import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
 import EntitySettingsWidget from "@/app/shared/EntitySettingsWidget";
 import {
@@ -12,6 +11,7 @@ import {
   STATION_MODE,
   useFrameWidgetSettings,
 } from "../../../workspace/[projectId]/useFrameWidgetSettings";
+import type { SatellitePoint } from "./record.model";
 
 type RecordViewProps = {
   projectId: string;
@@ -21,7 +21,7 @@ type RecordViewProps = {
   error: string | null;
   frameSlots: number[];
   frameIndex: number;
-  satellites: RenderSatellitePoint[];
+  satellites: SatellitePoint[];
   playing: boolean;
   hasMore: boolean;
   onTogglePlay: () => void;

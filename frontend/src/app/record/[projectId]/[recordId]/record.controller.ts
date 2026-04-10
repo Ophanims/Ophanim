@@ -120,7 +120,45 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
       const y = Number(payload.y);
       const z = Number(payload.z);
       if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
-      out.push({ id: String(payload.id ?? p.entity_id), x, y, z });
+      out.push({
+        addr: String(p.entity_id ?? payload.id ?? "unknown"),
+        type: String(payload.type ?? p.entity_type ?? "earth_satellite"),
+        id: String(payload.id ?? p.entity_id ?? "unknown"),
+        plane: 0,
+        order: 0,
+        x,
+        y,
+        z,
+        velocityVector: [0, 0, 0],
+        solarVector: [0, 0, 0],
+        corLat1: 0,
+        corLon1: 0,
+        corLat2: 0,
+        corLon2: 0,
+        corLat3: 0,
+        corLon3: 0,
+        corLat4: 0,
+        corLon4: 0,
+        corX1: 0,
+        corY1: 0,
+        corZ1: 0,
+        corX2: 0,
+        corY2: 0,
+        corZ2: 0,
+        corX3: 0,
+        corY3: 0,
+        corZ3: 0,
+        corX4: 0,
+        corY4: 0,
+        corZ4: 0,
+        batteryLevel: 0,
+        processorClockFrequency: 0,
+        onROI: false,
+        onSUN: false,
+        onSGL: false,
+        onISL: false,
+        onCOM: false,
+      });
     }
     return out;
   }, [recordSeries, selectedFrameSlot]);

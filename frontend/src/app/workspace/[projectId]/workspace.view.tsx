@@ -28,6 +28,7 @@ type WorkspaceViewProps = {
   onSaveProject: (patch: ProjectPatch) => void;
   onDeleteGroundStation: (stationId: number) => void;
   onDeleteRecord: (recordId: number) => void;
+  onClearRecords: () => void;
   onAddGroundStation: () => void;
   newStationName: string;
   newStationLat: number;
@@ -53,6 +54,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
     onSaveProject,
     onDeleteGroundStation,
     onDeleteRecord,
+    onClearRecords,
     onAddGroundStation,
     newStationName,
     newStationLat,
@@ -1065,7 +1067,24 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
 
           {activeSection === "records" ? (
             <section className="p-4">
-              <h2 className="mb-3 text-lg font-semibold">Record List</h2>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Record List</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      records.length > 0
+                      && window.confirm("Delete all records? This action cannot be undone.")
+                    ) {
+                      onClearRecords();
+                    }
+                  }}
+                  className="rounded border px-2 py-1 text-xs text-red-600 disabled:opacity-50"
+                  disabled={saving || records.length === 0}
+                >
+                  Clear All
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full border-collapse text-sm">
                   <thead>

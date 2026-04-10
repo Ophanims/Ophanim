@@ -125,6 +125,9 @@ class TimescaleRecorder:
     async def delete_record(self, record_id: int) -> int:
         return await asyncio.to_thread(self._delete_record_sync, record_id)
 
+    async def delete_records_by_project(self, project_id: int) -> int:
+        return await asyncio.to_thread(self._delete_records_by_project_sync, project_id)
+
     def _list_records_sync(self, project_id: int, limit: int) -> list[Dict[str, Any]]:
         sql = (
             "SELECT id, project_id, status, started_at, ended_at, run_config, error_message "
@@ -142,6 +145,16 @@ class TimescaleRecorder:
         with self._connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (record_id,))
+                deleted = cur.rowcount
+            conn.commit()
+        return int(deleted)
+
+    def _delete_records_by_project_sync(self, project_id: int) -> int:
+        # simulation_state_points and simulation_entity_points are deleted by FK cascade.
+        sql = "DELETE FROM simulation_records WHERE project_id = %s"
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (project_id,))
                 deleted = cur.rowcount
             conn.commit()
         return int(deleted)

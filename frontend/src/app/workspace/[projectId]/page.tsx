@@ -49,6 +49,9 @@ export default function WorkspaceProjectPage() {
       onDeleteRecord={(recordId) => {
         void controller.deleteRecord(recordId);
       }}
+      onClearRecords={() => {
+        void controller.clearRecords();
+      }}
       onAddGroundStation={() => {
         void controller.addGroundStation();
       }}

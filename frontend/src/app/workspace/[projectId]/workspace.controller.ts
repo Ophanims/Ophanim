@@ -163,6 +163,22 @@ export function useWorkspaceController({ projectId }: UseWorkspaceControllerArgs
     }
   };
 
+  const clearRecords = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const resp = await fetch(`${apiBase}/api/simulation/records/project/${projectId}`, {
+        method: "DELETE",
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      await fetchRecords();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear records");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const satellites = useMemo(() => {
     if (!project) return [] as SatelliteSummary[];
 
@@ -195,6 +211,7 @@ export function useWorkspaceController({ projectId }: UseWorkspaceControllerArgs
     addGroundStation,
     deleteGroundStation,
     deleteRecord,
+    clearRecords,
     newStationName,
     newStationLat,
     newStationLon,

@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import EarthWidget from "@/app/workspace/[projectId]/EarthWidget";
 import LatLonWidget from "@/app/workspace/[projectId]/LatLonWidget";
-import SatelliteWidget, { type RenderSatellitePoint } from "@/app/workspace/[projectId]/SatelliteWidget";
+import SatelliteWidget from "@/app/workspace/[projectId]/SatelliteWidget";
 import {
   EARTH_MODE,
   FOOTPRINT_MODE,
@@ -16,6 +16,7 @@ import {
 } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
 import {
   EarthPoint,
+  SatellitePoint,
   StationPoint,
   SunPoint,
 } from "@/app/simulation/[projectId]/simulation.model";
@@ -30,7 +31,7 @@ export default function FrameWidget({
 }: {
   sun?: SunPoint | null;
   earth?: EarthPoint | null;
-  satellites: RenderSatellitePoint[];
+  satellites: SatellitePoint[];
   stations?: StationPoint[];
   slotCount?: number;
   settings?: Partial<FrameWidgetSettings>;
