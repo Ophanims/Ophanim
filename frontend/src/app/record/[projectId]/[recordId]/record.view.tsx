@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import FrameWidget from "../../../workspace/[projectId]/FrameWidget";
+import type { RenderSatellitePoint } from "../../../workspace/[projectId]/SatelliteWidget";
 import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
 import EntitySettingsWidget from "@/app/shared/EntitySettingsWidget";
 import {
   EARTH_MODE,
+  FOOTPRINT_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
   STATION_MODE,
   useFrameWidgetSettings,
 } from "../../../workspace/[projectId]/useFrameWidgetSettings";
-import type { SatellitePoint } from "./record.model";
 
 type RecordViewProps = {
   projectId: string;
@@ -20,7 +21,7 @@ type RecordViewProps = {
   error: string | null;
   frameSlots: number[];
   frameIndex: number;
-  satellites: SatellitePoint[];
+  satellites: RenderSatellitePoint[];
   playing: boolean;
   hasMore: boolean;
   onTogglePlay: () => void;
@@ -51,11 +52,14 @@ export default function RecordView({
     setSatelliteMode,
     stationMode,
     setStationMode,
+    footprintMode,
+    setFootprintMode,
   } = useFrameWidgetSettings({
     earthMode: EARTH_MODE.REALISTIC,
     latLonMode: LATLON_MODE.HIDDEN,
     satelliteMode: SATELLITE_MODE.SHOW,
     stationMode: STATION_MODE.SHOW,
+    footprintMode: FOOTPRINT_MODE.SHOW,
   });
   const totalFrameCount = Math.max(frameSlots.length, 1);
   const currentFrame = frameIndex < 0 ? 0 : Math.min(frameIndex + 1, totalFrameCount);
@@ -89,10 +93,12 @@ export default function RecordView({
                 latLonMode={latLonMode}
                 satelliteMode={satelliteMode}
                 stationMode={stationMode}
+                footprintMode={footprintMode}
                 onEarthModeChange={setEarthMode}
                 onLatLonModeChange={setLatLonMode}
                 onSatelliteModeChange={setSatelliteMode}
                 onStationModeChange={setStationMode}
+                onFootprintModeChange={setFootprintMode}
               />
             }
           />

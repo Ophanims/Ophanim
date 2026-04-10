@@ -3,9 +3,11 @@
 import {
   EARTH_MODE_OPTIONS,
   LATLON_MODE_OPTIONS,
+  FOOTPRINT_MODE_OPTIONS,
   SATELLITE_MODE_OPTIONS,
   STATION_MODE_OPTIONS,
   type EarthMode,
+  type FootprintMode,
   type LatLonMode,
   type SatelliteMode,
   type StationMode,
@@ -16,10 +18,12 @@ type EntitySettingsWidgetProps = {
   latLonMode: LatLonMode;
   satelliteMode: SatelliteMode;
   stationMode: StationMode;
+  footprintMode: FootprintMode;
   onEarthModeChange: (mode: EarthMode) => void;
   onLatLonModeChange: (mode: LatLonMode) => void;
   onSatelliteModeChange: (mode: SatelliteMode) => void;
   onStationModeChange: (mode: StationMode) => void;
+  onFootprintModeChange: (mode: FootprintMode) => void;
 };
 
 export default function EntitySettingsWidget({
@@ -27,10 +31,12 @@ export default function EntitySettingsWidget({
   latLonMode,
   satelliteMode,
   stationMode,
+  footprintMode,
   onEarthModeChange,
   onLatLonModeChange,
   onSatelliteModeChange,
   onStationModeChange,
+  onFootprintModeChange,
 }: EntitySettingsWidgetProps) {
   return (
     <div className="flex items-center gap-3 text-xs">
@@ -87,6 +93,21 @@ export default function EntitySettingsWidget({
           onChange={(e) => onStationModeChange(e.target.value as StationMode)}
         >
           {STATION_MODE_OPTIONS.map((mode) => (
+            <option key={mode.value} value={mode.value} className="text-black">
+              {mode.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex items-center gap-2">
+        <span>Footprint</span>
+        <select
+          className="rounded bg-white/10 px-2 py-1 text-white"
+          value={footprintMode}
+          onChange={(e) => onFootprintModeChange(e.target.value as FootprintMode)}
+        >
+          {FOOTPRINT_MODE_OPTIONS.map((mode) => (
             <option key={mode.value} value={mode.value} className="text-black">
               {mode.label}
             </option>

@@ -5,9 +5,10 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import EarthWidget from "@/app/workspace/[projectId]/EarthWidget";
 import LatLonWidget from "@/app/workspace/[projectId]/LatLonWidget";
-import SatelliteWidget from "@/app/workspace/[projectId]/SatelliteWidget";
+import SatelliteWidget, { type RenderSatellitePoint } from "@/app/workspace/[projectId]/SatelliteWidget";
 import {
   EARTH_MODE,
+  FOOTPRINT_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
   STATION_MODE,
@@ -15,7 +16,6 @@ import {
 } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
 import {
   EarthPoint,
-  SatellitePoint,
   StationPoint,
   SunPoint,
 } from "@/app/simulation/[projectId]/simulation.model";
@@ -30,7 +30,7 @@ export default function FrameWidget({
 }: {
   sun?: SunPoint | null;
   earth?: EarthPoint | null;
-  satellites: SatellitePoint[];
+  satellites: RenderSatellitePoint[];
   stations?: StationPoint[];
   slotCount?: number;
   settings?: Partial<FrameWidgetSettings>;
@@ -42,6 +42,7 @@ export default function FrameWidget({
   const latLonMode = settings?.latLonMode ?? LATLON_MODE.HIDDEN;
   const satelliteMode = settings?.satelliteMode ?? SATELLITE_MODE.SHOW;
   const stationMode = settings?.stationMode ?? STATION_MODE.SHOW;
+  const footprintMode = settings?.footprintMode ?? FOOTPRINT_MODE.SHOW;
   const earthRotationSpeed =
     earth?.rotationalAngularVelocity ??
     settings?.earthRotationSpeed ??
@@ -70,7 +71,7 @@ export default function FrameWidget({
         className="pointer-events-auto touch-none"
         camera={{ position: [0, 0, 8], fov: 45 }}
       >
-        <ambientLight intensity={0.1} />
+        <ambientLight intensity={0.01} />
         <directionalLight position={sunLightPosition} intensity={2} />
         <EarthWidget
           mode={earthMode}
@@ -104,9 +105,10 @@ export default function FrameWidget({
         {satelliteMode === SATELLITE_MODE.SHOW
           ? satellites.map((s, idx) => (
               <SatelliteWidget
-                key={`${s.addr}`}
+                key={`${s.id ?? "unknown"}-${s.addr ?? "unknown"}-${idx}`}
                 satellite={s}
                 scale={scale}
+                showFootprint={footprintMode === FOOTPRINT_MODE.SHOW}
               />
             ))
           : null}

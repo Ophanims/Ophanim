@@ -24,16 +24,23 @@ export const STATION_MODE = {
   HIDDEN: "hidden",
 } as const;
 
+export const FOOTPRINT_MODE = {
+  SHOW: "show",
+  HIDDEN: "hidden",
+} as const;
+
 export type EarthMode = (typeof EARTH_MODE)[keyof typeof EARTH_MODE];
 export type LatLonMode = (typeof LATLON_MODE)[keyof typeof LATLON_MODE];
 export type SatelliteMode = (typeof SATELLITE_MODE)[keyof typeof SATELLITE_MODE];
 export type StationMode = (typeof STATION_MODE)[keyof typeof STATION_MODE];
+export type FootprintMode = (typeof FOOTPRINT_MODE)[keyof typeof FOOTPRINT_MODE];
 
 export type FrameWidgetSettings = {
   earthMode: EarthMode;
   latLonMode: LatLonMode;
   satelliteMode: SatelliteMode;
   stationMode: StationMode;
+  footprintMode: FootprintMode;
   earthRotationSpeed: number;
   earthTransitionDuration: number;
 };
@@ -60,6 +67,11 @@ export const STATION_MODE_OPTIONS: Array<{ value: StationMode; label: string }> 
   { value: STATION_MODE.HIDDEN, label: "HIDDEN" },
 ];
 
+export const FOOTPRINT_MODE_OPTIONS: Array<{ value: FootprintMode; label: string }> = [
+  { value: FOOTPRINT_MODE.SHOW, label: "SHOW" },
+  { value: FOOTPRINT_MODE.HIDDEN, label: "HIDDEN" },
+];
+
 type UseFrameWidgetSettingsArgs = Partial<FrameWidgetSettings>;
 
 export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
@@ -67,6 +79,7 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
   const [latLonMode, setLatLonMode] = useState<LatLonMode>(initial?.latLonMode ?? LATLON_MODE.HIDDEN);
   const [satelliteMode, setSatelliteMode] = useState<SatelliteMode>(initial?.satelliteMode ?? SATELLITE_MODE.SHOW);
   const [stationMode, setStationMode] = useState<StationMode>(initial?.stationMode ?? STATION_MODE.SHOW);
+  const [footprintMode, setFootprintMode] = useState<FootprintMode>(initial?.footprintMode ?? FOOTPRINT_MODE.SHOW);
   const [earthRotationSpeed, setEarthRotationSpeed] = useState<number>(initial?.earthRotationSpeed ?? 0.0012);
   const [earthTransitionDuration, setEarthTransitionDuration] = useState<number>(
     initial?.earthTransitionDuration ?? 0.35,
@@ -78,10 +91,11 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
       latLonMode,
       satelliteMode,
       stationMode,
+      footprintMode,
       earthRotationSpeed,
       earthTransitionDuration,
     }),
-    [earthMode, latLonMode, satelliteMode, stationMode, earthRotationSpeed, earthTransitionDuration],
+    [earthMode, latLonMode, satelliteMode, stationMode, footprintMode, earthRotationSpeed, earthTransitionDuration],
   );
 
   return {
@@ -94,6 +108,8 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
     setSatelliteMode,
     stationMode,
     setStationMode,
+    footprintMode,
+    setFootprintMode,
     earthRotationSpeed,
     setEarthRotationSpeed,
     earthTransitionDuration,
