@@ -9,7 +9,7 @@ from skyfield.positionlib import Geocentric
 from controller.project_controller import ProjectBase
 from entity.entity import Entity, EntityType
 from entity.node import NodeStatus
-from util.const import EARTH, GEOD, SUN
+from util.const import EARTH, EPHEMERIS, GEOD, SUN
 
 class SatelliteSnapshot(BaseModel):
     addr: str
@@ -199,6 +199,7 @@ class Satellite(EarthSatellite, Entity):
     def tick(self, t: Time):
         # 更新卫星状态
         geocentric = self.at(t)
+        self.onSUN = geocentric.is_sunlit(EPHEMERIS)
         # 1. 更新位置和姿态
         self.calc_position(geocentric)
         self.calc_velocity_vector(geocentric)

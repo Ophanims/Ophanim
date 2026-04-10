@@ -5,6 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import EarthWidget from "@/app/workspace/[projectId]/EarthWidget";
 import LatLonWidget from "@/app/workspace/[projectId]/LatLonWidget";
+import SatelliteWidget from "@/app/workspace/[projectId]/SatelliteWidget";
 import {
   EARTH_MODE,
   LATLON_MODE,
@@ -14,22 +15,10 @@ import {
 } from "@/app/workspace/[projectId]/useFrameWidgetSettings";
 import {
   EarthPoint,
+  SatellitePoint,
+  StationPoint,
   SunPoint,
 } from "@/app/simulation/[projectId]/simulation.model";
-
-type SatellitePoint = {
-  id: string;
-  x: number;
-  y: number;
-  z: number;
-};
-
-type StationPoint = {
-  id: string;
-  x: number;
-  y: number;
-  z: number;
-};
 
 export default function FrameWidget({
   sun,
@@ -62,8 +51,8 @@ export default function FrameWidget({
 
     // Convert backend coordinates to scene coordinates and normalize for stable directional lighting.
     const sx = sun.x * scale;
-    const sy = sun.z * scale;
-    const sz = -sun.y * scale;
+    const sy = sun.y * scale;
+    const sz = sun.z * scale;
     const length = Math.hypot(sx, sy, sz);
     if (!Number.isFinite(length) || length <= 0) return [4, 3, 6];
 
@@ -113,24 +102,18 @@ export default function FrameWidget({
           </mesh>
         ) : null}
         {satelliteMode === SATELLITE_MODE.SHOW
-          ? satellites.map((s) => (
-              <mesh
-                key={s.id}
-                position={[s.x * scale, s.z * scale, -s.y * scale]}
-              >
-                <sphereGeometry args={[0.02, 10, 10]} />
-                <meshStandardMaterial
-                  color="#ffffff"
-                  emissive="#ffffff"
-                  emissiveIntensity={0.35}
-                />
-              </mesh>
+          ? satellites.map((s, idx) => (
+              <SatelliteWidget
+                key={`${s.addr}`}
+                satellite={s}
+                scale={scale}
+              />
             ))
           : null}
         {stationMode === STATION_MODE.SHOW && stations
           ? stations.map((st) => (
               <mesh
-                key={st.id}
+                key={`${st.addr}`}
                 position={[st.x * scale, st.z * scale, -st.y * scale]}
               >
                 <sphereGeometry args={[0.03, 10, 10]} />

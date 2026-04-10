@@ -37,7 +37,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
-        // console.debug("Received WebSocket message:", msg);
+        console.debug("Received WebSocket message:", msg);
         if (msg?.type === "error") {
           setStatus("error");
           setError(msg?.message ?? "Simulation engine error");
@@ -61,37 +61,72 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
             const entityType = entity.type;
 
             if (entityType === "the_earth") {
-              const x0 = Number(entity.null_island_x);
-              const y0 = Number(entity.null_island_y);
-              const z0 = Number(entity.null_island_z);
               const r = Number(entity.rotational_angular_velocity)
-              if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(z0)) continue;
               setEarth({
-                id: String(entity.id ?? "earth"),
-                nullIslandX: Number.isFinite(x0) ? x0 : 0,
-                nullIslandY: Number.isFinite(y0) ? y0 : 0,
-                nullIslandZ: Number.isFinite(z0) ? z0 : 0,
+                addr: String(entity.addr ?? "earth"),
+                nullIslandX: Number(entity.nullIslandX ?? 0),
+                nullIslandY: Number(entity.nullIslandZ ?? 0),
+                nullIslandZ: - Number(entity.nullIslandY ?? 0),
                 rotationalAngularVelocity: Number.isFinite(r) ? r : 0,
               });
               continue;
             } else if (entityType === "the_sun") {
-              const x = Number(entity.x);
-              const y = Number(entity.y);
-              const z = Number(entity.z);
-              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
               setSun({
-                id: String(entity.id ?? "sun"),
-                x: Number.isFinite(x) ? x : 0,
-                y: Number.isFinite(y) ? y : 0,
-                z: Number.isFinite(z) ? z : 0,
+                addr: String(entity.addr ?? "sun"),
+                x: Number(entity.x ?? 0),
+                y: Number(entity.z ?? 0),
+                z: - Number(entity.y ?? 0),
               });
               continue;
             } else if (entityType === "earth_satellite") {
-              const x = Number(entity.x);
-              const y = Number(entity.y);
-              const z = Number(entity.z);
-              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
-              nextSatellites.push({ id: String(entity.id ?? entity.address ?? "unknown"), x, y, z });
+              const sat: SatellitePoint = {
+                addr: String(entity.addr ?? "unknown"),
+                type: String(entity.type ?? "unknown"),
+                id: String(entity.id ?? "unknown"),
+                plane: Number(entity.plane ?? 0),
+                order: Number(entity.order ?? 0),
+                x: Number(entity.x ?? 0),
+                y: Number(entity.z ?? 0),
+                z: - Number(entity.y ?? 0),
+                velocityVector: [
+                  Number(entity.velocityVectorX ?? 0),
+                  Number(entity.velocityVectorZ ?? 0),
+                  - Number(entity.velocityVectorY ?? 0),
+                ] as [number, number, number],
+                solarVector: [
+                  Number(entity.solarVectorX ?? 0),
+                  Number(entity.solarVectorZ ?? 0),
+                  - Number(entity.solarVectorY ?? 0),
+                ] as [number, number, number],
+                corLat1: Number(entity.corLat1 ?? 0),
+                corLon1: Number(entity.corLon1 ?? 0),
+                corLat2: Number(entity.corLat2 ?? 0),
+                corLon2: Number(entity.corLon2 ?? 0),
+                corLat3: Number(entity.corLat3 ?? 0),
+                corLon3: Number(entity.corLon3 ?? 0),
+                corLat4: Number(entity.corLat4 ?? 0),
+                corLon4: Number(entity.corLon4 ?? 0),
+                corX1: Number(entity.corX1 ?? 0),
+                corY1: Number(entity.corZ1 ?? 0),
+                corZ1: - Number(entity.corY1 ?? 0),
+                corX2: Number(entity.corX2 ?? 0),
+                corY2: Number(entity.corZ2 ?? 0),
+                corZ2: - Number(entity.corY2 ?? 0),
+                corX3: Number(entity.corX3 ?? 0),
+                corY3: Number(entity.corZ3 ?? 0),
+                corZ3: - Number(entity.corY3 ?? 0),
+                corX4: Number(entity.corX4 ?? 0),
+                corY4: Number(entity.corZ4 ?? 0),
+                corZ4: - Number(entity.corY4 ?? 0),
+                batteryLevel: Number(entity.batteryLevel ?? 0),
+                processorClockFrequency: Number(entity.processorClockFrequency ?? 0),
+                onROI: Boolean(entity.onROI ?? false),
+                onSUN: Boolean(entity.onSUN ?? false),
+                onSGL: Boolean(entity.onSGL ?? false),
+                onISL: Boolean(entity.onISL ?? false),
+                onCOM: Boolean(entity.onCOM ?? false),
+              };
+              nextSatellites.push(sat);
               continue;
             } else if (entityType === "ground_station") {
               const x = Number(entity.x);
@@ -99,7 +134,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
               const z = Number(entity.z);
               if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
 
-              nextStations.push({ id: String(entity.id ?? entity.name ?? "unknown"), x, y, z });
+              nextStations.push({ addr: String(entity.id ?? entity.name ?? "unknown"), x, y, z });
             }
           }
 
