@@ -4,10 +4,12 @@ import {
   EARTH_MODE_OPTIONS,
   LATLON_MODE_OPTIONS,
   FOOTPRINT_MODE_OPTIONS,
+  LINK_MODE_OPTIONS,
   SATELLITE_MODE_OPTIONS,
   STATION_MODE_OPTIONS,
   type EarthMode,
   type FootprintMode,
+  type LinkMode,
   type LatLonMode,
   type SatelliteMode,
   type StationMode,
@@ -19,11 +21,13 @@ type EntitySettingsWidgetProps = {
   satelliteMode: SatelliteMode;
   stationMode: StationMode;
   footprintMode: FootprintMode;
+  linkMode: LinkMode;
   onEarthModeChange: (mode: EarthMode) => void;
   onLatLonModeChange: (mode: LatLonMode) => void;
   onSatelliteModeChange: (mode: SatelliteMode) => void;
   onStationModeChange: (mode: StationMode) => void;
   onFootprintModeChange: (mode: FootprintMode) => void;
+  onLinkModeChange: (mode: LinkMode) => void;
 };
 
 export default function EntitySettingsWidget({
@@ -32,11 +36,13 @@ export default function EntitySettingsWidget({
   satelliteMode,
   stationMode,
   footprintMode,
+  linkMode,
   onEarthModeChange,
   onLatLonModeChange,
   onSatelliteModeChange,
   onStationModeChange,
   onFootprintModeChange,
+  onLinkModeChange,
 }: EntitySettingsWidgetProps) {
   return (
     <div className="flex items-center gap-3 text-xs">
@@ -108,6 +114,21 @@ export default function EntitySettingsWidget({
           onChange={(e) => onFootprintModeChange(e.target.value as FootprintMode)}
         >
           {FOOTPRINT_MODE_OPTIONS.map((mode) => (
+            <option key={mode.value} value={mode.value} className="text-black">
+              {mode.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex items-center gap-2">
+        <span>Links</span>
+        <select
+          className="rounded bg-white/10 px-2 py-1 text-white"
+          value={linkMode}
+          onChange={(e) => onLinkModeChange(e.target.value as LinkMode)}
+        >
+          {LINK_MODE_OPTIONS.map((mode) => (
             <option key={mode.value} value={mode.value} className="text-black">
               {mode.label}
             </option>

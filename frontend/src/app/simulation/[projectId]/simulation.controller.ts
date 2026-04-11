@@ -38,7 +38,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
-        console.debug("Received WebSocket message:", msg);
+        // console.debug("Received WebSocket message:", msg);
         if (msg?.type === "error") {
           setStatus("error");
           setError(msg?.message ?? "Simulation engine error");
@@ -179,7 +179,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
               const l: LinkPoint = { id: id, type: type, status: status, distance: distance, capacity: capacity, srcId: srcId, dstId: dstId, srcX: srcX, srcY: srcY, srcZ: srcZ, dstX: dstX, dstY: dstY, dstZ: dstZ };
               nextLinks.push(l);
             }
-            
+
           }
 
           setSatellites(nextSatellites);

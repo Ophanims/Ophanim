@@ -62,7 +62,7 @@ export default function LatLonWidget({ visible, radius, rotationSpeed = 0.004178
     if (!visible) return [] as LatLonLineSpec[];
 
     const groupLines: LatLonLineSpec[] = [];
-    const lineRadius = radius * 1.02;
+    const lineRadius = radius * 1.002;
     const segments = 256;
 
     for (let lat = -90; lat <= 90; lat += 10) {

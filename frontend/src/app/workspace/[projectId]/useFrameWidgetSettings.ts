@@ -29,11 +29,20 @@ export const FOOTPRINT_MODE = {
   HIDDEN: "hidden",
 } as const;
 
+export const LINK_MODE = {
+  ALL: "all",
+  ISL: "isl",
+  UPLINK: "uplink",
+  DOWNLINK: "downlink",
+  HIDDEN: "hidden",
+} as const;
+
 export type EarthMode = (typeof EARTH_MODE)[keyof typeof EARTH_MODE];
 export type LatLonMode = (typeof LATLON_MODE)[keyof typeof LATLON_MODE];
 export type SatelliteMode = (typeof SATELLITE_MODE)[keyof typeof SATELLITE_MODE];
 export type StationMode = (typeof STATION_MODE)[keyof typeof STATION_MODE];
 export type FootprintMode = (typeof FOOTPRINT_MODE)[keyof typeof FOOTPRINT_MODE];
+export type LinkMode = (typeof LINK_MODE)[keyof typeof LINK_MODE];
 
 export type FrameWidgetSettings = {
   earthMode: EarthMode;
@@ -41,6 +50,7 @@ export type FrameWidgetSettings = {
   satelliteMode: SatelliteMode;
   stationMode: StationMode;
   footprintMode: FootprintMode;
+  linkMode: LinkMode;
   earthRotationSpeed: number;
   earthTransitionDuration: number;
 };
@@ -72,6 +82,14 @@ export const FOOTPRINT_MODE_OPTIONS: Array<{ value: FootprintMode; label: string
   { value: FOOTPRINT_MODE.HIDDEN, label: "HIDDEN" },
 ];
 
+export const LINK_MODE_OPTIONS: Array<{ value: LinkMode; label: string }> = [
+  { value: LINK_MODE.ALL, label: "ALL" },
+  { value: LINK_MODE.ISL, label: "ISL" },
+  { value: LINK_MODE.UPLINK, label: "UPLINK" },
+  { value: LINK_MODE.DOWNLINK, label: "DOWNLINK" },
+  { value: LINK_MODE.HIDDEN, label: "HIDDEN" },
+];
+
 type UseFrameWidgetSettingsArgs = Partial<FrameWidgetSettings>;
 
 export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
@@ -80,6 +98,7 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
   const [satelliteMode, setSatelliteMode] = useState<SatelliteMode>(initial?.satelliteMode ?? SATELLITE_MODE.SHOW);
   const [stationMode, setStationMode] = useState<StationMode>(initial?.stationMode ?? STATION_MODE.SHOW);
   const [footprintMode, setFootprintMode] = useState<FootprintMode>(initial?.footprintMode ?? FOOTPRINT_MODE.SHOW);
+  const [linkMode, setLinkMode] = useState<LinkMode>(initial?.linkMode ?? LINK_MODE.ALL);
   const [earthRotationSpeed, setEarthRotationSpeed] = useState<number>(initial?.earthRotationSpeed ?? 0.0012);
   const [earthTransitionDuration, setEarthTransitionDuration] = useState<number>(
     initial?.earthTransitionDuration ?? 0.35,
@@ -92,10 +111,11 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
       satelliteMode,
       stationMode,
       footprintMode,
+      linkMode,
       earthRotationSpeed,
       earthTransitionDuration,
     }),
-    [earthMode, latLonMode, satelliteMode, stationMode, footprintMode, earthRotationSpeed, earthTransitionDuration],
+    [earthMode, latLonMode, satelliteMode, stationMode, footprintMode, linkMode, earthRotationSpeed, earthTransitionDuration],
   );
 
   return {
@@ -110,6 +130,8 @@ export function useFrameWidgetSettings(initial?: UseFrameWidgetSettingsArgs) {
     setStationMode,
     footprintMode,
     setFootprintMode,
+    linkMode,
+    setLinkMode,
     earthRotationSpeed,
     setEarthRotationSpeed,
     earthTransitionDuration,

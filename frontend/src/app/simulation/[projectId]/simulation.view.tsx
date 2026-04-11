@@ -6,6 +6,7 @@ import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
 import {
   EARTH_MODE,
   FOOTPRINT_MODE,
+  LINK_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
   STATION_MODE,
@@ -56,12 +57,15 @@ export default function SimulationView({
     setStationMode,
     footprintMode,
     setFootprintMode,
+    linkMode,
+    setLinkMode,
   } = useFrameWidgetSettings({
     earthMode: EARTH_MODE.REALISTIC,
     latLonMode: LATLON_MODE.HIDDEN,
     satelliteMode: SATELLITE_MODE.SHOW,
     stationMode: STATION_MODE.SHOW,
     footprintMode: FOOTPRINT_MODE.SHOW,
+    linkMode: LINK_MODE.ALL,
   });
   const totalSlot = maxSlot && maxSlot > 0 ? maxSlot : Math.max(tickCount, 1);
   const boundedTick = Math.min(Math.max(tickCount, 0), totalSlot);
@@ -102,11 +106,13 @@ export default function SimulationView({
                 satelliteMode={satelliteMode}
                 stationMode={stationMode}
                 footprintMode={footprintMode}
+                linkMode={linkMode}
                 onEarthModeChange={setEarthMode}
                 onLatLonModeChange={setLatLonMode}
                 onSatelliteModeChange={setSatelliteMode}
                 onStationModeChange={setStationMode}
                 onFootprintModeChange={setFootprintMode}
+                onLinkModeChange={setLinkMode}
               />
             }
           />

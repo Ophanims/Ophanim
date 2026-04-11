@@ -39,7 +39,7 @@ function createQuadGeometry(a: Vec3, b: Vec3, c: Vec3, d: Vec3): THREE.BufferGeo
 }
 
 export default function SatelliteWidget({ satellite, scale, showFootprint = true }: SatelliteWidgetProps) {
-  const bodyColor = satellite.onSUN ? "#22c55e" : "#ef4444";
+  const bodyColor = satellite.onSUN ? "#ffff00" : "#8000ff";
   const projectionColor = "#ffffff";
   const footprintColor = "#facc15";
 

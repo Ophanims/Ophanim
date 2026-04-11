@@ -10,6 +10,7 @@ import SatelliteWidget from "@/app/workspace/[projectId]/SatelliteWidget";
 import {
   EARTH_MODE,
   FOOTPRINT_MODE,
+  LINK_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
   STATION_MODE,
@@ -48,6 +49,7 @@ export default function FrameWidget({
   const satelliteMode = settings?.satelliteMode ?? SATELLITE_MODE.SHOW;
   const stationMode = settings?.stationMode ?? STATION_MODE.SHOW;
   const footprintMode = settings?.footprintMode ?? FOOTPRINT_MODE.SHOW;
+  const linkMode = settings?.linkMode ?? LINK_MODE.ALL;
   const earthRotationSpeed =
     earth?.rotationalAngularVelocity ??
     settings?.earthRotationSpeed ??
@@ -125,14 +127,25 @@ export default function FrameWidget({
               >
                 <sphereGeometry args={[0.03, 10, 10]} />
                 <meshStandardMaterial
-                  color="#ffff00"
-                  emissive="#ffff00"
+                  color="#3cff00"
+                  emissive="#3cff00"
                   emissiveIntensity={0.25}
                 />
               </mesh>
             ))
           : null}
         {links.map((link, idx) => {
+          const normalizedType = String(link.type ?? "").toUpperCase();
+          const shouldShowLink =
+            linkMode === LINK_MODE.ALL ||
+            (linkMode === LINK_MODE.ISL && normalizedType === "ISL") ||
+            (linkMode === LINK_MODE.UPLINK && (normalizedType === "UL" || normalizedType === "UPLINK")) ||
+            (linkMode === LINK_MODE.DOWNLINK && (normalizedType === "DL" || normalizedType === "DOWNLINK"));
+
+          if (linkMode === LINK_MODE.HIDDEN || !shouldShowLink) {
+            return null;
+          }
+
           const sx = link.srcX * scale;
           const sy = link.srcY * scale;
           const sz = link.srcZ * scale;
@@ -157,7 +170,8 @@ export default function FrameWidget({
             startVec,
             endVec,
           ]);
-          const linkColor = link.type === "ISL" ? "#ffffff" : "#ff3b30";
+
+          const linkColor = link.type === "ISL" ? "#ffffff" : link.type === "UPLINK" ? "#3cff00" : "#00ffa6";
 
           return (
             <line key={`${link.id}`}>

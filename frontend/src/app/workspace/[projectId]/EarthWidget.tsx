@@ -76,7 +76,7 @@ export default function EarthWidget({ mode, radius, rotationSpeed = 0.004178074,
         {/* <group rotation={[AXIAL_TILT_RAD, 0, 0]}> */}
           <mesh>
             <sphereGeometry args={[radius, 64, 64]} />
-            <meshStandardMaterial color="#1d4ed8" roughness={0.7} metalness={0.05} />
+            <meshStandardMaterial color="#2b2b2b" emissive="#2b2b2b" roughness={0.7} metalness={0.05} />
           </mesh>
         {/* </group> */}
       </group>
