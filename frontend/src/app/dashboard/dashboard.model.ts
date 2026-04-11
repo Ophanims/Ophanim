@@ -4,36 +4,46 @@ export type Project = {
   timeSlot?: number | null;
   startTime?: string | null;
   endTime?: string | null;
+  seed?: number | null;
   altitude?: number | null;
   inclination?: number | null;
-  planeCount?: number | null;
-  constellationSize?: number | null;
+  maximumNumberOfPlane?: number | null;
+  sizeOfConstellation?: number | null;
   phaseFactor?: number | null;
   imageryWidthPx?: number | null;
-  imageryLengthPx?: number | null;
-  cameraFocalLengthMm?: number | null;
-  cameraSensorUnitLengthUm?: number | null;
+  imageryHeightPx?: number | null;
+  lengthOfCameraFocalMm?: number | null;
+  lengthOfCameraSensorUnitUm?: number | null;
   channelsPerPixel?: number | null;
-  bitsPerChannel?: number | null;
-  processorClockFrequency?: number | null;
-  processorCoreQuantity?: number | null;
-  processorEnergyFactor?: number | null;
-  maxTaskProcessingNumber?: number | null;
-  transmitAntennaGain?: number | null;
-  receiveAntennaGain?: number | null;
-  transmitSignalPower?: number | null;
-  maxTaskTransmittingNumber?: number | null;
-  batteryCapacity?: number | null;
-  solarPanelArea?: number | null;
-  solarPanelEfficiency?: number | null;
-  dynamicPowerComputing?: number | null;
-  dynamicPowerTransmitting?: number | null;
-  staticPowerComputing?: number | null;
-  staticPowerTransmitting?: number | null;
-  staticPowerOthers?: number | null;
-  stationTransmitAntennaGain?: number | null;
-  stationReceiveAntennaGain?: number | null;
-  stationTransmitSignalPower?: number | null;
+  bitsPerChannelBit?: number | null;
+  maximumNumberOfProcessorCore?: number | null;
+  factorOfComputationEnergy?: number | null;
+  maximumConcurrentComputation?: number | null;
+  maximumClockFrequencyGhz?: number | null;
+  carrierFrequencyOfIslGhz?: number | null;
+  carrierFrequencyOfUpGhz?: number | null;
+  carrierFrequencyOfDlGhz?: number | null;
+  bandwidthOfIslMhz?: number | null;
+  bandwidthOfUlMhz?: number | null;
+  bandwidthOfDlMhz?: number | null;
+  factorOfTransmissionEnergy?: number | null;
+  efficiencyOfTargetSpectrum?: number | null;
+  antennaGainOfIslTransmitDbi?: number | null;
+  antennaGainOfIslReceiveDbi?: number | null;
+  antennaGainOfUlTransmitDbi?: number | null;
+  antennaGainOfUlReceiveDbi?: number | null;
+  antennaGainOfDlTransmitDbi?: number | null;
+  antennaGainOfDlReceiveDbi?: number | null;
+  maximumConcurrentTransmission?: number | null;
+  batteryCapacityWh?: number | null;
+  areaOfSolarPanelM2?: number | null;
+  efficiencyOfSolarPanel?: number | null;
+  efficiencyOfPowerAmplifier?: number | null;
+  staticPowerOfProcessingW?: number | null;
+  staticPowerOfIslTransmittingW?: number | null;
+  staticPowerOfUplinkTransmittingW?: number | null;
+  staticPowerOfDownlinkTransmittingW?: number | null;
+  staticPowerOfOthersW?: number | null;
   description: string;
   status: string;
   created_at: string;
@@ -45,36 +55,46 @@ export type FormState = {
   timeSlot: string;
   startTime: string;
   endTime: string;
+  seed: string;
   altitude: string;
   inclination: string;
-  planeCount: string;
-  constellationSize: string;
+  maximumNumberOfPlane: string;
+  sizeOfConstellation: string;
   phaseFactor: string;
   imageryWidthPx: string;
-  imageryLengthPx: string;
-  cameraFocalLengthMm: string;
-  cameraSensorUnitLengthUm: string;
+  imageryHeightPx: string;
+  lengthOfCameraFocalMm: string;
+  lengthOfCameraSensorUnitUm: string;
   channelsPerPixel: string;
-  bitsPerChannel: string;
-  processorClockFrequency: string;
-  processorCoreQuantity: string;
-  processorEnergyFactor: string;
-  maxTaskProcessingNumber: string;
-  transmitAntennaGain: string;
-  receiveAntennaGain: string;
-  transmitSignalPower: string;
-  maxTaskTransmittingNumber: string;
-  batteryCapacity: string;
-  solarPanelArea: string;
-  solarPanelEfficiency: string;
-  dynamicPowerComputing: string;
-  dynamicPowerTransmitting: string;
-  staticPowerComputing: string;
-  staticPowerTransmitting: string;
-  staticPowerOthers: string;
-  stationTransmitAntennaGain: string;
-  stationReceiveAntennaGain: string;
-  stationTransmitSignalPower: string;
+  bitsPerChannelBit: string;
+  maximumNumberOfProcessorCore: string;
+  factorOfComputationEnergy: string;
+  maximumConcurrentComputation: string;
+  maximumClockFrequencyGhz: string;
+  carrierFrequencyOfIslGhz: string;
+  carrierFrequencyOfUpGhz: string;
+  carrierFrequencyOfDlGhz: string;
+  bandwidthOfIslMhz: string;
+  bandwidthOfUlMhz: string;
+  bandwidthOfDlMhz: string;
+  factorOfTransmissionEnergy: string;
+  efficiencyOfTargetSpectrum: string;
+  antennaGainOfIslTransmitDbi: string;
+  antennaGainOfIslReceiveDbi: string;
+  antennaGainOfUlTransmitDbi: string;
+  antennaGainOfUlReceiveDbi: string;
+  antennaGainOfDlTransmitDbi: string;
+  antennaGainOfDlReceiveDbi: string;
+  maximumConcurrentTransmission: string;
+  batteryCapacityWh: string;
+  areaOfSolarPanelM2: string;
+  efficiencyOfSolarPanel: string;
+  efficiencyOfPowerAmplifier: string;
+  staticPowerOfProcessingW: string;
+  staticPowerOfIslTransmittingW: string;
+  staticPowerOfUplinkTransmittingW: string;
+  staticPowerOfDownlinkTransmittingW: string;
+  staticPowerOfOthersW: string;
 };
 
 export const emptyForm: FormState = {
@@ -82,46 +102,57 @@ export const emptyForm: FormState = {
   timeSlot: "",
   startTime: "",
   endTime: "",
+  seed: "",
   altitude: "",
   inclination: "",
-  planeCount: "",
-  constellationSize: "",
+  maximumNumberOfPlane: "",
+  sizeOfConstellation: "",
   phaseFactor: "",
   imageryWidthPx: "",
-  imageryLengthPx: "",
-  cameraFocalLengthMm: "",
-  cameraSensorUnitLengthUm: "",
+  imageryHeightPx: "",
+  lengthOfCameraFocalMm: "",
+  lengthOfCameraSensorUnitUm: "",
   channelsPerPixel: "",
-  bitsPerChannel: "",
-  processorClockFrequency: "",
-  processorCoreQuantity: "",
-  processorEnergyFactor: "",
-  maxTaskProcessingNumber: "",
-  transmitAntennaGain: "",
-  receiveAntennaGain: "",
-  transmitSignalPower: "",
-  maxTaskTransmittingNumber: "",
-  batteryCapacity: "",
-  solarPanelArea: "",
-  solarPanelEfficiency: "",
-  dynamicPowerComputing: "",
-  dynamicPowerTransmitting: "",
-  staticPowerComputing: "",
-  staticPowerTransmitting: "",
-  staticPowerOthers: "",
-  stationTransmitAntennaGain: "",
-  stationReceiveAntennaGain: "",
-  stationTransmitSignalPower: "",
+  bitsPerChannelBit: "",
+  maximumNumberOfProcessorCore: "",
+  factorOfComputationEnergy: "",
+  maximumConcurrentComputation: "",
+  maximumClockFrequencyGhz: "",
+  carrierFrequencyOfIslGhz: "",
+  carrierFrequencyOfUpGhz: "",
+  carrierFrequencyOfDlGhz: "",
+  bandwidthOfIslMhz: "",
+  bandwidthOfUlMhz: "",
+  bandwidthOfDlMhz: "",
+  factorOfTransmissionEnergy: "",
+  efficiencyOfTargetSpectrum: "",
+  antennaGainOfIslTransmitDbi: "",
+  antennaGainOfIslReceiveDbi: "",
+  antennaGainOfUlTransmitDbi: "",
+  antennaGainOfUlReceiveDbi: "",
+  antennaGainOfDlTransmitDbi: "",
+  antennaGainOfDlReceiveDbi: "",
+  maximumConcurrentTransmission: "",
+  batteryCapacityWh: "",
+  areaOfSolarPanelM2: "",
+  efficiencyOfSolarPanel: "",
+  efficiencyOfPowerAmplifier: "",
+  staticPowerOfProcessingW: "",
+  staticPowerOfIslTransmittingW: "",
+  staticPowerOfUplinkTransmittingW: "",
+  staticPowerOfDownlinkTransmittingW: "",
+  staticPowerOfOthersW: "",
 };
 
 export const intFields = new Set([
-  "planeCount",
-  "constellationSize",
+  "maximumNumberOfPlane",
+  "sizeOfConstellation",
   "imageryWidthPx",
-  "imageryLengthPx",
+  "imageryHeightPx",
   "channelsPerPixel",
-  "bitsPerChannel",
-  "processorCoreQuantity",
-  "maxTaskProcessingNumber",
-  "maxTaskTransmittingNumber",
+  "bitsPerChannelBit",
+  "seed",
+  "maximumNumberOfProcessorCore",
+  "maximumConcurrentComputation",
+  "maximumConcurrentTransmission",
 ]);

@@ -113,7 +113,7 @@ function ModalForm({
 
           <Section title="Simulation Parameters">
             <TextInput
-              label="Time Slot"
+              label="Time Slot (s)"
               field="timeSlot"
               form={form}
               setField={setField}
@@ -133,6 +133,13 @@ function ModalForm({
               setField={setField}
               type="datetime-local"
             />
+            <TextInput
+              label="Seed"
+              field="seed"
+              form={form}
+              setField={setField}
+              type="number"
+            />
           </Section>
 
           <Section title="Orbital Parameters">
@@ -151,15 +158,15 @@ function ModalForm({
               type="number"
             />
             <TextInput
-              label="Quantity of Plane"
-              field="planeCount"
+              label="Maximum Number of Plane"
+              field="maximumNumberOfPlane"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
               label="Size of Constellation"
-              field="constellationSize"
+              field="sizeOfConstellation"
               form={form}
               setField={setField}
               type="number"
@@ -182,22 +189,22 @@ function ModalForm({
               type="number"
             />
             <TextInput
-              label="Imagery Length (px)"
-              field="imageryLengthPx"
+              label="Imagery Height (px)"
+              field="imageryHeightPx"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Camera Focal Length (mm)"
-              field="cameraFocalLengthMm"
+              label="Length of Camera Focal (mm)"
+              field="lengthOfCameraFocalMm"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Camera Sensor Unit Length (um)"
-              field="cameraSensorUnitLengthUm"
+              label="Length of Camera Sensor Unit (um)"
+              field="lengthOfCameraSensorUnitUm"
               form={form}
               setField={setField}
               type="number"
@@ -210,8 +217,8 @@ function ModalForm({
               type="number"
             />
             <TextInput
-              label="Bits Per Channel"
-              field="bitsPerChannel"
+              label="Bits per Channel (bit)"
+              field="bitsPerChannelBit"
               form={form}
               setField={setField}
               type="number"
@@ -220,29 +227,29 @@ function ModalForm({
 
           <Section title="Computation Parameters">
             <TextInput
-              label="Processor Clock Frequency"
-              field="processorClockFrequency"
+              label="Maximum Number of Processor Core"
+              field="maximumNumberOfProcessorCore"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Processor Core Quantity"
-              field="processorCoreQuantity"
+              label="Factor of Computation Energy"
+              field="factorOfComputationEnergy"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Processor Energy Factor"
-              field="processorEnergyFactor"
+              label="Maximum Concurrent Computation"
+              field="maximumConcurrentComputation"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Maximum Task Processing Number"
-              field="maxTaskProcessingNumber"
+              label="Maximum Clock Frequency (GHz)"
+              field="maximumClockFrequencyGhz"
               form={form}
               setField={setField}
               type="number"
@@ -251,29 +258,106 @@ function ModalForm({
 
           <Section title="Communication Parameters">
             <TextInput
-              label="Transmit Antenna Gain"
-              field="transmitAntennaGain"
+              label="Carrier Frequency of ISL (GHz)"
+              field="carrierFrequencyOfIslGhz"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Receive Antenna Gain"
-              field="receiveAntennaGain"
+              label="Carrier Frequency of UP (GHz)"
+              field="carrierFrequencyOfUpGhz"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Transmit Signal Power"
-              field="transmitSignalPower"
+              label="Carrier Frequency of DL (GHz)"
+              field="carrierFrequencyOfDlGhz"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Maximum Task Transmitting Number"
-              field="maxTaskTransmittingNumber"
+              label="Bandwidth of ISL (MHz)"
+              field="bandwidthOfIslMhz"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Bandwidth of UL (MHz)"
+              field="bandwidthOfUlMhz"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Bandwidth of DL (MHz)"
+              field="bandwidthOfDlMhz"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Factor of Transmission Energy"
+              field="factorOfTransmissionEnergy"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Efficiency of Target Spectrum"
+              field="efficiencyOfTargetSpectrum"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Antenna Gain of ISL Transmit (dBi)"
+              field="antennaGainOfIslTransmitDbi"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Antenna Gain of ISL Receive (dBi)"
+              field="antennaGainOfIslReceiveDbi"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Antenna Gain of UL Transmit (dBi)"
+              field="antennaGainOfUlTransmitDbi"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Antenna Gain of UL Receive (dBi)"
+              field="antennaGainOfUlReceiveDbi"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Antenna Gain of DL Transmit (dBi)"
+              field="antennaGainOfDlTransmitDbi"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Antenna Gain of DL Receive (dBi)"
+              field="antennaGainOfDlReceiveDbi"
+              form={form}
+              setField={setField}
+              type="number"
+            />
+            <TextInput
+              label="Maximum Concurrent Transmission"
+              field="maximumConcurrentTransmission"
               form={form}
               setField={setField}
               type="number"
@@ -282,81 +366,64 @@ function ModalForm({
 
           <Section title="Energy Parameters">
             <TextInput
-              label="Battery Capacity"
-              field="batteryCapacity"
+              label="Battery Capacity (Wh)"
+              field="batteryCapacityWh"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Solar Panel Area"
-              field="solarPanelArea"
+              label="Area of Solar Panel (m²)"
+              field="areaOfSolarPanelM2"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Solar Panel Efficiency"
-              field="solarPanelEfficiency"
+              label="Efficiency of Solar Panel"
+              field="efficiencyOfSolarPanel"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Dynamic Power of Computing"
-              field="dynamicPowerComputing"
+              label="Efficiency of Power Amplifier"
+              field="efficiencyOfPowerAmplifier"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Dynamic Power of Transmitting"
-              field="dynamicPowerTransmitting"
+              label="Static Power of Processing (W)"
+              field="staticPowerOfProcessingW"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Static Power of Computing"
-              field="staticPowerComputing"
+              label="Static Power of ISL Transmitting (W)"
+              field="staticPowerOfIslTransmittingW"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Static Power of Transmitting"
-              field="staticPowerTransmitting"
+              label="Static Power of Uplink Transmitting (W)"
+              field="staticPowerOfUplinkTransmittingW"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Static Power of Others"
-              field="staticPowerOthers"
-              form={form}
-              setField={setField}
-              type="number"
-            />
-          </Section>
-
-          <Section title="Station Parameters">
-            <TextInput
-              label="Transmit Antenna Gain"
-              field="stationTransmitAntennaGain"
+              label="Static Power of Downlink Transmitting (W)"
+              field="staticPowerOfDownlinkTransmittingW"
               form={form}
               setField={setField}
               type="number"
             />
             <TextInput
-              label="Receive Antenna Gain"
-              field="stationReceiveAntennaGain"
-              form={form}
-              setField={setField}
-              type="number"
-            />
-            <TextInput
-              label="Transmit Signal Power"
-              field="stationTransmitSignalPower"
+              label="Static Power of Others (W)"
+              field="staticPowerOfOthersW"
               form={form}
               setField={setField}
               type="number"
@@ -609,12 +676,12 @@ export default function DashboardView(props: DashboardViewProps) {
                   {selectedProject.inclination ?? "-"}
                 </p>
                 <p>
-                  <span className="opacity-70">Plane Count:</span>{" "}
-                  {selectedProject.planeCount ?? "-"}
+                  <span className="opacity-70">Maximum Number of Plane:</span>{" "}
+                  {selectedProject.maximumNumberOfPlane ?? "-"}
                 </p>
                 <p>
-                  <span className="opacity-70">Constellation Size:</span>{" "}
-                  {selectedProject.constellationSize ?? "-"}
+                  <span className="opacity-70">Size of Constellation:</span>{" "}
+                  {selectedProject.sizeOfConstellation ?? "-"}
                 </p>
                 <p>
                   <span className="opacity-70">Updated:</span>{" "}

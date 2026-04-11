@@ -14,36 +14,46 @@ class ProjectBase(BaseModel):
     timeSlot: Optional[float] = None
     startTime: Optional[str] = None
     endTime: Optional[str] = None
+    seed: Optional[int] = None
     altitude: Optional[float] = None
     inclination: Optional[float] = None
-    planeCount: Optional[int] = None
-    constellationSize: Optional[int] = None
+    maximumNumberOfPlane: Optional[int] = None
+    sizeOfConstellation: Optional[int] = None
     phaseFactor: Optional[float] = None
     imageryWidthPx: Optional[int] = None
-    imageryLengthPx: Optional[int] = None
-    cameraFocalLengthMm: Optional[float] = None
-    cameraSensorUnitLengthUm: Optional[float] = None
+    imageryHeightPx: Optional[int] = None
+    lengthOfCameraFocalMm: Optional[float] = None
+    lengthOfCameraSensorUnitUm: Optional[float] = None
     channelsPerPixel: Optional[int] = None
-    bitsPerChannel: Optional[int] = None
-    processorClockFrequency: Optional[float] = None
-    processorCoreQuantity: Optional[int] = None
-    processorEnergyFactor: Optional[float] = None
-    maxTaskProcessingNumber: Optional[int] = None
-    transmitAntennaGain: Optional[float] = None
-    receiveAntennaGain: Optional[float] = None
-    transmitSignalPower: Optional[float] = None
-    maxTaskTransmittingNumber: Optional[int] = None
-    batteryCapacity: Optional[float] = None
-    solarPanelArea: Optional[float] = None
-    solarPanelEfficiency: Optional[float] = None
-    dynamicPowerComputing: Optional[float] = None
-    dynamicPowerTransmitting: Optional[float] = None
-    staticPowerComputing: Optional[float] = None
-    staticPowerTransmitting: Optional[float] = None
-    staticPowerOthers: Optional[float] = None
-    stationTransmitAntennaGain: Optional[float] = None
-    stationReceiveAntennaGain: Optional[float] = None
-    stationTransmitSignalPower: Optional[float] = None
+    bitsPerChannelBit: Optional[int] = None
+    maximumNumberOfProcessorCore: Optional[int] = None
+    factorOfComputationEnergy: Optional[float] = None
+    maximumConcurrentComputation: Optional[int] = None
+    maximumClockFrequencyGhz: Optional[float] = None
+    carrierFrequencyOfIslGhz: Optional[float] = None
+    carrierFrequencyOfUpGhz: Optional[float] = None
+    carrierFrequencyOfDlGhz: Optional[float] = None
+    bandwidthOfIslMhz: Optional[float] = None
+    bandwidthOfUlMhz: Optional[float] = None
+    bandwidthOfDlMhz: Optional[float] = None
+    factorOfTransmissionEnergy: Optional[float] = None
+    efficiencyOfTargetSpectrum: Optional[float] = None
+    antennaGainOfIslTransmitDbi: Optional[float] = None
+    antennaGainOfIslReceiveDbi: Optional[float] = None
+    antennaGainOfUlTransmitDbi: Optional[float] = None
+    antennaGainOfUlReceiveDbi: Optional[float] = None
+    antennaGainOfDlTransmitDbi: Optional[float] = None
+    antennaGainOfDlReceiveDbi: Optional[float] = None
+    maximumConcurrentTransmission: Optional[int] = None
+    batteryCapacityWh: Optional[float] = None
+    areaOfSolarPanelM2: Optional[float] = None
+    efficiencyOfSolarPanel: Optional[float] = None
+    efficiencyOfPowerAmplifier: Optional[float] = None
+    staticPowerOfProcessingW: Optional[float] = None
+    staticPowerOfIslTransmittingW: Optional[float] = None
+    staticPowerOfUplinkTransmittingW: Optional[float] = None
+    staticPowerOfDownlinkTransmittingW: Optional[float] = None
+    staticPowerOfOthersW: Optional[float] = None
     description: Optional[str] = Field(default=None, max_length=2000)
     status: Optional[str] = Field(default=None, max_length=50)
 
@@ -78,13 +88,19 @@ class GroundStationUpdate(GroundStationBase):
 
 PROJECT_FIELDS = [
     "name",
-    "timeSlot", "startTime", "endTime",
-    "altitude", "inclination", "planeCount", "constellationSize", "phaseFactor",
-    "imageryWidthPx", "imageryLengthPx", "cameraFocalLengthMm", "cameraSensorUnitLengthUm", "channelsPerPixel", "bitsPerChannel",
-    "processorClockFrequency", "processorCoreQuantity", "processorEnergyFactor", "maxTaskProcessingNumber",
-    "transmitAntennaGain", "receiveAntennaGain", "transmitSignalPower", "maxTaskTransmittingNumber",
-    "batteryCapacity", "solarPanelArea", "solarPanelEfficiency", "dynamicPowerComputing", "dynamicPowerTransmitting", "staticPowerComputing", "staticPowerTransmitting", "staticPowerOthers",
-    "stationTransmitAntennaGain", "stationReceiveAntennaGain", "stationTransmitSignalPower",
+    "timeSlot", "startTime", "endTime", "seed",
+    "altitude", "inclination", "maximumNumberOfPlane", "sizeOfConstellation", "phaseFactor",
+    "imageryWidthPx", "imageryHeightPx", "lengthOfCameraFocalMm", "lengthOfCameraSensorUnitUm", "channelsPerPixel", "bitsPerChannelBit",
+    "maximumNumberOfProcessorCore", "factorOfComputationEnergy", "maximumConcurrentComputation", "maximumClockFrequencyGhz",
+    "carrierFrequencyOfIslGhz", "carrierFrequencyOfUpGhz", "carrierFrequencyOfDlGhz",
+    "bandwidthOfIslMhz", "bandwidthOfUlMhz", "bandwidthOfDlMhz",
+    "factorOfTransmissionEnergy", "efficiencyOfTargetSpectrum",
+    "antennaGainOfIslTransmitDbi", "antennaGainOfIslReceiveDbi",
+    "antennaGainOfUlTransmitDbi", "antennaGainOfUlReceiveDbi",
+    "antennaGainOfDlTransmitDbi", "antennaGainOfDlReceiveDbi",
+    "maximumConcurrentTransmission",
+    "batteryCapacityWh", "areaOfSolarPanelM2", "efficiencyOfSolarPanel", "efficiencyOfPowerAmplifier",
+    "staticPowerOfProcessingW", "staticPowerOfIslTransmittingW", "staticPowerOfUplinkTransmittingW", "staticPowerOfDownlinkTransmittingW", "staticPowerOfOthersW",
     "description", "status",
 ]
 
@@ -92,37 +108,78 @@ PROJECT_COLUMN_DEFINITIONS = {
     "timeSlot": "DOUBLE NULL",
     "startTime": "DATETIME NULL",
     "endTime": "DATETIME NULL",
+    "seed": "BIGINT NULL",
     "altitude": "DOUBLE NULL",
     "inclination": "DOUBLE NULL",
-    "planeCount": "INT NULL",
-    "constellationSize": "INT NULL",
+    "maximumNumberOfPlane": "INT NULL",
+    "sizeOfConstellation": "INT NULL",
     "phaseFactor": "DOUBLE NULL",
     "imageryWidthPx": "INT NULL",
-    "imageryLengthPx": "INT NULL",
-    "cameraFocalLengthMm": "DOUBLE NULL",
-    "cameraSensorUnitLengthUm": "DOUBLE NULL",
+    "imageryHeightPx": "INT NULL",
+    "lengthOfCameraFocalMm": "DOUBLE NULL",
+    "lengthOfCameraSensorUnitUm": "DOUBLE NULL",
     "channelsPerPixel": "INT NULL",
-    "bitsPerChannel": "INT NULL",
-    "processorClockFrequency": "DOUBLE NULL",
-    "processorCoreQuantity": "INT NULL",
-    "processorEnergyFactor": "DOUBLE NULL",
-    "maxTaskProcessingNumber": "INT NULL",
-    "transmitAntennaGain": "DOUBLE NULL",
-    "receiveAntennaGain": "DOUBLE NULL",
-    "transmitSignalPower": "DOUBLE NULL",
-    "maxTaskTransmittingNumber": "INT NULL",
-    "batteryCapacity": "DOUBLE NULL",
-    "solarPanelArea": "DOUBLE NULL",
-    "solarPanelEfficiency": "DOUBLE NULL",
-    "dynamicPowerComputing": "DOUBLE NULL",
-    "dynamicPowerTransmitting": "DOUBLE NULL",
-    "staticPowerComputing": "DOUBLE NULL",
-    "staticPowerTransmitting": "DOUBLE NULL",
-    "staticPowerOthers": "DOUBLE NULL",
-    "stationTransmitAntennaGain": "DOUBLE NULL",
-    "stationReceiveAntennaGain": "DOUBLE NULL",
-    "stationTransmitSignalPower": "DOUBLE NULL",
+    "bitsPerChannelBit": "INT NULL",
+    "maximumNumberOfProcessorCore": "INT NULL",
+    "factorOfComputationEnergy": "DOUBLE NULL",
+    "maximumConcurrentComputation": "INT NULL",
+    "maximumClockFrequencyGhz": "DOUBLE NULL",
+    "carrierFrequencyOfIslGhz": "DOUBLE NULL",
+    "carrierFrequencyOfUpGhz": "DOUBLE NULL",
+    "carrierFrequencyOfDlGhz": "DOUBLE NULL",
+    "bandwidthOfIslMhz": "DOUBLE NULL",
+    "bandwidthOfUlMhz": "DOUBLE NULL",
+    "bandwidthOfDlMhz": "DOUBLE NULL",
+    "factorOfTransmissionEnergy": "DOUBLE NULL",
+    "efficiencyOfTargetSpectrum": "DOUBLE NULL",
+    "antennaGainOfIslTransmitDbi": "DOUBLE NULL",
+    "antennaGainOfIslReceiveDbi": "DOUBLE NULL",
+    "antennaGainOfUlTransmitDbi": "DOUBLE NULL",
+    "antennaGainOfUlReceiveDbi": "DOUBLE NULL",
+    "antennaGainOfDlTransmitDbi": "DOUBLE NULL",
+    "antennaGainOfDlReceiveDbi": "DOUBLE NULL",
+    "maximumConcurrentTransmission": "INT NULL",
+    "batteryCapacityWh": "DOUBLE NULL",
+    "areaOfSolarPanelM2": "DOUBLE NULL",
+    "efficiencyOfSolarPanel": "DOUBLE NULL",
+    "efficiencyOfPowerAmplifier": "DOUBLE NULL",
+    "staticPowerOfProcessingW": "DOUBLE NULL",
+    "staticPowerOfIslTransmittingW": "DOUBLE NULL",
+    "staticPowerOfUplinkTransmittingW": "DOUBLE NULL",
+    "staticPowerOfDownlinkTransmittingW": "DOUBLE NULL",
+    "staticPowerOfOthersW": "DOUBLE NULL",
 }
+
+LEGACY_TO_NEW_COLUMN_MAPPINGS = [
+    ("planeCount", "maximumNumberOfPlane"),
+    ("constellationSize", "sizeOfConstellation"),
+    ("imageryLengthPx", "imageryHeightPx"),
+    ("cameraFocalLengthMm", "lengthOfCameraFocalMm"),
+    ("cameraSensorUnitLengthUm", "lengthOfCameraSensorUnitUm"),
+    ("bitsPerChannel", "bitsPerChannelBit"),
+    ("processorCoreQuantity", "maximumNumberOfProcessorCore"),
+    ("processorEnergyFactor", "factorOfComputationEnergy"),
+    ("maxTaskProcessingNumber", "maximumConcurrentComputation"),
+    ("processorClockFrequency", "maximumClockFrequencyGhz"),
+    ("transmitAntennaGain", "antennaGainOfIslTransmitDbi"),
+    ("receiveAntennaGain", "antennaGainOfIslReceiveDbi"),
+    ("transmitSignalPower", "factorOfTransmissionEnergy"),
+    ("maxTaskTransmittingNumber", "maximumConcurrentTransmission"),
+    ("batteryCapacity", "batteryCapacityWh"),
+    ("solarPanelArea", "areaOfSolarPanelM2"),
+    ("solarPanelEfficiency", "efficiencyOfSolarPanel"),
+    ("dynamicPowerComputing", "efficiencyOfPowerAmplifier"),
+    ("dynamicPowerTransmitting", "efficiencyOfTargetSpectrum"),
+    ("staticPowerComputing", "staticPowerOfProcessingW"),
+    ("staticPowerTransmitting", "staticPowerOfIslTransmittingW"),
+    ("staticPowerOthers", "staticPowerOfOthersW"),
+    ("frequencyBand", "carrierFrequencyOfIslGhz"),
+    ("bandwidthMhz", "bandwidthOfIslMhz"),
+    ("stationTransmitAntennaGain", "antennaGainOfUlTransmitDbi"),
+    ("stationReceiveAntennaGain", "antennaGainOfDlReceiveDbi"),
+    ("antennaGainOfUplinkTransmitDbi", "antennaGainOfUlTransmitDbi"),
+    ("antennaGainOfDownlinkReceiveDbi", "antennaGainOfDlReceiveDbi"),
+]
 
 
 def _mysql_config_from_env() -> dict:
@@ -189,6 +246,13 @@ def ensure_projects_table():
                 if column_name not in existing_columns:
                     cursor.execute(
                         f"ALTER TABLE projects ADD COLUMN `{column_name}` {column_type}"
+                    )
+
+            # Backfill new columns from legacy columns for existing rows.
+            for legacy_col, new_col in LEGACY_TO_NEW_COLUMN_MAPPINGS:
+                if legacy_col in existing_columns and new_col in PROJECT_COLUMN_DEFINITIONS:
+                    cursor.execute(
+                        f"UPDATE projects SET `{new_col}` = `{legacy_col}` WHERE `{new_col}` IS NULL AND `{legacy_col}` IS NOT NULL"
                     )
 
             cursor.execute(

@@ -79,13 +79,13 @@ class Satellite(EarthSatellite, Entity):
         
         self.plane = plane
         self.order = order
-        self.inc = 0.0
         self.azimuth = 0.0
         
         # 地面投影点坐标 (lat, lon, alt)
         self.lat = 0.0
         self.lon = 0.0
         self.alt = 0.0
+        self.inc = 0.0
         
         # ECEF 坐标
         self.x = 0.0
@@ -128,29 +128,52 @@ class Satellite(EarthSatellite, Entity):
         
         # 观测参数
         self.IMAGERY_WIDTH: int = 0
-        self.IMAGERY_LENGTH: int = 0
-        self.CAMERA_FOCAL_LENGTH: float = 0.0
-        self.CAMERA_SENSOR_UNIT_LENGTH: float = 0.0
+        self.IMAGERY_HEIGHT: int = 0
+        self.LENGTH_OF_CAMERA_FOCAL: float = 0.0
+        self.LENGTH_OF_CAMERA_SENSOR_UNIT: float = 0.0
         self.CHANNELS_PER_PIXEL: int = 0
         self.BITS_PER_CHANNEL: int = 0
         
         # 计算属性
-        self.PROCESSOR_CORE_QUANTITY: int = 0
-        self.PROCESSOR_ENERGY_FACTOR: float = 0.0
-        self.MAXIMUM_TASK_PROCESSING_NUMBER: int = 0
+        self.FACTOR_OF_COMPUTATION_ENERGY: float = 0.0
+        self.MAXIMUM_CONCURRENT_COMPUTATION: int = 0
+        self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE: int = 0
+        self.MAXIMUM_CLOCK_FREQUENCY: float = 0.0
+        
         
         # 通信属性
-        self.TRANSMIT_ANTENNA_GAIN: float = 0.0  # 发射天线增益
-        self.RECEIVE_ANTENNA_GAIN: float = 0.0   # 接收天线增益
-        self.TRANSMIT_SIGNAL_POWER: float = 0.0  # 发射信号功率
-        self.MAXIMUM_TASK_TRANSMITTING_NUMBER: int = 0  # 最大任务传输数量
+        self.CARRIER_FREQUENCY_OF_ISL: float = 0.0
+        self.CARRIER_FREQUENCY_OF_UL: float = 0.0
+        self.CARRIER_FREQUENCY_OF_DL: float = 0.0
+        
+        self.BANDWIDTH_OF_ISL: float = 0.0
+        self.BANDWIDTH_OF_UL: float = 0.0
+        self.BANDWIDTH_OF_DL: float = 0.0
+        
+        self.FACTOR_OF_TRANSMISSION_ENERGY: float = 0.0
+        
+        self.EFFICIENCY_OF_TARGET_SPECTRUM: float = 0.0
+        
+        self.ANTENNA_GAIN_OF_ISL_TRANSMIT: float = 0.0
+        # self.ANTENNA_GAIN_OF_UP_TRANSMIT: float = 0.0
+        self.ANTENNA_GAIN_OF_DL_TRANSMIT: float = 0.0
+        self.ANTENNA_GAIN_OF_ISL_RECEIVE: float = 0.0
+        self.ANTENNA_GAIN_OF_UL_RECEIVE: float = 0.0
+        # self.ANTENNA_GAIN_OF_DL_RECEIVE: float = 0.0
+        self.MAXIMUM_CONCURRENT_TRANSMISSION: int = 0
+        
+
         
         # 能量属性
         self.BATTERY_CAPACITY: float = 0.0  # 电池容量
-        self.SOLAR_PANEL_AREA: float = 0.0  # 太阳能板面积
-        self.SOLAR_PANEL_EFFICIENCY: float = 0.0  # 太阳能板效率
-        self.STATIC_POWER_OF_COMPUTING: float = 0.0  # 计算静态功率
-        self.STATIC_POWER_OF_TRANSMITTING: float = 0.0  # 传输静态功率
+        self.AREA_OF_SOLAR_PANEL: float = 0.0  # 太阳能板面积
+        self.EFFICIENCY_OF_SOLAR_PANEL: float = 0.0  # 太阳能板效率
+        self.EFFICIENCY_OF_POWER_AMPLIFIER: float = 0.0
+        
+        self.STATIC_POWER_OF_PROCESSING: float = 0.0  # 计算静态功率
+        self.STATIC_POWER_OF_ISL_TRANSMITTING: float = 0.0  # 传输静态功率
+        self.STATIC_POWER_OF_DL_TRANSMITTING: float = 0.0  # 传输静态功率
+        # self.STATIC_POWER_OF_UP_TRANSMITTING: float = 0.0  # 传输静态功率
         self.STATIC_POWER_OF_OTHERS: float = 0.0  # 其他静态功率
         
         # 动态变量
@@ -158,8 +181,13 @@ class Satellite(EarthSatellite, Entity):
         self.processor_clock_frequency: float = 0.0  # 当前处理器时钟频率
         self.tasks_in_processing: int = 0  # 当前正在处理的任务数量
         self.tasks_in_transmitting: int = 0  # 当前正在传输的任务
-        self.dynamic_power_of_computing: float = 0.0  # 计算动态功率
-        self.dynamic_power_of_transmitting: float = 0.0  # 传输动态功率
+        self.power_of_computing: float = 0.0  # 计算动态功率
+        
+        self.power_of_ISL_transmission: float = 30  # 传输动态功率
+        self.power_of_DL_transmission: float = 60  # 传输动态功率
+        
+        self.transmit_signal_ISL_power: float = 0.0  # 发射信号功率
+        self.transmit_signal_DL_power: float = 0.0  # 发射信号功率
         
         # 状态
         self.onROI: bool = True
@@ -170,36 +198,55 @@ class Satellite(EarthSatellite, Entity):
         
     def setup(self, project: ProjectBase):
         # 从项目数据中提取卫星属性
-        self.IMAGERY_WIDTH = project.imageryWidthPx
-        self.IMAGERY_LENGTH = project.imageryLengthPx
-        self.CAMERA_FOCAL_LENGTH = project.cameraFocalLengthMm
-        self.CAMERA_SENSOR_UNIT_LENGTH = project.cameraSensorUnitLengthUm
-        self.CHANNELS_PER_PIXEL = project.channelsPerPixel
-        self.BITS_PER_CHANNEL = project.bitsPerChannel
+        self.IMAGERY_WIDTH = int(project.imageryWidthPx or 0)
+        self.IMAGERY_HEIGHT = int(project.imageryHeightPx or 0)
+        self.LENGTH_OF_CAMERA_FOCAL = float(project.lengthOfCameraFocalMm or 0.0)
+        self.LENGTH_OF_CAMERA_SENSOR_UNIT = float(project.lengthOfCameraSensorUnitUm or 0.0)
+        self.CHANNELS_PER_PIXEL = int(project.channelsPerPixel or 0)
+        self.BITS_PER_CHANNEL = int(project.bitsPerChannelBit or 0)
 
         # 计算属性
-        self.PROCESSOR_CORE_QUANTITY = project.processorCoreQuantity
-        self.PROCESSOR_ENERGY_FACTOR = project.processorEnergyFactor
-        self.MAXIMUM_TASK_PROCESSING_NUMBER = project.maxTaskProcessingNumber
+        self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE = int(project.maximumNumberOfProcessorCore or 0)
+        self.FACTOR_OF_COMPUTATION_ENERGY = float(project.factorOfComputationEnergy or 0.0)
+        self.MAXIMUM_CONCURRENT_COMPUTATION = int(project.maximumConcurrentComputation or 0)
+        self.processor_clock_frequency = float(project.maximumClockFrequencyGhz or 0.0)
         
         # 通信属性
-        self.TRANSMIT_ANTENNA_GAIN = project.transmitAntennaGain
-        self.RECEIVE_ANTENNA_GAIN = project.receiveAntennaGain
-        self.TRANSMIT_SIGNAL_POWER = project.transmitSignalPower
-        self.MAXIMUM_TASK_TRANSMITTING_NUMBER = project.maxTaskTransmittingNumber
+        # ISL
+        self.CARRIER_FREQUENCY_OF_ISL = float(project.carrierFrequencyOfIslGhz or 0.0)
+        self.BANDWIDTH_OF_ISL = float(project.bandwidthOfIslMhz or 0.0)
+        self.ANTENNA_GAIN_OF_ISL_TRANSMIT = float(project.antennaGainOfIslTransmitDbi or 0.0)
+        self.ANTENNA_GAIN_OF_ISL_RECEIVE = float(project.antennaGainOfIslReceiveDbi or 0.0)
+        
+        # Uplink
+        self.CARRIER_FREQUENCY_OF_UL = float(project.carrierFrequencyOfUpGhz or 0.0)
+        self.BANDWIDTH_OF_UL = float(project.bandwidthOfUlMhz or 0.0)
+        self.ANTENNA_GAIN_OF_UL_RECEIVE = float(project.antennaGainOfUlReceiveDbi or 0.0)
+        
+        # Downlink
+        self.CARRIER_FREQUENCY_OF_DL = float(project.carrierFrequencyOfDlGhz or 0.0)
+        self.BANDWIDTH_OF_DL = float(project.bandwidthOfDlMhz or 0.0)
+        self.ANTENNA_GAIN_OF_DL_TRANSMIT = float(project.antennaGainOfDlTransmitDbi or 0.0)
+        
+        self.FACTOR_OF_TRANSMISSION_ENERGY = float(project.factorOfTransmissionEnergy or 0.0)
+        self.EFFICIENCY_OF_TARGET_SPECTRUM = float(project.efficiencyOfTargetSpectrum or 0.0)
+        self.MAXIMUM_CONCURRENT_TRANSMISSION = int(project.maximumConcurrentTransmission or 0)
         
         # 能量属性
-        self.BATTERY_CAPACITY = project.batteryCapacity
-        self.SOLAR_PANEL_AREA = project.solarPanelArea
-        self.SOLAR_PANEL_EFFICIENCY = project.solarPanelEfficiency
-        self.STATIC_POWER_OF_COMPUTING = project.staticPowerComputing
-        self.STATIC_POWER_OF_TRANSMITTING = project.staticPowerTransmitting
-        self.STATIC_POWER_OF_OTHERS = project.staticPowerOthers
+        self.BATTERY_CAPACITY = float(project.batteryCapacityWh or 0.0)
+        self.AREA_OF_SOLAR_PANEL = float(project.areaOfSolarPanelM2 or 0.0)
+        self.EFFICIENCY_OF_SOLAR_PANEL = float(project.efficiencyOfSolarPanel or 0.0)
+        self.EFFICIENCY_OF_POWER_AMPLIFIER = float(project.efficiencyOfPowerAmplifier or 1)
+        self.STATIC_POWER_OF_PROCESSING = float(project.staticPowerOfProcessingW or 0.0)
+        self.STATIC_POWER_OF_ISL_TRANSMITTING = float(project.staticPowerOfIslTransmittingW or 0.0)
+        self.STATIC_POWER_OF_DL_TRANSMITTING = float(project.staticPowerOfDownlinkTransmittingW or 0.0)
+        self.STATIC_POWER_OF_OTHERS = float(project.staticPowerOfOthersW or 0.0)
 
     def tick(self, t: Time):
         # 更新卫星状态
         geocentric = self.at(t)
         self.onSUN = geocentric.is_sunlit(EPHEMERIS)
+        self.calc_transmit_signal_power()
         # 1. 更新位置和姿态
         self.calc_position(geocentric)
         self.calc_velocity_vector(geocentric)
@@ -207,6 +254,19 @@ class Satellite(EarthSatellite, Entity):
         self.calc_subpoint(geocentric)
         self.calc_footprint(t)
         
+    def calc_transmit_signal_power(self):
+        # 简化模型：假设发射功率与带宽成正比
+        self.transmit_signal_ISL_power = max(
+            self.EFFICIENCY_OF_POWER_AMPLIFIER
+            * (self.power_of_ISL_transmission - self.STATIC_POWER_OF_ISL_TRANSMITTING),
+            0.0,
+        )
+        self.transmit_signal_DL_power = max(
+            self.EFFICIENCY_OF_POWER_AMPLIFIER
+            * (self.power_of_DL_transmission - self.STATIC_POWER_OF_DL_TRANSMITTING),
+            0.0,
+        )
+
     def calc_velocity_vector(self, geocentric: Geocentric):
         # geocentric.velocity.m_per_s is a 3D instantaneous velocity vector [vx, vy, vz].
         velocity = geocentric.velocity.m_per_s
@@ -235,7 +295,7 @@ class Satellite(EarthSatellite, Entity):
         
     def calc_dpc(self) -> float:
         """计算计算动态功率 (DPC)，单位 W"""
-        computing_power = self.PROCESSOR_CORE_QUANTITY * self.PROCESSOR_ENERGY_FACTOR * self.processor_clock_frequency ** 3
+        computing_power = self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE * self.FACTOR_OF_COMPUTATION_ENERGY * self.processor_clock_frequency ** 3
         return computing_power
     
     def calc_dpt(self) -> float:
@@ -243,7 +303,7 @@ class Satellite(EarthSatellite, Entity):
         circuit_power = 2 # 假设电路功耗为 2 W
         eta = 0.25
         num_of_links = 4
-        transmitting_power = num_of_links * self.STATIC_POWER_OF_TRANSMITTING / eta + circuit_power
+        transmitting_power = num_of_links * self.STATIC_POWER_OF_ISL_TRANSMITTING / eta + circuit_power
         return transmitting_power
         
     def calc_position(self, geocentric: Geocentric):
@@ -261,17 +321,17 @@ class Satellite(EarthSatellite, Entity):
         if self.alt <= 0:
             return
 
-        if self.CAMERA_FOCAL_LENGTH <= 0 or self.CAMERA_SENSOR_UNIT_LENGTH <= 0:
+        if self.LENGTH_OF_CAMERA_FOCAL <= 0 or self.LENGTH_OF_CAMERA_SENSOR_UNIT <= 0:
             return
 
-        if self.IMAGERY_WIDTH <= 0 or self.IMAGERY_LENGTH <= 0:
+        if self.IMAGERY_WIDTH <= 0 or self.IMAGERY_HEIGHT <= 0:
             return
 
-        focal_m = self.CAMERA_FOCAL_LENGTH * 1e-3
-        sensor_unit_m = self.CAMERA_SENSOR_UNIT_LENGTH * 1e-6
+        focal_m = self.LENGTH_OF_CAMERA_FOCAL * 1e-3
+        sensor_unit_m = self.LENGTH_OF_CAMERA_SENSOR_UNIT * 1e-6
 
         swath_w = self.alt * (self.IMAGERY_WIDTH * sensor_unit_m) / focal_m
-        swath_l = self.alt * (self.IMAGERY_LENGTH * sensor_unit_m) / focal_m
+        swath_l = self.alt * (self.IMAGERY_HEIGHT * sensor_unit_m) / focal_m
 
         half_w = swath_w / 2
         half_l = swath_l / 2

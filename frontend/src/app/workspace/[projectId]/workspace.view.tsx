@@ -104,36 +104,46 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
       timeSlot: draftProject.timeSlot,
       startTime: draftProject.startTime,
       endTime: draftProject.endTime,
+      seed: draftProject.seed,
       altitude: draftProject.altitude,
       inclination: draftProject.inclination,
-      planeCount: draftProject.planeCount,
-      constellationSize: draftProject.constellationSize,
+      maximumNumberOfPlane: draftProject.maximumNumberOfPlane,
+      sizeOfConstellation: draftProject.sizeOfConstellation,
       phaseFactor: draftProject.phaseFactor,
       imageryWidthPx: draftProject.imageryWidthPx,
-      imageryLengthPx: draftProject.imageryLengthPx,
-      cameraFocalLengthMm: draftProject.cameraFocalLengthMm,
-      cameraSensorUnitLengthUm: draftProject.cameraSensorUnitLengthUm,
+      imageryHeightPx: draftProject.imageryHeightPx,
+      lengthOfCameraFocalMm: draftProject.lengthOfCameraFocalMm,
+      lengthOfCameraSensorUnitUm: draftProject.lengthOfCameraSensorUnitUm,
       channelsPerPixel: draftProject.channelsPerPixel,
-      bitsPerChannel: draftProject.bitsPerChannel,
-      processorClockFrequency: draftProject.processorClockFrequency,
-      processorCoreQuantity: draftProject.processorCoreQuantity,
-      processorEnergyFactor: draftProject.processorEnergyFactor,
-      maxTaskProcessingNumber: draftProject.maxTaskProcessingNumber,
-      transmitAntennaGain: draftProject.transmitAntennaGain,
-      receiveAntennaGain: draftProject.receiveAntennaGain,
-      transmitSignalPower: draftProject.transmitSignalPower,
-      maxTaskTransmittingNumber: draftProject.maxTaskTransmittingNumber,
-      batteryCapacity: draftProject.batteryCapacity,
-      solarPanelArea: draftProject.solarPanelArea,
-      solarPanelEfficiency: draftProject.solarPanelEfficiency,
-      dynamicPowerComputing: draftProject.dynamicPowerComputing,
-      dynamicPowerTransmitting: draftProject.dynamicPowerTransmitting,
-      staticPowerComputing: draftProject.staticPowerComputing,
-      staticPowerTransmitting: draftProject.staticPowerTransmitting,
-      staticPowerOthers: draftProject.staticPowerOthers,
-      stationTransmitAntennaGain: draftProject.stationTransmitAntennaGain,
-      stationReceiveAntennaGain: draftProject.stationReceiveAntennaGain,
-      stationTransmitSignalPower: draftProject.stationTransmitSignalPower,
+      bitsPerChannelBit: draftProject.bitsPerChannelBit,
+      maximumClockFrequencyGhz: draftProject.maximumClockFrequencyGhz,
+      maximumNumberOfProcessorCore: draftProject.maximumNumberOfProcessorCore,
+      factorOfComputationEnergy: draftProject.factorOfComputationEnergy,
+      maximumConcurrentComputation: draftProject.maximumConcurrentComputation,
+      carrierFrequencyOfIslGhz: draftProject.carrierFrequencyOfIslGhz,
+      carrierFrequencyOfUpGhz: draftProject.carrierFrequencyOfUpGhz,
+      carrierFrequencyOfDlGhz: draftProject.carrierFrequencyOfDlGhz,
+      bandwidthOfIslMhz: draftProject.bandwidthOfIslMhz,
+      bandwidthOfUlMhz: draftProject.bandwidthOfUlMhz,
+      bandwidthOfDlMhz: draftProject.bandwidthOfDlMhz,
+      efficiencyOfTargetSpectrum: draftProject.efficiencyOfTargetSpectrum,
+      antennaGainOfIslTransmitDbi: draftProject.antennaGainOfIslTransmitDbi,
+      antennaGainOfIslReceiveDbi: draftProject.antennaGainOfIslReceiveDbi,
+      antennaGainOfUlTransmitDbi: draftProject.antennaGainOfUlTransmitDbi,
+      antennaGainOfUlReceiveDbi: draftProject.antennaGainOfUlReceiveDbi,
+      antennaGainOfDlTransmitDbi: draftProject.antennaGainOfDlTransmitDbi,
+      antennaGainOfDlReceiveDbi: draftProject.antennaGainOfDlReceiveDbi,
+      factorOfTransmissionEnergy: draftProject.factorOfTransmissionEnergy,
+      maximumConcurrentTransmission: draftProject.maximumConcurrentTransmission,
+      batteryCapacityWh: draftProject.batteryCapacityWh,
+      areaOfSolarPanelM2: draftProject.areaOfSolarPanelM2,
+      efficiencyOfSolarPanel: draftProject.efficiencyOfSolarPanel,
+      efficiencyOfPowerAmplifier: draftProject.efficiencyOfPowerAmplifier,
+      staticPowerOfProcessingW: draftProject.staticPowerOfProcessingW,
+      staticPowerOfIslTransmittingW: draftProject.staticPowerOfIslTransmittingW,
+      staticPowerOfUplinkTransmittingW: draftProject.staticPowerOfUplinkTransmittingW,
+      staticPowerOfDownlinkTransmittingW: draftProject.staticPowerOfDownlinkTransmittingW,
+      staticPowerOfOthersW: draftProject.staticPowerOfOthersW,
     };
 
     onSaveProject(patch);
@@ -274,7 +284,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </p>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-3 text-sm">
                       <div>
-                        <span className="opacity-70">Time Slot: </span>
+                        <span className="opacity-70">Time Slot (s): </span>
                         {isEditingProject ? (
                           <input
                             type="number"
@@ -301,6 +311,21 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           />
                         ) : (
                           <span>{draftProject.startTime ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">Seed: </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.seed ?? ""}
+                            onChange={(e) =>
+                              setNumberField("seed", e.target.value)
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.seed ?? "-"}</span>
                         )}
                       </div>
                       <div>
@@ -357,18 +382,18 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                         )}
                       </div>
                       <div>
-                        <span className="opacity-70">Quantity of Plane: </span>
+                        <span className="opacity-70">Maximum Number of Plane: </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.planeCount ?? ""}
+                            value={draftProject.maximumNumberOfPlane ?? ""}
                             onChange={(e) =>
-                              setNumberField("planeCount", e.target.value)
+                              setNumberField("maximumNumberOfPlane", e.target.value)
                             }
                           />
                         ) : (
-                          <span>{draftProject.planeCount ?? "-"}</span>
+                          <span>{draftProject.maximumNumberOfPlane ?? "-"}</span>
                         )}
                       </div>
                       <div>
@@ -379,16 +404,16 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.constellationSize ?? ""}
+                            value={draftProject.sizeOfConstellation ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "constellationSize",
+                                "sizeOfConstellation",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
-                          <span>{draftProject.constellationSize ?? "-"}</span>
+                          <span>{draftProject.sizeOfConstellation ?? "-"}</span>
                         )}
                       </div>
                       <div>
@@ -431,60 +456,60 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Imagery Length (px):{" "}
+                          Imagery Height (px):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.imageryLengthPx ?? ""}
+                            value={draftProject.imageryHeightPx ?? ""}
                             onChange={(e) =>
-                              setNumberField("imageryLengthPx", e.target.value)
+                              setNumberField("imageryHeightPx", e.target.value)
                             }
                           />
                         ) : (
-                          <span>{draftProject.imageryLengthPx ?? "-"}</span>
+                          <span>{draftProject.imageryHeightPx ?? "-"}</span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Camera Focal Length (mm):{" "}
+                          Length of Camera Focal (mm):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.cameraFocalLengthMm ?? ""}
+                            value={draftProject.lengthOfCameraFocalMm ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "cameraFocalLengthMm",
+                                "lengthOfCameraFocalMm",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
-                          <span>{draftProject.cameraFocalLengthMm ?? "-"}</span>
+                          <span>{draftProject.lengthOfCameraFocalMm ?? "-"}</span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Camera Sensor Unit Length (μm):{" "}
+                          Length of Camera Sensor Unit (μm):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.cameraSensorUnitLengthUm ?? ""}
+                            value={draftProject.lengthOfCameraSensorUnitUm ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "cameraSensorUnitLengthUm",
+                                "lengthOfCameraSensorUnitUm",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.cameraSensorUnitLengthUm ?? "-"}
+                            {draftProject.lengthOfCameraSensorUnitUm ?? "-"}
                           </span>
                         )}
                       </div>
@@ -504,18 +529,18 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                         )}
                       </div>
                       <div>
-                        <span className="opacity-70">Bits per Channel: </span>
+                        <span className="opacity-70">Bits per Channel (bit): </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.bitsPerChannel ?? ""}
+                            value={draftProject.bitsPerChannelBit ?? ""}
                             onChange={(e) =>
-                              setNumberField("bitsPerChannel", e.target.value)
+                              setNumberField("bitsPerChannelBit", e.target.value)
                             }
                           />
                         ) : (
-                          <span>{draftProject.bitsPerChannel ?? "-"}</span>
+                          <span>{draftProject.bitsPerChannelBit ?? "-"}</span>
                         )}
                       </div>
                     </div>
@@ -528,89 +553,89 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
                       <div>
                         <span className="opacity-70">
-                          Processor Clock Frequency:{" "}
+                          Maximum Clock Frequency (GHz):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.processorClockFrequency ?? ""}
+                            value={draftProject.maximumClockFrequencyGhz ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "processorClockFrequency",
+                                "maximumClockFrequencyGhz",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.processorClockFrequency ?? "-"}
+                            {draftProject.maximumClockFrequencyGhz ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Processor Core Quantity:{" "}
+                          Maximum Number of Processor Core:{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.processorCoreQuantity ?? ""}
+                            value={draftProject.maximumNumberOfProcessorCore ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "processorCoreQuantity",
+                                "maximumNumberOfProcessorCore",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.processorCoreQuantity ?? "-"}
+                            {draftProject.maximumNumberOfProcessorCore ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Processor Energy Factor:{" "}
+                          Factor of Computation Energy:{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.processorEnergyFactor ?? ""}
+                            value={draftProject.factorOfComputationEnergy ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "processorEnergyFactor",
+                                "factorOfComputationEnergy",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.processorEnergyFactor ?? "-"}
+                            {draftProject.factorOfComputationEnergy ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Maximum Task Processing Number:{" "}
+                          Maximum Concurrent Computation:{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.maxTaskProcessingNumber ?? ""}
+                            value={draftProject.maximumConcurrentComputation ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "maxTaskProcessingNumber",
+                                "maximumConcurrentComputation",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.maxTaskProcessingNumber ?? "-"}
+                            {draftProject.maximumConcurrentComputation ?? "-"}
                           </span>
                         )}
                       </div>
@@ -624,83 +649,303 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
                       <div>
                         <span className="opacity-70">
-                          Transmit Antenna Gain:{" "}
+                          Carrier Frequency of ISL (GHz):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.transmitAntennaGain ?? ""}
+                            value={draftProject.carrierFrequencyOfIslGhz ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "transmitAntennaGain",
+                                "carrierFrequencyOfIslGhz",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
-                          <span>{draftProject.transmitAntennaGain ?? "-"}</span>
+                          <span>{draftProject.carrierFrequencyOfIslGhz ?? "-"}</span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Receive Antenna Gain:{" "}
+                          Carrier Frequency of UP (GHz):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.receiveAntennaGain ?? ""}
+                            value={draftProject.carrierFrequencyOfUpGhz ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "receiveAntennaGain",
+                                "carrierFrequencyOfUpGhz",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
-                          <span>{draftProject.receiveAntennaGain ?? "-"}</span>
+                          <span>{draftProject.carrierFrequencyOfUpGhz ?? "-"}</span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Transmit Signal Power:{" "}
+                          Carrier Frequency of DL (GHz):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.transmitSignalPower ?? ""}
+                            value={draftProject.carrierFrequencyOfDlGhz ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "transmitSignalPower",
+                                "carrierFrequencyOfDlGhz",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
-                          <span>{draftProject.transmitSignalPower ?? "-"}</span>
+                          <span>{draftProject.carrierFrequencyOfDlGhz ?? "-"}</span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Maximum Task Transmitting Number:{" "}
+                          Bandwidth of ISL (MHz):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.maxTaskTransmittingNumber ?? ""}
+                            value={draftProject.bandwidthOfIslMhz ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "maxTaskTransmittingNumber",
+                                "bandwidthOfIslMhz",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.bandwidthOfIslMhz ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Bandwidth of UL (MHz):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.bandwidthOfUlMhz ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "bandwidthOfUlMhz",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.bandwidthOfUlMhz ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Bandwidth of DL (MHz):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.bandwidthOfDlMhz ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "bandwidthOfDlMhz",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.bandwidthOfDlMhz ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Factor of Transmission Energy:{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.factorOfTransmissionEnergy ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "factorOfTransmissionEnergy",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.factorOfTransmissionEnergy ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Efficiency of Target Spectrum:{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.efficiencyOfTargetSpectrum ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "efficiencyOfTargetSpectrum",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.efficiencyOfTargetSpectrum ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Antenna Gain of ISL Transmit (dBi):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.antennaGainOfIslTransmitDbi ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "antennaGainOfIslTransmitDbi",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.antennaGainOfIslTransmitDbi ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Antenna Gain of ISL Receive (dBi):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.antennaGainOfIslReceiveDbi ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "antennaGainOfIslReceiveDbi",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.antennaGainOfIslReceiveDbi ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Antenna Gain of UL Transmit (dBi):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.antennaGainOfUlTransmitDbi ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "antennaGainOfUlTransmitDbi",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.antennaGainOfUlTransmitDbi ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Antenna Gain of UL Receive (dBi):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.antennaGainOfUlReceiveDbi ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "antennaGainOfUlReceiveDbi",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.antennaGainOfUlReceiveDbi ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Antenna Gain of DL Transmit (dBi):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.antennaGainOfDlTransmitDbi ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "antennaGainOfDlTransmitDbi",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.antennaGainOfDlTransmitDbi ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Antenna Gain of DL Receive (dBi):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.antennaGainOfDlReceiveDbi ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "antennaGainOfDlReceiveDbi",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>{draftProject.antennaGainOfDlReceiveDbi ?? "-"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Maximum Concurrent Transmission:{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.maximumConcurrentTransmission ?? ""}
+                            onChange={(e) =>
+                              setNumberField(
+                                "maximumConcurrentTransmission",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.maxTaskTransmittingNumber ?? "-"}
+                            {draftProject.maximumConcurrentTransmission ?? "-"}
                           </span>
                         )}
                       </div>
@@ -713,245 +958,187 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </p>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
                       <div>
-                        <span className="opacity-70">Battery Capacity: </span>
+                        <span className="opacity-70">Battery Capacity (Wh): </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.batteryCapacity ?? ""}
+                            value={draftProject.batteryCapacityWh ?? ""}
                             onChange={(e) =>
-                              setNumberField("batteryCapacity", e.target.value)
+                              setNumberField("batteryCapacityWh", e.target.value)
                             }
                           />
                         ) : (
-                          <span>{draftProject.batteryCapacity ?? "-"}</span>
+                          <span>{draftProject.batteryCapacityWh ?? "-"}</span>
                         )}
                       </div>
                       <div>
-                        <span className="opacity-70">Solar Panel Area: </span>
+                        <span className="opacity-70">Area of Solar Panel (m²): </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.solarPanelArea ?? ""}
+                            value={draftProject.areaOfSolarPanelM2 ?? ""}
                             onChange={(e) =>
-                              setNumberField("solarPanelArea", e.target.value)
+                              setNumberField("areaOfSolarPanelM2", e.target.value)
                             }
                           />
                         ) : (
-                          <span>{draftProject.solarPanelArea ?? "-"}</span>
+                          <span>{draftProject.areaOfSolarPanelM2 ?? "-"}</span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Solar Panel Efficiency:{" "}
+                          Efficiency of Solar Panel:{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.solarPanelEfficiency ?? ""}
+                            value={draftProject.efficiencyOfSolarPanel ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "solarPanelEfficiency",
+                                "efficiencyOfSolarPanel",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.solarPanelEfficiency ?? "-"}
+                            {draftProject.efficiencyOfSolarPanel ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Dynamic Power of Computing:{" "}
+                          Efficiency of Power Amplifier:{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.dynamicPowerComputing ?? ""}
+                            value={draftProject.efficiencyOfPowerAmplifier ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "dynamicPowerComputing",
+                                "efficiencyOfPowerAmplifier",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.dynamicPowerComputing ?? "-"}
+                            {draftProject.efficiencyOfPowerAmplifier ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Dynamic Power of Transmitting:{" "}
+                          Static Power of Processing (W):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.dynamicPowerTransmitting ?? ""}
+                            value={draftProject.staticPowerOfProcessingW ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "dynamicPowerTransmitting",
+                                "staticPowerOfProcessingW",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.dynamicPowerTransmitting ?? "-"}
+                            {draftProject.staticPowerOfProcessingW ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Static Power of Computing:{" "}
+                          Static Power of ISL Transmitting (W):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.staticPowerComputing ?? ""}
+                            value={draftProject.staticPowerOfIslTransmittingW ?? ""}
+                            onChange={(e) =>
+                              setNumberField("staticPowerOfIslTransmittingW", e.target.value)
+                            }
+                          />
+                        ) : (
+                          <span>
+                            {draftProject.staticPowerOfIslTransmittingW ?? "-"}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="opacity-70">
+                          Static Power of Uplink Transmitting (W):{" "}
+                        </span>
+                        {isEditingProject ? (
+                          <input
+                            type="number"
+                            className="ml-2 rounded border px-2 py-1"
+                            value={draftProject.staticPowerOfUplinkTransmittingW ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "staticPowerComputing",
+                                "staticPowerOfUplinkTransmittingW",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.staticPowerComputing ?? "-"}
+                            {draftProject.staticPowerOfUplinkTransmittingW ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Static Power of Transmitting:{" "}
+                          Static Power of Downlink Transmitting (W):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.staticPowerTransmitting ?? ""}
+                            value={draftProject.staticPowerOfDownlinkTransmittingW ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "staticPowerTransmitting",
+                                "staticPowerOfDownlinkTransmittingW",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
                           <span>
-                            {draftProject.staticPowerTransmitting ?? "-"}
+                            {draftProject.staticPowerOfDownlinkTransmittingW ?? "-"}
                           </span>
                         )}
                       </div>
                       <div>
                         <span className="opacity-70">
-                          Static Power of Others:{" "}
+                          Static Power of Others (W):{" "}
                         </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.staticPowerOthers ?? ""}
+                            value={draftProject.staticPowerOfOthersW ?? ""}
                             onChange={(e) =>
                               setNumberField(
-                                "staticPowerOthers",
+                                "staticPowerOfOthersW",
                                 e.target.value,
                               )
                             }
                           />
                         ) : (
-                          <span>{draftProject.staticPowerOthers ?? "-"}</span>
+                          <span>{draftProject.staticPowerOfOthersW ?? "-"}</span>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
-                    <p className="mb-2 text-sm font-semibold">
-                      Station Parameters
-                    </p>
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
-                      <div>
-                        <span className="opacity-70">
-                          Transmit Antenna Gain:{" "}
-                        </span>
-                        {isEditingProject ? (
-                          <input
-                            type="number"
-                            className="ml-2 rounded border px-2 py-1"
-                            value={
-                              draftProject.stationTransmitAntennaGain ?? ""
-                            }
-                            onChange={(e) =>
-                              setNumberField(
-                                "stationTransmitAntennaGain",
-                                e.target.value,
-                              )
-                            }
-                          />
-                        ) : (
-                          <span>
-                            {draftProject.stationTransmitAntennaGain ?? "-"}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <span className="opacity-70">
-                          Receive Antenna Gain:{" "}
-                        </span>
-                        {isEditingProject ? (
-                          <input
-                            type="number"
-                            className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.stationReceiveAntennaGain ?? ""}
-                            onChange={(e) =>
-                              setNumberField(
-                                "stationReceiveAntennaGain",
-                                e.target.value,
-                              )
-                            }
-                          />
-                        ) : (
-                          <span>
-                            {draftProject.stationReceiveAntennaGain ?? "-"}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <span className="opacity-70">
-                          Transmit Signal Power:{" "}
-                        </span>
-                        {isEditingProject ? (
-                          <input
-                            type="number"
-                            className="ml-2 rounded border px-2 py-1"
-                            value={
-                              draftProject.stationTransmitSignalPower ?? ""
-                            }
-                            onChange={(e) =>
-                              setNumberField(
-                                "stationTransmitSignalPower",
-                                e.target.value,
-                              )
-                            }
-                          />
-                        ) : (
-                          <span>
-                            {draftProject.stationTransmitSignalPower ?? "-"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
                   {/* <div className="rounded border p-3">
                   <p className="mb-2 text-sm font-semibold">Description</p>

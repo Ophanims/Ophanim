@@ -1,6 +1,5 @@
 import enum
 import math
-
 import numpy as np
 from pydantic import BaseModel
 from controller.project_controller import ProjectBase
@@ -11,8 +10,8 @@ from util.const import R_EARTH
 
 class LinkType(enum.Enum):
     ISL = "ISL"  # 卫星间链路
-    SGL = "SGL"  # 卫星-地面链路
-    TL = "TL"    # 地面链路
+    UL = "UL"  
+    DL = "DL"  
     
     
 class LinkSnapshot(BaseModel):
@@ -22,38 +21,86 @@ class LinkSnapshot(BaseModel):
     type: str
     status: bool
     snr: float
+    elevation_angle: float
     distance: float
     line_of_sight: float
     bandwidth: float
+    carrier_frequency: float
     capacity: float
+    loss: float
+    antenna_gain_of_receive: float
+    antenna_gain_of_transmit: float
+    transmit_signal_power: float
+
 
 class Link:
     """
     链路类：处理节点间的通信逻辑
     """
+
     def __init__(self, src: Entity, dst: Entity):
         self.id = f"({src.address},{dst.address})"
         self.src = src
         self.dst = dst
-        self.type = LinkType.SGL          # ISL, SGL, TL
+        self.type = LinkType.ISL          # ISL, SGL, TL
         self.status = False              # 是否连通
         
         self.MAX_PLANE = 0
         
         # 物理参数
         self.snr = 0.0                   # 信噪比 (dB)
+        self.elevation_angle = 0.0       # 仰角 (度)
         self.distance = 0.0              # m
         self.line_of_sight = 0.0         # m
         self.bandwidth = 20e6            # Hz (默认 20 MHz)
+        self.carrier_frequency = 2e9     # Hz
         self.capacity = 0.0              # bps
         self.loss = 0.0
+        self.antenna_gain_of_receive = 0.0 # dBi
+        self.antenna_gain_of_transmit = 0.0 # dBi
+        self.transmit_signal_power = 0.0 # W
         
     def setup(self, project: ProjectBase):
-        self.MAX_PLANE = project.planeCount
+        self.MAX_PLANE = int(project.maximumNumberOfPlane or 0)
+        
+        # 根据链路类型选择合适的频率和带宽参数
+        if isinstance(self.src, Satellite) and isinstance(self.dst, Satellite):
+            # ISL 链路使用 ISL 频率和带宽
+            self.type = LinkType.ISL
+            self.bandwidth = self.src.BANDWIDTH_OF_ISL * 1e6
+            self.carrier_frequency = self.src.CARRIER_FREQUENCY_OF_ISL * 1e9
+            self.antenna_gain_of_receive = self.dst.ANTENNA_GAIN_OF_ISL_RECEIVE
+            self.antenna_gain_of_transmit = self.src.ANTENNA_GAIN_OF_ISL_TRANSMIT
+            self.transmit_signal_power = self.src.transmit_signal_ISL_power
+        elif isinstance(self.src, GroundStation) and isinstance(self.dst, Satellite):
+            # 上行链路使用地面站的上行参数
+            self.type = LinkType.UL
+            self.bandwidth = self.src.BANDWIDTH_OF_UL * 1e6
+            self.carrier_frequency = self.src.CARRIER_FREQUENCY_OF_UP * 1e9
+            self.antenna_gain_of_receive = self.dst.ANTENNA_GAIN_OF_UL_RECEIVE
+            self.antenna_gain_of_transmit = self.src.ANTENNA_GAIN_OF_UL_TRANSMIT
+            self.transmit_signal_power = self.src.transmit_signal_UL_power
+        elif isinstance(self.src, Satellite) and isinstance(self.dst, GroundStation):
+            # 下行链路使用地面站的下行参数
+            self.type = LinkType.DL
+            self.bandwidth = self.src.BANDWIDTH_OF_DL * 1e6
+            self.carrier_frequency = self.src.CARRIER_FREQUENCY_OF_DL * 1e9
+            self.antenna_gain_of_receive = self.dst.ANTENNA_GAIN_OF_DL_RECEIVE
+            self.antenna_gain_of_transmit = self.src.ANTENNA_GAIN_OF_DL_TRANSMIT
+            self.transmit_signal_power = self.src.transmit_signal_DL_power
+
+    def _sync_transmit_signal_power(self):
+        if self.type == LinkType.ISL and isinstance(self.src, Satellite):
+            self.transmit_signal_power = float(getattr(self.src, "transmit_signal_ISL_power", 0.0))
+        elif self.type == LinkType.UL and isinstance(self.src, GroundStation):
+            self.transmit_signal_power = float(getattr(self.src, "transmit_signal_UL_power", 0.0))
+        elif self.type == LinkType.DL and isinstance(self.src, Satellite):
+            self.transmit_signal_power = float(getattr(self.src, "transmit_signal_DL_power", 0.0))
+        else:
+            self.transmit_signal_power = 0.0
 
     def refresh(self):
-        self.type = self.getType()
-        
+        self._sync_transmit_signal_power()
         self.distance = self.calc_euclidean_distance()
         
         # 判断物理上是否连通 (视距)
@@ -61,43 +108,39 @@ class Link:
         
         if self.status:
             # 1. 先算基础损耗
-            self.loss = self.calc_fspl() 
+            self.loss = self.calc_fspl_db() 
             # 2. 算 SNR (返回 dB)
             self.snr = self.calc_signal_to_noise_ratio() 
             # 3. 算实际数据吞吐量 capacity (bps)
             self.capacity = self.calc_capacity()
         else:
-            self.loss = float('inf')
+            self.loss = 9999.9
             # JSON 不支持 Infinity，使用有限的低 SNR 哨兵值。
-            self.snr = -120.0
+            self.snr = -9999.9
             self.capacity = 0.0
-            
-    def getType(self) -> LinkType:
-        if self.src.type == EntityType.SAT \
-            and self.dst.type == EntityType.SAT:
-            # inter-satellite link
-            return LinkType.ISL
-        elif self.src.type == EntityType.GS \
-            and self.dst.type == EntityType.GS:
-            # terrestrial link
-            return LinkType.TL
-        else:
-            # satellite-ground link
-            return LinkType.SGL
         
     def check_connectivity(self) -> bool:
+        if isinstance(self.src, Satellite) and isinstance(self.dst, Satellite):
+            
+            plane_diff = abs(self.src.plane - self.dst.plane)
+            order_diff = abs(self.src.order - self.dst.order)
+            
+            seam_con = plane_diff == self.MAX_PLANE - 1
 
-        if self.type == LinkType.SGL:
-            # 确保 theta >= 10
-            elv = self.calc_elevation_angle()
-            return elv >= 10.0
-        else:
-            if not abs(self.src.plane - self.dst.plane) == self.MAX_PLANE - 1:
+            inter_link_con = plane_diff == 1 and order_diff == 0
+                
+            intra_link_con = plane_diff == 0
+                
+            if not inter_link_con and not intra_link_con or seam_con:
                 return False
             
             # ISL 使用视距公式
             self.line_of_sight = self.calc_line_of_sight() 
             return self.distance < self.line_of_sight
+        else:
+            # 确保 theta >= 10
+            self.elevation_angle = self.calc_elevation_angle()
+            return self.elevation_angle >= 10.0
     
     def calc_line_of_sight(self) -> float:
         """计算两节点间的视距"""
@@ -127,46 +170,36 @@ class Link:
     
     def calc_signal_to_noise_ratio(self) -> float:
         """计算信噪比 (SNR)，单位 dB"""
-        
-        if not isinstance(self.src, Satellite) and not isinstance(self.src, GroundStation):
-            return 0.0
-        
-        if not isinstance(self.dst, Satellite) and not isinstance(self.dst, GroundStation):
-            return 0.0
-        
+        # 传输天线增益 (dBi) 转线性增益
+        G_tx = self.antenna_gain_of_transmit
+        # 接收天线增益 (dBi) 转线性增益
+        G_rx = self.antenna_gain_of_receive
+        P_tx = self.transmit_signal_power
+        # Boltzmann Constant (J/K)
+        k = 1.380649e-23
+        # System Noise Temperature (K)
+        T = 290
+        # Bandwidth (hz)
+        B = max(self.bandwidth, 1.0)
+
         # 1. 发射端参数 (EIRP)
-        tx_power_dbw = 10 * math.log10(self.src.TRANSMIT_SIGNAL_POWER) # 假设输入是 W
-        tx_gain_dbi = self.src.TRANSMIT_ANTENNA_GAIN # 假设已经是 dBi
-        eirp = tx_power_dbw + tx_gain_dbi
-
-        # 2. 空间损耗
-        fspl_db = self.calc_fspl() # 例如 150 dB
+        EIRP = 10 * math.log10(max(P_tx, 1e-12)) + G_tx  # dBW, 加上发射天线增益
         
-        # 3. 大气衰减 (dB)
-        # 你的 calc_attenuation_factor 返回的是线性系数 (0.8)，这里转成 dB 损耗
-        af_linear = self.calc_attenuation_factor()
-        atm_loss_db = -10 * math.log10(af_linear) if af_linear > 0 else 0 
-
-        # 4. 接收端功率 (dBW)
-        rx_gain_dbi = self.dst.RECEIVE_ANTENNA_GAIN
-        received_power_dbw = eirp - fspl_db - atm_loss_db + rx_gain_dbi
-
-        # 5. 噪声功率 (dBW)
-        k_dbw = -228.6 # 玻尔兹曼常数 10*log10(1.38e-23)
-        T = 290 # K
-        temperature_dbk = 10 * math.log10(T)
-        bandwidth_dbhz = 10 * math.log10(self.bandwidth)
+        # 2. 自由空间路径损耗 (FSPL)
+        L_fs_db = self.calc_fspl_db()
         
-        # Noise Figure 应该是接收机的固有属性，假设为 3 dB
-        noise_figure_db = 3.0 
+        # # 3. 大气衰减
+        # L_m = self.calc_attenuation_factor()
+        # L_m_db = -10 * math.log10(L_m) if L_m > 0 else 0.0 
         
-        noise_power_dbw = k_dbw + temperature_dbk + bandwidth_dbhz + noise_figure_db
+        # 4. 计算接收功率 (dBW)
+        k_dbw = 10 * math.log10(k)  # dBW/K/Hz
+        G_T = G_rx - 10 * math.log10(T)
 
         # 6. 计算 SNR (dB)
-        snr_db = received_power_dbw - noise_power_dbw
-        
+        snr_db = EIRP + G_T - L_fs_db - k_dbw - 10 * math.log10(B)
         return snr_db
-        
+
     def calc_capacity(self) -> float:
         """根据 SNR 和 Shannon 定律计算信道最大传输速率 (bps)"""
         if self.snr < -20: # 信号太弱，无法同步
@@ -188,45 +221,53 @@ class Link:
         """计算大气衰减因子，简化模型"""
         if self.type == LinkType.ISL:
             return 1.0  # 卫星间无大气衰减
-        elif self.type == LinkType.SGL:
-            return 0.8  # 卫星-地面链路有一定衰减
         else:
-            return 0.9  # 地面链路有轻微衰减
-
-    @staticmethod
-    def _json_safe_number(value: float, fallback: float = 0.0) -> float:
-        return float(value) if isinstance(value, (int, float)) and math.isfinite(value) else fallback
+            return 0.8  # 地面链路有轻微衰减
         
-    def calc_fspl(self) -> float:
+    def calc_fspl_db(self) -> float:
         if self.distance <= 0:
             return 0.0
             
-        c = 3e8
-        f = 2e9
-        carrier_wavelength = c / f
+        c = 299792458.0  # 精确光速
+        f = self.carrier_frequency
+        d = self.distance
         
-        # 展开为对数相加：20*log10(d) + 20*log10(4*pi/lambda)
-        fspl_db = 20 * math.log10(self.distance) + \
-            20 * math.log10((4 * math.pi) / carrier_wavelength)
+        # 线性公式: L_fs = (4 * pi * d * f / c)^2
+        # 对数转换: 20 * log10(4 * pi * d * f / c)
+        fspl_db = 20 * math.log10(4 * math.pi * d * f / c)
+        
         return fspl_db
     
     def calc_elevation_angle(self) -> float:
         """计算地面站对卫星的仰角 (SGL 专用)"""
         # 确保 gs 是地面站，sat 是卫星
-        gs = self.src if isinstance(self.src, GroundStation) else self.dst
-        sat = self.dst if isinstance(self.dst, Satellite) else self.src
+        gs = np.array(
+            [self.src.x, self.src.y, self.src.z]
+            if isinstance(self.src, GroundStation)
+            else [self.dst.x, self.dst.y, self.dst.z],
+            dtype=float,
+        )
+        sat = np.array(
+            [self.src.x, self.src.y, self.src.z]
+            if isinstance(self.src, Satellite)
+            else [self.dst.x, self.dst.y, self.dst.z],
+            dtype=float,
+        )
 
-        p_gs = np.array([gs.x, gs.y, gs.z])
-        p_sat = np.array([sat.x, sat.y, sat.z])
+        vec = sat - gs
 
         # 站星向量
-        r_gs_sat = p_sat - p_gs
-        # 地面站法向量 (简化处理，指向地心反方向)
-        n_gs = p_gs / np.linalg.norm(p_gs)
+        norm_vec = np.linalg.norm(vec)
+        if norm_vec == 0:
+            return 0.0
+        gs_norm_norm = np.linalg.norm(gs)
+        if gs_norm_norm == 0:
+            return 0.0
+        gs_norm = gs / gs_norm_norm
+        elev_rad = np.arcsin(np.dot(vec, gs_norm) / norm_vec)
+        elev_deg = np.degrees(elev_rad)
 
-        # 计算仰角
-        sin_el = np.dot(r_gs_sat, n_gs) / np.linalg.norm(r_gs_sat)
-        return math.degrees(math.asin(max(-1.0, min(1.0, sin_el))))
+        return elev_deg
 
     def snapshot(self) -> LinkSnapshot:
         return LinkSnapshot(
@@ -235,11 +276,17 @@ class Link:
             dst=self.dst.address,
             type=self.type.value,
             status=self.status,
-            snr=self._json_safe_number(self.snr, -120.0),
-            distance=self._json_safe_number(self.distance, 0.0),
-            line_of_sight=self._json_safe_number(self.line_of_sight, 0.0),
-            bandwidth=self._json_safe_number(self.bandwidth, 0.0),
-            capacity=self._json_safe_number(self.capacity, 0.0),
+            snr=self.snr,
+            elevation_angle=self.elevation_angle,
+            distance=self.distance,
+            line_of_sight=self.line_of_sight,
+            bandwidth=self.bandwidth,
+            carrier_frequency=self.carrier_frequency,
+            capacity=self.capacity,
+            loss=self.loss,
+            antenna_gain_of_receive=self.antenna_gain_of_receive,
+            antenna_gain_of_transmit=self.antenna_gain_of_transmit,
+            transmit_signal_power=self.transmit_signal_power,
         )
         
     def serialize(self) -> dict:

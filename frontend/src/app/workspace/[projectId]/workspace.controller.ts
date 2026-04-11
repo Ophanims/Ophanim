@@ -182,8 +182,8 @@ export function useWorkspaceController({ projectId }: UseWorkspaceControllerArgs
   const satellites = useMemo(() => {
     if (!project) return [] as SatelliteSummary[];
 
-    const planeCount = Number(project.planeCount ?? 0);
-    const constellationSize = Number(project.constellationSize ?? 0);
+    const planeCount = Number(project.maximumNumberOfPlane ?? 0);
+    const constellationSize = Number(project.sizeOfConstellation ?? 0);
     const orderCount = constellationSize / planeCount;
     if (!Number.isFinite(planeCount) || !Number.isFinite(constellationSize)) return [];
     if (planeCount <= 0 || constellationSize <= 0) return [];

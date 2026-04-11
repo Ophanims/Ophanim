@@ -5,7 +5,7 @@ import { Line } from "@react-three/drei";
 
 const DEFAULT_ROTATION_Y = Math.PI;
 const INITIAL_ROTATION_OFFSET_Y = 0.06;
-const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
+// const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
 
 type LatLonLineSpec = {
   points: Array<[number, number, number]>;
@@ -69,7 +69,7 @@ export default function LatLonWidget({ visible, radius, rotationSpeed = 0.004178
       const isEquator = lat === 0;
       groupLines.push({
         points: createLatitudeLine(lineRadius, lat, segments),
-        color: isEquator ? "#ffffff" : "#2b2b2b",
+        color: isEquator ? "#ffffff" : "#eeeeee",
         lineWidth: isEquator ? 2 : 1,
         opacity: isEquator ? 0.75 : 0.45,
       });
@@ -78,7 +78,7 @@ export default function LatLonWidget({ visible, radius, rotationSpeed = 0.004178
     for (let lon = -180; lon <= 180; lon += 10) {
       groupLines.push({
         points: createLongitudeLine(lineRadius, lon, segments),
-        color: "#2b2b2b",
+        color: "#eeeeee",
         lineWidth: 1,
         opacity: 0.45,
       });
@@ -95,7 +95,7 @@ export default function LatLonWidget({ visible, radius, rotationSpeed = 0.004178
 
   return (
     <group rotation={[0, rotationY, 0]}>
-      <group rotation={[AXIAL_TILT_RAD, 0, 0]} renderOrder={3}>
+      {/* <group rotation={[AXIAL_TILT_RAD, 0, 0]} renderOrder={3}> */}
         {lines.map((line, index) => (
           <Line
             key={index}
@@ -108,7 +108,7 @@ export default function LatLonWidget({ visible, radius, rotationSpeed = 0.004178
             depthTest
           />
         ))}
-      </group>
+      {/* </group> */}
     </group>
   );
 }

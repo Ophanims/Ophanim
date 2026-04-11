@@ -4,7 +4,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
-from entity.link import Link
+from entity.link import Link, LinkType
 from entity.eth import Earth
 from entity.sun import Sun
 from util.gs_generator import generate_stations
@@ -65,8 +65,10 @@ class SimulatorEngine:
     def _collect_link_snapshots(self) -> List[Dict[str, Any]]:
         snapshots: List[Dict[str, Any]] = []
         for l in self.links:
-            data = l.serialize()
-            snapshots.append(data)
+            if l.status:  # 仅记录连通的链路
+            # if not l.type == LinkType.ISL:  # 仅记录连通的链路
+                data = l.serialize()
+                snapshots.append(data)
         return snapshots
 
     def _collect_entity_snapshots(self) -> List[Dict[str, Any]]:
@@ -108,8 +110,8 @@ class SimulatorEngine:
         # 根据项目数据创建实体
         ALT = project.altitude if project.altitude and project.altitude > 0 else DEFAULT_ALTITUDE
         INC = project.inclination if project.inclination and 0 <= project.inclination <= 180 else DEFAULT_INCLINATION
-        CON_SIZE = project.constellationSize if project.constellationSize else DEFAULT_CONSTELLATION_SIZE
-        P_NUM = project.planeCount if project.planeCount else DEFAULT_PLANE_COUNT
+        CON_SIZE = project.sizeOfConstellation if project.sizeOfConstellation else DEFAULT_CONSTELLATION_SIZE
+        P_NUM = project.maximumNumberOfPlane if project.maximumNumberOfPlane else DEFAULT_PLANE_COUNT
         PF = project.phaseFactor if project.phaseFactor else DEFAULT_PHASE_FACTOR
         
         satellites = generate_constellation(alt=ALT, inc=INC, P=P_NUM, T=CON_SIZE, F=PF)

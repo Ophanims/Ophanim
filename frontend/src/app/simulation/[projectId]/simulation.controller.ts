@@ -131,27 +131,44 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
               nextSatellites.push(sat);
               continue;
             } else if (entityType === "ground_station") {
-              const x = Number(entity.x);
-              const y = Number(entity.y);
-              const z = Number(entity.z);
-              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
-
-              nextStations.push({ addr: String(entity.id ?? entity.name ?? "unknown"), x, y, z });
+              const x = Number(entity.x ?? 0);
+              const y = Number(entity.z ?? 0);
+              const z = - Number(entity.y ?? 0);
+              const gs: StationPoint = {
+                addr: String(entity.addr ?? "unknown"),
+                x,
+                y,
+                z,
+              };
+              nextStations.push(gs);
             }
           }
 
           for (const link of state.links ?? []) {
             if (!link || typeof link !== "object") continue;
-            // 目前仅将链路数据作为卫星的属性进行展示，后续可增加链路组件进行专门展示
             const id = String(link.id ?? "unknown");
             const type = String(link.type ?? "unknown");
             const status = String(link.status ?? "unknown");
             const distance = Number(link.distance ?? 0);
             const capacity = Number(link.capacity ?? 0);
-            const srcId = String(link.srcId ?? "unknown");
-            const dstId = String(link.dstId ?? "unknown");
-            const src = nextSatellites.find((s) => s.id === srcId);
-            const dst = nextSatellites.find((s) => s.id === dstId);
+            const srcId = String(link.src ?? "unknown");
+            const dstId = String(link.dst ?? "unknown");
+            var src: SatellitePoint | StationPoint | undefined;
+            var dst: SatellitePoint | StationPoint | undefined;
+            if (type === "ISL") {
+              src = nextSatellites.find((s) => s.addr === srcId);
+              dst = nextSatellites.find((s) => s.addr === dstId);
+            } else {
+              src = nextSatellites.find((s) => s.addr === srcId)
+              if (!src) {
+                src = nextStations.find((s) => s.addr === srcId)
+              }
+              dst = nextStations.find((s) => s.addr === dstId)
+              if (!dst) {
+                dst = nextSatellites.find((s) => s.addr === dstId)
+              }
+            }
+
             if (src && dst) {
               const srcX = Number(src.x ?? 0);
               const srcY = Number(src.y ?? 0);
@@ -159,8 +176,10 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
               const dstX = Number(dst.x ?? 0);
               const dstY = Number(dst.y ?? 0);
               const dstZ = Number(dst.z ?? 0);
-              nextLinks.push({ id, type, status, distance, capacity, srcId, dstId, srcX: srcX, srcY: srcY, srcZ: srcZ, dstX: dstX, dstY: dstY, dstZ: dstZ });
+              const l: LinkPoint = { id: id, type: type, status: status, distance: distance, capacity: capacity, srcId: srcId, dstId: dstId, srcX: srcX, srcY: srcY, srcZ: srcZ, dstX: dstX, dstY: dstY, dstZ: dstZ };
+              nextLinks.push(l);
             }
+            
           }
 
           setSatellites(nextSatellites);

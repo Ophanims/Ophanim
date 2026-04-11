@@ -22,14 +22,13 @@ import {
   StationPoint,
   SunPoint,
 } from "@/app/simulation/[projectId]/simulation.model";
-import { link } from "fs";
 
 export default function FrameWidget({
   sun,
   earth,
   satellites,
   stations,
-  links,
+  links = [],
   slotCount,
   settings,
 }: {
@@ -37,7 +36,7 @@ export default function FrameWidget({
   earth?: EarthPoint | null;
   satellites: SatellitePoint[];
   stations?: StationPoint[];
-  links: LinkPoint[];
+  links?: LinkPoint[];
   slotCount?: number;
   settings?: Partial<FrameWidgetSettings>;
 }) {
@@ -122,7 +121,7 @@ export default function FrameWidget({
           ? stations.map((st) => (
               <mesh
                 key={`${st.addr}`}
-                position={[st.x * scale, st.z * scale, -st.y * scale]}
+                position={[st.x * scale, st.y * scale, st.z * scale]}
               >
                 <sphereGeometry args={[0.03, 10, 10]} />
                 <meshStandardMaterial
@@ -133,37 +132,48 @@ export default function FrameWidget({
               </mesh>
             ))
           : null}
-        {links
-          ? links.map((link) => {
-              const startVec = new THREE.Vector3(
-                link.srcX * scale,
-                link.srcY * scale,
-                link.srcZ * scale,
-              );
-              const endVec = new THREE.Vector3(
-                link.dstX * scale,
-                link.dstY * scale,
-                link.dstZ * scale,
-              );
-              const geometry = new THREE.BufferGeometry().setFromPoints([
-                startVec,
-                endVec,
-              ]);
-              const linkColor = link.type === "ISL" ? "#ffffff" : "red";
-              return (
-                <line key={link.id}>
-                  <primitive object={geometry} attach="geometry" />
-                  <lineBasicMaterial
-                    attach="material"
-                    transparent
-                    opacity={0.2}
-                    color={linkColor}
-                    linewidth={2}
-                  />
-                </line>
-              );
-            })
-          : null}
+        {links.map((link, idx) => {
+          const sx = link.srcX * scale;
+          const sy = link.srcY * scale;
+          const sz = link.srcZ * scale;
+          const dx = link.dstX * scale;
+          const dy = link.dstY * scale;
+          const dz = link.dstZ * scale;
+
+          if (
+            !Number.isFinite(sx) ||
+            !Number.isFinite(sy) ||
+            !Number.isFinite(sz) ||
+            !Number.isFinite(dx) ||
+            !Number.isFinite(dy) ||
+            !Number.isFinite(dz)
+          ) {
+            return null;
+          }
+
+          const startVec = new THREE.Vector3(sx, sy, sz);
+          const endVec = new THREE.Vector3(dx, dy, dz);
+          const geometry = new THREE.BufferGeometry().setFromPoints([
+            startVec,
+            endVec,
+          ]);
+          const linkColor = link.type === "ISL" ? "#ffffff" : "#ff3b30";
+
+          return (
+            <line key={`${link.id}`}>
+              <primitive object={geometry} attach="geometry" />
+              <lineBasicMaterial
+                attach="material"
+                transparent
+                opacity={0.9}
+                depthTest={true}
+                depthWrite={false}
+                toneMapped={false}
+                color={linkColor}
+              />
+            </line>
+          );
+        })}
         <OrbitControls enablePan={false} enableDamping dampingFactor={0.08} />
       </Canvas>
     </div>
