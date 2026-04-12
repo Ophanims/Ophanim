@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { useProgress } from "@react-three/drei";
 import type { EarthPoint, LinkPoint, SatellitePoint, StationPoint, SunPoint } from "./simulation.model";
 import FrameWidget from "@/app/workspace/[projectId]/FrameWidget";
 import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
@@ -73,6 +74,12 @@ export default function SimulationView({
     100,
     Math.max(0, (boundedTick / totalSlot) * 100),
   );
+  const { active: assetsLoading, progress } = useProgress();
+  const waitingForSimulation = !error && status === "idle";
+  const showLoadingOverlay = assetsLoading || waitingForSimulation;
+  const loadingText = assetsLoading
+    ? `Loading Visualization textures...%`
+    : "Waiting for simulation response...";
 
   return (
     <main className="w-full h-screen bg-black text-white relative font-sans overflow-hidden">
@@ -119,8 +126,27 @@ export default function SimulationView({
         </div>
       </div>
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <FrameWidget sun={sun} earth={earth} satellites={satellites} stations={stations} links={links} slotCount={boundedTick} settings={settings} />
+        <FrameWidget
+          sun={sun}
+          earth={earth}
+          satellites={satellites}
+          stations={stations}
+          links={links}
+          slotCount={boundedTick}
+          settings={settings}
+        />
       </div>
+      {showLoadingOverlay ? (
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 rounded-xl bg-black/45 px-6 py-4 backdrop-blur-sm">
+            <div className="relative h-10 w-10">
+              <div className="absolute inset-0 rounded-full border-2 border-white/25" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white animate-spin" />
+            </div>
+            <p className="text-sm text-white/90 tracking-wide">{loadingText}</p>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
