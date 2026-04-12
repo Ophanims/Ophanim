@@ -64,7 +64,7 @@ export default function EntitySettingsWidget({
     <div ref={rootRef} className="relative inline-flex items-start text-xs">
       <button
         type="button"
-        className="flex rounded-full bg-black/50 p-2 text-white gap-2 transition hover:bg-white/20"
+        className="p-2 rounded-full transition hover:bg-white/20"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="dialog"

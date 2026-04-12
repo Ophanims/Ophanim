@@ -51,7 +51,7 @@ export default function PlaybackControlWidget({
           {onRefresh ? (
             <button
               onClick={onRefresh}
-              className="flex rounded-full bg-black/50 p-2 text-sm transition hover:bg-white/20"
+              className="flex rounded-full bg-black/50 p-2 transition hover:bg-white/20 hover:cursor-pointer"
               title="Refresh"
             >
               <ArrowPathIcon className="h-5 w-5" />
@@ -61,7 +61,7 @@ export default function PlaybackControlWidget({
           {!playing ? (
             <button
               onClick={onPlay}
-              className="flex rounded-full bg-black/50 p-2 text-sm transition hover:bg-white/20"
+              className="flex rounded-full bg-black/50 p-2 transition hover:bg-white/20 hover:cursor-pointer"
               title="Play"
             >
               <PlayIcon className="h-5 w-5" />
@@ -69,7 +69,7 @@ export default function PlaybackControlWidget({
           ) : (
             <button
               onClick={onPause}
-              className="flex rounded-full bg-black/50 p-2 text-sm transition hover:bg-white/20"
+              className="flex rounded-full bg-black/50 p-2 transition hover:bg-white/20 hover:cursor-pointer"
               title="Pause"
             >
               <PauseIcon className="h-5 w-5" />
@@ -79,21 +79,22 @@ export default function PlaybackControlWidget({
           {onStop ? (
             <button
               onClick={onStop}
-              className="flex rounded-full bg-black/50 p-2 text-sm transition hover:bg-white/20"
+              className="flex rounded-full bg-black/50 p-2 transition hover:bg-white/20 hover:cursor-pointer"
               title="Stop"
             >
               <StopIcon className="h-5 w-5" />
             </button>
           ) : null}
-          <div className="flex rounded-full bg-black/50 py-2 px-3 text-white gap-2">
-            <p>{progressLabel}</p>
+          <div className="flex rounded-full bg-black/50 py-2 px-3 text-white">
+            <span>{progressLabel}</span>
           </div>
-          <div className="flex rounded-full bg-black/50 py-2 px-3 text-white gap-2">
-            <p>Status: {status}</p>
-            {/* {rightHeader ? rightHeader : null} */}
+          <div className="flex rounded-full bg-black/50 py-2 px-3 text-white">
+            <span>Status: {status}</span>
           </div>
         </div>
-        {rightHeader ? rightHeader : null}
+        <div className="flex rounded-full bg-black/50 text-white gap-2 ">
+          {rightHeader ? rightHeader : null}
+        </div>
       </div>
 
       {error ? <p className="text-sm text-red-600">Error: {error}</p> : null}
