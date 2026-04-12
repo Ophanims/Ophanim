@@ -31,3 +31,6 @@ def to_iso_string(dt: Optional[datetime]) -> Optional[str]:
 
 def to_skyfield_time(dt: datetime) -> Time:
     return TS.from_datetime(ensure_utc(dt))
+
+def skyfield_to_datetime(t: Time) -> datetime:
+    return t.utc_datetime().replace(tzinfo=timezone.utc)

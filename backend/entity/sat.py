@@ -3,12 +3,12 @@ from typing import Any, Dict
 
 import numpy as np
 from pydantic import BaseModel
-from skyfield.api import wgs84, load, EarthSatellite
+from skyfield.api import wgs84, EarthSatellite
 from skyfield.timelib import Time
 from skyfield.positionlib import Geocentric
+from entity.node import Node
 from controller.project_controller import ProjectBase
 from entity.entity import Entity, EntityType
-from entity.node import NodeStatus
 from util.const import EARTH, EPHEMERIS, GEOD, SUN
 
 class SatelliteSnapshot(BaseModel):
@@ -68,15 +68,15 @@ class SatelliteSnapshot(BaseModel):
     onCOM: bool
     onISL: bool
     onSUN: bool
+    
+    connections: list[str] = []
 
-class Satellite(EarthSatellite, Entity):
+class Satellite(EarthSatellite, Node):
     def __init__(self,l1: str, l2: str, id: int = 0, plane: int = 0, order: int = 0):
         super().__init__(line1=l1, line2=l2, name=str(id))
-        Entity.__init__(self, EntityType.SAT)
+        Node.__init__(self, EntityType.SAT)
         
         self.id = id
-        self.status = NodeStatus.ACTIVE
-        
         self.plane = plane
         self.order = order
         self.azimuth = 0.0
@@ -162,8 +162,6 @@ class Satellite(EarthSatellite, Entity):
         # self.ANTENNA_GAIN_OF_DL_RECEIVE: float = 0.0
         self.MAXIMUM_CONCURRENT_TRANSMISSION: int = 0
         
-
-        
         # 能量属性
         self.BATTERY_CAPACITY: float = 0.0  # 电池容量
         self.AREA_OF_SOLAR_PANEL: float = 0.0  # 太阳能板面积
@@ -243,6 +241,8 @@ class Satellite(EarthSatellite, Entity):
         self.STATIC_POWER_OF_OTHERS = float(project.staticPowerOfOthersW or 0.0)
 
     def tick(self, t: Time):
+        # clear connections for this tick
+        self.connections.clear()
         # 更新卫星状态
         geocentric = self.at(t)
         self.onSUN = geocentric.is_sunlit(EPHEMERIS)
@@ -419,6 +419,7 @@ class Satellite(EarthSatellite, Entity):
             onCOM=self.onCOM,
             onISL=self.onISL,
             onSUN=self.onSUN,
+            connections=self.list_connection_addresses(),
         )
         
     def serialize(self) -> dict[str, Any]:

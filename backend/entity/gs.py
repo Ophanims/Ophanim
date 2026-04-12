@@ -1,5 +1,11 @@
+from typing import List
+
+import numpy as np
 from pydantic import BaseModel
 
+from entity.node import Node
+from util.time_utils import skyfield_to_datetime
+from entity.mission import Mission
 from entity.entity import Entity, EntityType
 from skyfield.api import wgs84
 from skyfield.timelib import Time
@@ -16,8 +22,9 @@ class GroundStationSnapshot(BaseModel):
     alt: float
     onUpload: bool
     onDownload: bool
+    connections: List[str]
 
-class GroundStation(Entity):
+class GroundStation(Node):
     def __init__(self, name: str, lon: float, lat: float, alt: float):
         super().__init__(type=EntityType.GS)
         
@@ -32,6 +39,10 @@ class GroundStation(Entity):
         self.x: float = 0.0
         self.y: float = 0.0
         self.z: float = 0.0
+        
+        # 仿真参数
+        self.RNG: np.random.Generator = np.random.default_rng()
+        self.SLOT: float = 0.0  # 时间步长 (秒)
         
         # 通信属性
         self.CARRIER_FREQUENCY_OF_UP: float = 0.0
@@ -58,6 +69,7 @@ class GroundStation(Entity):
         self.onDownload: bool = False
         
     def setup(self, project):
+        self.RNG = np.random.default_rng(getattr(project, "seed", None))
         self.CARRIER_FREQUENCY_OF_UP = float(project.carrierFrequencyOfUpGhz or 0.0)
         self.CARRIER_FREQUENCY_OF_DL = float(project.carrierFrequencyOfDlGhz or 0.0)
         self.BANDWIDTH_OF_UL = float(project.bandwidthOfUlMhz or 0.0)
@@ -77,6 +89,29 @@ class GroundStation(Entity):
         self.x, self.y, self.z = geocentric
         self.transmit_signal_UL_power = self.calc_transmit_signal_power()
         
+        _now = skyfield_to_datetime(t).isoformat()
+        _applied_missions = self.generate_missions(now=_now)
+        
+        self.missions.extend(_applied_missions)
+        
+    def execute(self):
+        pass
+        
+    def generate_missions(self, now: str) -> List[Mission]:
+        # 根据泊松分布和SEED生成新的Mission
+        lam = 0.2 * self.SLOT
+        num_missions = self.RNG.poisson(lam)
+        missions = []
+        for i in range(num_missions):
+            mission = Mission(
+                position=self.address,
+                start_time=now,
+            )
+
+            missions.append(mission)
+
+        return missions
+        
     def calc_transmit_signal_power(self) -> float:
         # 简化模型：假设发射功率与带宽成正比
         result = self.EFFICIENCY_OF_POWER_AMPLIFIER * (self.power_of_UL_transmission - self.STATIC_POWER_OF_UP_TRANSMITTING)
@@ -94,7 +129,8 @@ class GroundStation(Entity):
             lon=self.lon,
             alt=self.alt,
             onUpload=self.onUpload,
-            onDownload=self.onDownload
+            onDownload=self.onDownload,
+            connections=self.list_connection_addresses(),
         )
         
     def serialize(self) -> dict:

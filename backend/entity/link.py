@@ -1,12 +1,18 @@
 import enum
 import math
+from typing import List
 import numpy as np
 from pydantic import BaseModel
+from entity.node import Node
 from controller.project_controller import ProjectBase
 from entity.sat import Satellite
 from entity.gs import GroundStation
-from entity.entity import Entity, EntityType
+from entity.process import Process
 from util.const import R_EARTH
+
+class Contact(BaseModel):
+    info: BaseModel
+    
 
 class LinkType(enum.Enum):
     ISL = "ISL"  # 卫星间链路
@@ -38,7 +44,7 @@ class Link:
     链路类：处理节点间的通信逻辑
     """
 
-    def __init__(self, src: Entity, dst: Entity):
+    def __init__(self, src: Node, dst: Node):
         self.id = f"({src.address},{dst.address})"
         self.src = src
         self.dst = dst
@@ -46,6 +52,7 @@ class Link:
         self.status = False              # 是否连通
         
         self.MAX_PLANE = 0
+        self.MAX_CONCURRENT_TRANSMISSION = 0
         
         # 物理参数
         self.snr = 0.0                   # 信噪比 (dB)
@@ -60,8 +67,12 @@ class Link:
         self.antenna_gain_of_transmit = 0.0 # dBi
         self.transmit_signal_power = 0.0 # W
         
+        # 模拟
+        self.processes: List[Process] = []  # 当前链路上正在进行的传输过程列表
+        
     def setup(self, project: ProjectBase):
         self.MAX_PLANE = int(project.maximumNumberOfPlane or 0)
+        self.MAX_CONCURRENT_TRANSMISSION = int(project.maximumConcurrentTransmission or 0)
         
         # 根据链路类型选择合适的频率和带宽参数
         if isinstance(self.src, Satellite) and isinstance(self.dst, Satellite):

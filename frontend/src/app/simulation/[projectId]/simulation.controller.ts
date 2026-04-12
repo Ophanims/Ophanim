@@ -38,7 +38,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
-        // console.debug("Received WebSocket message:", msg);
+        console.debug("Received WebSocket message:", msg);
         if (msg?.type === "error") {
           setStatus("error");
           setError(msg?.message ?? "Simulation engine error");

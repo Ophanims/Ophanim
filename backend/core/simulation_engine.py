@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
+from entity.node import Node
 from entity.link import Link, LinkType
 from entity.eth import Earth
 from entity.sun import Sun
@@ -43,6 +44,7 @@ class SimulatorEngine:
         self.START_TIME: Optional[datetime] = None
         self.END_TIME: Optional[datetime] = None
         self.MAX_SLOT: Optional[int] = None
+        self.SEED: Optional[int] = None
         
         # 外部钩子（由 FastAPI 注入）
         self.on_render_hook = None 
@@ -85,6 +87,7 @@ class SimulatorEngine:
 
         # timeSlot 作为逻辑步长（秒）
         self.SLOT = project.timeSlot if project.timeSlot and project.timeSlot > 0 else DEFAULT_SIMULATION_TIMESLOT
+        self.SEED = project.seed if project.seed else None
             
         # startTime/endTime 作为逻辑时间范围
         T_START = parse_datetime(project.startTime) if project.startTime else None
@@ -123,7 +126,7 @@ class SimulatorEngine:
         earth = Earth()
         self.entities.append(earth) # 添加地球实体
         
-        nodes: List[Entity] = satellites + stations
+        nodes: List[Node] = satellites + stations
         
         for sat in satellites:
             self.entities.append(sat)
@@ -193,9 +196,15 @@ class SimulatorEngine:
                 
                 for e in self.entities:
                     e.tick(skyfield_time)
+
+                # 清空每一帧的连接关系，随后按当前连通状态重建
+                for node in (n for n in self.entities if isinstance(n, Node)):
+                    node.connections.clear()
                     
                 for l in self.links:
                     l.refresh()
+                    if l.status:
+                        l.src.connections.append(l)
                 
                 self.state.timestamp += self.SLOT
                 self.state.slot_count += 1
