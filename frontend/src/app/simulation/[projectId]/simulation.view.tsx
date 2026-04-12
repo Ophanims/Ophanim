@@ -83,7 +83,7 @@ export default function SimulationView({
 
   return (
     <main className="w-full h-screen bg-black text-white relative font-sans overflow-hidden">
-      <div className="absolute inset-0 flex flex-col pt-20 px-12 z-20 pointer-events-none">
+      <div className="absolute inset-0 flex flex-col mt-12 py-12 px-12 z-20 pointer-events-none">
         <div className="relative h-full w-full flex flex-col">
           <div className="w-full flex items-center justify-between mb-6 pointer-events-auto">
             <div className="flex items-center gap-3">
