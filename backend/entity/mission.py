@@ -1,10 +1,13 @@
 import itertools
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from status.mission_status import MissionStatus
+from status.mission_status import MissionStatus, MissionPhase
 from controller.project_controller import ProjectBase
+
+if TYPE_CHECKING:
+    from entity.node import Node
 
 class MissionSnapshot(BaseModel):
     id: str
@@ -19,16 +22,17 @@ class MissionSnapshot(BaseModel):
 
 class Mission():
     _id_counter = itertools.count(1)
-    def __init__(self, position: dict, start_time: str):
-        self.id = self._next_unique_id(type)
-        self.status = MissionStatus.PENDING
-        self.phase = MissionStatus.UPLOADING
+    def __init__(self, position: "Node", start_time: str):
+        self.id = self._next_unique_id()
+        self.status = MissionStatus.IDLE
+        self.phase = MissionPhase.UPLOADING
         
         self.IMAGE_WIDTH_PX = 10000
         self.IMAGE_HEIGHT_PX = 10000
         self.BITS_PER_CHANNEL = 8
         self.CHANNEL_PER_PIXEL = 3
         self.MAXIMUM_INFERENCE_LAYER = 7
+        self.INITIAL_DATA_SIZE_MB = self.calc_image_data_size_mb()
         
         self.position = position
         self.inference_layer = 0
@@ -41,13 +45,13 @@ class Mission():
     @classmethod
     def _next_unique_id(cls) -> str:
         # 使用统一递增计数，确保当前进程内全局唯一。
-        return f"M{next(cls._id_counter):08d}"
+        return next(cls._id_counter)
         
-    def setup(self, project: ProjectBase):
-        self.IMAGE_WIDTH_PX = project.imageryWidthPx or 0
-        self.IMAGE_HEIGHT_PX = project.imageryHeightPx or 0
-        self.BITS_PER_CHANNEL = project.bitsPerChannelBit or 0
-        self.CHANNEL_PER_PIXEL = project.channelsPerPixel or 0
+    def setup(self, w_px: int, h_px: int, bpc: int, cpp: int):
+        self.IMAGE_WIDTH_PX = w_px
+        self.IMAGE_HEIGHT_PX = h_px
+        self.BITS_PER_CHANNEL = bpc
+        self.CHANNEL_PER_PIXEL = cpp
         
         self.data_size = self.calc_image_data_size_mb()
         

@@ -6,6 +6,9 @@ from pydantic import BaseModel
 from skyfield.api import wgs84, EarthSatellite
 from skyfield.timelib import Time
 from skyfield.positionlib import Geocentric
+from status.mission_status import MissionPhase
+from util.time_utils import skyfield_to_datetime
+from entity.mission import Mission
 from entity.node import Node
 from controller.project_controller import ProjectBase
 from entity.entity import Entity, EntityType
@@ -239,21 +242,62 @@ class Satellite(EarthSatellite, Node):
         self.STATIC_POWER_OF_ISL_TRANSMITTING = float(project.staticPowerOfIslTransmittingW or 0.0)
         self.STATIC_POWER_OF_DL_TRANSMITTING = float(project.staticPowerOfDownlinkTransmittingW or 0.0)
         self.STATIC_POWER_OF_OTHERS = float(project.staticPowerOfOthersW or 0.0)
+        self.calc_transmit_signal_power()
 
     def tick(self, t: Time):
-        # clear connections for this tick
-        self.connections.clear()
+        # 1. 更新状态
+        self.move(t)
+        # 2. 进行观测
+        state = self.observe()
+        # 3. 制定策略
+        action = self.decide(state)
+        # 4. 执行决策
+        self.act(action)
+       
+    """为了专注于Task Offloading，创立此函数生成任务从而简化仿真流程，跳过上传和观测阶段""" 
+    # =============================================================================
+    def generate_missions(self, t: Time) -> list[Mission]:
+        _now = skyfield_to_datetime(t).isoformat()
+        # 随机数生成器，使用卫星地址的哈希值作为种子，确保同一卫星在不同轮次生成的任务分布相似
+        rng = np.random.default_rng(hash(self.address) % (2**32))
+        num_missions = rng.poisson(3)  # 平均每轮生成3个任务
+        random_missions = []
+        for i in range(num_missions):
+            mission = Mission(
+                position=self,
+                start_time=_now,
+            )
+            mission.setup(
+                w_px=self.IMAGERY_WIDTH, 
+                h_px=self.IMAGERY_HEIGHT, 
+                bpc=self.BITS_PER_CHANNEL, 
+                cpp=self.CHANNELS_PER_PIXEL)
+            mission.status = MissionPhase.COMPUTING
+            random_missions.append(mission)
+        return random_missions
+    # =============================================================================
+    
+    def move(self, t: Time):
         # 更新卫星状态
         geocentric = self.at(t)
         self.onSUN = geocentric.is_sunlit(EPHEMERIS)
-        self.calc_transmit_signal_power()
-        # 1. 更新位置和姿态
         self.calc_position(geocentric)
         self.calc_velocity_vector(geocentric)
         self.calc_solar_vector(t, geocentric)
         self.calc_subpoint(geocentric)
         self.calc_footprint(t)
+        # 生成任务
+        self.missions.extend(self.generate_missions(t))
         
+    def observe(self) -> Dict[str, Any]:
+        pass 
+   
+    def decide(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        pass
+    
+    def act(self, action: Dict[str, Any]):
+        pass
+
     def calc_transmit_signal_power(self):
         # 简化模型：假设发射功率与带宽成正比
         self.transmit_signal_ISL_power = max(

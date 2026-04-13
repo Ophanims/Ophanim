@@ -89,12 +89,13 @@ class GroundStation(Node):
         self.x, self.y, self.z = geocentric
         self.transmit_signal_UL_power = self.calc_transmit_signal_power()
         
-        _now = skyfield_to_datetime(t).isoformat()
-        _applied_missions = self.generate_missions(now=_now)
+        # _now = skyfield_to_datetime(t).isoformat()
+        # _applied_missions = self.generate_missions(now=_now)
         
-        self.missions.extend(_applied_missions)
+        # self.missions.extend(_applied_missions)
         
     def execute(self):
+        # if len(self.missions) > 0:
         pass
         
     def generate_missions(self, now: str) -> List[Mission]:
