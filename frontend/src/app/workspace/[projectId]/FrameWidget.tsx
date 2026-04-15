@@ -97,8 +97,8 @@ export default function FrameWidget({
             key={"null-island"}
             position={[
               earth.nullIslandX * scale,
+              earth.nullIslandY * scale,
               earth.nullIslandZ * scale,
-              -earth.nullIslandY * scale,
             ]}
           >
             <sphereGeometry args={[0.03, 10, 10]} />

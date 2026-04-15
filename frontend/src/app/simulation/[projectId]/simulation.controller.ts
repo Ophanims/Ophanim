@@ -66,9 +66,9 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
               const r = Number(entity.rotational_angular_velocity)
               setEarth({
                 addr: String(entity.addr ?? "earth"),
-                nullIslandX: Number(entity.nullIslandX ?? 0),
-                nullIslandY: Number(entity.nullIslandZ ?? 0),
-                nullIslandZ: - Number(entity.nullIslandY ?? 0),
+                nullIslandX: Number(entity.null_island_x ?? 0),
+                nullIslandY: Number(entity.null_island_z ?? 0),
+                nullIslandZ: - Number(entity.null_island_y ?? 0),
                 rotationalAngularVelocity: Number.isFinite(r) ? r : 0,
               });
               continue;

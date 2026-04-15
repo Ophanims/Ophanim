@@ -21,6 +21,7 @@ class Earth(Entity):
         self.null_island_x: float = 0.0
         self.null_island_y: float = 0.0
         self.null_island_z: float = 0.0
+        
         self.rotational_angular_velocity: float = 0.0
         
 
