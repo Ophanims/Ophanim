@@ -19,13 +19,13 @@ class Entity:
 
     def __init__(self, type: str):
         self.type: str = type  # 实体类型（如 "satellite"、"ground_station"）
-        self.address: str = self._next_unique_id(type)
+        self.address: str = self._next_unique_id()  # 全局唯一地址，格式为 "@00000001"
         self.x: float = 0.0
         self.y: float = 0.0
         self.z: float = 0.0
 
     @classmethod
-    def _next_unique_id(cls, type_name: str) -> str:
+    def _next_unique_id(cls) -> str:
         # 使用统一递增计数，确保当前进程内全局唯一。
         return f"@{next(cls._id_counter):08d}"
 
