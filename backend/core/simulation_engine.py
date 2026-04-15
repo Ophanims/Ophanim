@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from algorithm.algo_manager import ALGO_MANAGER
 from core.simulation_clock import CLOCK
 from entity.mission import Mission
-from entity.world import WORLD, World
+from core.simulation_world import WORLD, SimulationWorld
 from topology.link import Link
 from util.const import DEFAULT_SIMULATION_TIMESLOT
 from util.time_utils import parse_datetime, to_iso_string, to_skyfield_time

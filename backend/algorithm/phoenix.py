@@ -3,7 +3,7 @@ from typing import Dict, List, Set, Tuple
 
 from algorithm.algo import Algorithm
 from status.mission_status import MissionStatus
-from entity.world import WORLD
+from core.simulation_world import WORLD
 from entity.mission import Mission
 from entity.gs import GroundStation
 from entity.sat import Satellite

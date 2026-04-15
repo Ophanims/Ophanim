@@ -19,7 +19,7 @@ from controller.project_controller import GroundStationBase, ProjectBase
 from entity.entity import Entity
 from skyfield.timelib import Time
 
-class World(Entity):
+class SimulationWorld(Entity):
     def __init__(self):
         super().__init__(type="world")
         
@@ -128,4 +128,4 @@ class World(Entity):
         self.links.clear()
 
 
-WORLD = World()
+WORLD = SimulationWorld()
