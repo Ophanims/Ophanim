@@ -1,5 +1,6 @@
 import numpy as np
 from pydantic import BaseModel
+from core.simulation_clock import CLOCK
 from entity.entity import Entity, EntityType
 from skyfield.api import wgs84
 from skyfield.timelib import Time
@@ -15,8 +16,6 @@ class EarthSnapshot(BaseModel):
 class Earth(Entity):
     def __init__(self):
         super().__init__(type=EntityType.ETH)
-        
-        self.timeslot_duration: float = 0.0  # 每个时间步的持续时间 (秒)
 
         # ECEF 坐标
         self.null_island_x: float = 0.0
@@ -24,21 +23,19 @@ class Earth(Entity):
         self.null_island_z: float = 0.0
         self.rotational_angular_velocity: float = 0.0
         
-    def setup(self, project):
-        self.timeslot_duration = project.timeSlot
 
-    def tick(self, current_time: Time, current_slot: int):
+    def tick(self):
         # 更新 ECEF 坐标
         topos = wgs84.latlon(0.0, 0.0)  # Null Island
-        p1 = topos.at(current_time).position.m
+        p1 = topos.at(CLOCK.current_time).position.m
         self.null_island_x, self.null_island_y, self.null_island_z = p1
         # 地球自转角速度（ degrees per timeslot）
-        if self.timeslot_duration <= 0:
+        if CLOCK.SLOT <= 0:
             self.rotational_angular_velocity = 0.0
             return
 
         # Build the next Skyfield Time explicitly from TT Julian date.
-        t2 = current_time.ts.tt_jd(current_time.tt + self.timeslot_duration / 86400.0)
+        t2 = CLOCK.current_time.ts.tt_jd(CLOCK.current_time.tt + CLOCK.SLOT / 86400.0)
         p2 = topos.at(t2).position.m
         # 向量夹角
         v1 = np.array(p1)

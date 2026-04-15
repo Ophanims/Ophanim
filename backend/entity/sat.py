@@ -1,4 +1,3 @@
-from curses.ascii import alt
 from typing import Any, Dict
 
 import numpy as np
@@ -6,12 +5,10 @@ from pydantic import BaseModel
 from skyfield.api import wgs84, EarthSatellite
 from skyfield.timelib import Time
 from skyfield.positionlib import Geocentric
-from status.mission_status import MissionPhase
-from util.time_utils import skyfield_to_datetime
 from algorithm.algo import Algorithm
 from algorithm.algo_manager import ALGO_MANAGER
-from entity.mission import Mission
-from backend.topology.node import Node
+from core.simulation_clock import CLOCK
+from topology.node import Node
 from controller.project_controller import ProjectBase
 from entity.entity import Entity, EntityType
 from util.const import EARTH, EPHEMERIS, GEOD, SUN
@@ -194,19 +191,22 @@ class Satellite(EarthSatellite, Node):
         self.transmit_signal_ISL_power: float = 0.0  # 发射信号功率
         self.transmit_signal_DL_power: float = 0.0  # 发射信号功率
         
+        self.power_of_solar_panel: float = 0.0  # 太阳能板功率
+        
         # 状态
         self.onROI: bool = True
         self.onSGL: bool = True
         self.onCOM: bool = True
         self.onISL: bool = False
         self.onSUN: bool = False
+        
+        # 任务列表
 
         # 可插拔算法（感知 -> 决策 -> 执行）
-        self.algorithm_name: str = "default"
+        self.algorithm_name: str = "phoenix"
         self.algorithm: Algorithm = ALGO_MANAGER.create(self.algorithm_name)
         
     def setup(self, project: ProjectBase):
-        self.SLOT = int(project.timeSlot or 0)
         
         # 从项目数据中提取卫星属性
         self.IMAGERY_WIDTH = int(project.imageryWidthPx or 0)
@@ -253,10 +253,12 @@ class Satellite(EarthSatellite, Node):
         self.STATIC_POWER_OF_DL_TRANSMITTING = float(project.staticPowerOfDownlinkTransmittingW or 0.0)
         self.STATIC_POWER_OF_OTHERS = float(project.staticPowerOfOthersW or 0.0)
         self.calc_transmit_signal_power()
+        
+        self.power_of_solar_panel = self.AREA_OF_SOLAR_PANEL * self.EFFICIENCY_OF_SOLAR_PANEL * 1361  # 太阳常数约为 1361 W/m^2
 
-    def tick(self, current_time: Time, current_slot: int):
+    def tick(self):
         # 1. 更新状态
-        self.move(current_time, current_slot)
+        self.move()
         # 2. 进行观测
         state = self.observe()
         # 3. 制定策略
@@ -264,58 +266,44 @@ class Satellite(EarthSatellite, Node):
         # 4. 执行决策
         self.act(action)
        
-    """为了专注于Task Offloading，创立此函数生成任务从而简化仿真流程，跳过上传和观测阶段""" 
-    # =============================================================================
-    def generate_missions(self, t: Time, slot: int) -> list[Mission]:
-        _now = skyfield_to_datetime(t).isoformat()
-        # 随机数生成器，使用卫星地址的哈希值作为种子，确保同一卫星在不同轮次生成的任务分布相似
-        rng = np.random.default_rng(hash(self.address) % (2**32))
-        num_missions = rng.poisson(3)  # 平均每轮生成3个任务
-        random_missions = []
-        for i in range(num_missions):
-            mission = Mission(
-                position=self,
-                start_time=_now,
-                start_slot=slot,
-            )
-            mission.setup(
-                w_px=self.IMAGERY_WIDTH, 
-                h_px=self.IMAGERY_HEIGHT, 
-                bpc=self.BITS_PER_CHANNEL, 
-                cpp=self.CHANNELS_PER_PIXEL)
-            mission.status = MissionPhase.COMPUTING
-            random_missions.append(mission)
-        return random_missions
-    # =============================================================================
     
-    def move(self, t: Time, slot: int):
+    def move(self):
         # 更新卫星状态
-        geocentric = self.at(t)
+        geocentric = self.at(CLOCK.current_time)
         self.onSUN = geocentric.is_sunlit(EPHEMERIS)
         self.calc_position(geocentric)
         self.calc_velocity_vector(geocentric)
-        self.calc_solar_vector(t, geocentric)
+        self.calc_solar_vector(CLOCK.current_time, geocentric)
         self.calc_subpoint(geocentric)
-        self.calc_footprint(t)
+        self.calc_footprint(CLOCK.current_time)
         # 生成任务
-        self.missions.extend(self.generate_missions(t, slot))
+        # self.missions.extend(self.generate_missions(CLOCK.current_time, CLOCK.current_slot))
         
-    def is_sunlit(self, t_slot: Time) -> bool:
-        geocentric = self.at(t_slot)
+    def is_sunlit(self, t: Time) -> bool:
+        geocentric = self.at(t)
         return geocentric.is_sunlit(EPHEMERIS)
+    
+    def sunlit_slots_in_period(self, start: Time, slots_num: int) -> list[int]:
+        """计算在给定时间段内卫星处于日照状态的时间槽列表"""
+        sunlit_slots = 0
+        for i in range(slots_num):
+            t = start + i * self.SLOT
+            if self.is_sunlit(t):
+                sunlit_slots += 1
+        return sunlit_slots
 
     def set_algorithm(self, name: str):
         self.algorithm_name = name
         self.algorithm = ALGO_MANAGER.create(name)
         
     def observe(self) -> Dict[str, Any]:
-        return self.algorithm.observe(self)
+        pass
    
     def decide(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        return self.algorithm.decide(self, state)
+        pass
     
     def act(self, action: Dict[str, Any]):
-        self.algorithm.act(self, action)
+        pass
         
     def get_orbital_cycle(self) -> float:
         """计算卫星的轨道周期，单位为秒"""

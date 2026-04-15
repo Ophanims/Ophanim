@@ -47,8 +47,8 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
 
         if (msg?.type === "state") {
           const state = msg.state ?? {};
-          setTickCount(state.slot_count ?? 0);
-          const nextMaxSlot = Number(state.maximum_slot);
+          setTickCount(state.clock.slot_count ?? 0);
+          const nextMaxSlot = Number(state.clock.maximum_slot);
           setMaxSlot(Number.isFinite(nextMaxSlot) && nextMaxSlot > 0 ? nextMaxSlot : null);
           setStatus((prevStatus) =>
             prevStatus === "paused" || prevStatus === "stopped" ? prevStatus : "running"

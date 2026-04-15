@@ -1,7 +1,15 @@
 from typing import List
 
-from backend.topology.node import Node
-from backend.topology.link import Link
+import numpy as np
+
+from core.simulation_clock import CLOCK
+from entity.gs import GroundStation
+from entity.sat import Satellite
+from util.time_utils import skyfield_to_datetime
+from status.mission_status import MissionPhase
+from entity.mission import Mission
+from topology.node import Node
+from topology.link import Link
 from entity.eth import Earth
 from entity.sun import Sun
 from util.const import DEFAULT_ALTITUDE, DEFAULT_CONSTELLATION_SIZE, DEFAULT_INCLINATION, DEFAULT_PHASE_FACTOR, DEFAULT_PLANE_COUNT
@@ -15,26 +23,26 @@ class World(Entity):
     def __init__(self):
         super().__init__(type="world")
         
-        # Environmental Parameters
-        self.SLOT: int = 0
-        self.current_time: Time = None
-        self.current_slot: int = 0
+        self.SEED: int = 0
         
         # Environment Entities
         self.entities: List[Entity] = []
         
         # Entities Classification
-        self.satellites: List[Entity] = []
-        self.ground_stations: List[Entity] = []
+        self.satellites: List[Satellite] = []
+        self.ground_stations: List[GroundStation] = []
         
         # Networks
         self.nodes: List[Node] = []
         self.links: List[Link] = []
         
+        # Missions
+        self.missions: List[Mission] = []
+        
     def setup(self, pjc_base: ProjectBase, gs_base: List[GroundStationBase]):
         self.clear()  # 清空现有数据
         
-        self.SLOT = pjc_base.timeSlot
+        self.SEED = pjc_base.seed
         
         # 根据项目数据创建实体
         ALT = pjc_base.altitude if pjc_base.altitude and pjc_base.altitude > 0 else DEFAULT_ALTITUDE
@@ -72,12 +80,11 @@ class World(Entity):
                     self.links.append(l)
                     
                     
-    def tick(self, current_time: Time, current_slot: int):
-        self.current_time = current_time
-        self.current_slot = current_slot
+    def tick(self):
+        self.missions.extend(self.generate_missions())  # 生成新的任务
         # 更新每个实体的状态
         for e in self.entities:
-            e.tick(current_time=current_time, current_slot=current_slot)
+            e.tick()
         # 每个时刻重新计算链路状态
         for n in self.nodes:
             n.connections.clear()
@@ -86,6 +93,31 @@ class World(Entity):
             l.refresh()
             if l.status:
                 l.src.connections.append(l)
+                
+    """为了专注于Task Offloading，创立此函数生成任务从而简化仿真流程，跳过上传和观测阶段""" 
+    # =============================================================================
+    def generate_missions(self) -> list[Mission]:
+        # 根据泊松分布和SEED生成新的Mission
+        lam = 0.2 * CLOCK.SLOT
+        rng = np.random.default_rng(self.SEED)
+        num_missions = rng.poisson(lam)
+        random_missions = []
+        for i in range(num_missions):
+            random_pos = rng.choice(self.satellites)  # 从卫星列表中随机选择一个位置
+            mission = Mission(
+                position=random_pos,
+                start_time=CLOCK.current_time,
+                start_slot=CLOCK.current_slot,
+            )
+            mission.create(
+                w_px=random_pos.IMAGERY_WIDTH, 
+                h_px=random_pos.IMAGERY_HEIGHT, 
+                bpc=random_pos.BITS_PER_CHANNEL, 
+                cpp=random_pos.CHANNELS_PER_PIXEL)
+            mission.phase = MissionPhase.COMPUTING
+            random_missions.append(mission)
+        return random_missions
+    # =============================================================================
                 
                 
     def clear(self):

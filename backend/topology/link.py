@@ -3,7 +3,7 @@ import math
 from typing import List
 import numpy as np
 from pydantic import BaseModel
-from backend.topology.node import Node
+from topology.node import Node
 from controller.project_controller import ProjectBase
 from entity.sat import Satellite
 from entity.gs import GroundStation
@@ -129,6 +129,10 @@ class Link:
             # JSON 不支持 Infinity，使用有限的低 SNR 哨兵值。
             self.snr = -9999.9
             self.capacity = 0.0
+            
+    def is_available(self) -> bool:
+        if len(self.processes) >= self.MAX_CONCURRENT_TRANSMISSION:
+            return False
         
     def check_connectivity(self) -> bool:
         if isinstance(self.src, Satellite) and isinstance(self.dst, Satellite):

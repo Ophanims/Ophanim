@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from core.simulation_clock import CLOCK
 from util.const import EARTH, SUN
 from entity.entity import Entity, EntityType
 from skyfield.api import wgs84
@@ -21,9 +22,9 @@ class Sun(Entity):
         self.y: float = 0.0
         self.z: float = 0.0
 
-    def tick(self, current_time: Time, current_slot: int):
+    def tick(self):
         # 更新 ECEF 坐标
-        ast_sun = EARTH.at(current_time).observe(SUN)
+        ast_sun = EARTH.at(CLOCK.current_time).observe(SUN)
         sun_ecef = ast_sun.apparent().position.m.T
         self.x, self.y, self.z = sun_ecef
 

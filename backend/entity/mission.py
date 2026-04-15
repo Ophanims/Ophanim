@@ -1,18 +1,21 @@
 import itertools
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
+from skyfield.timelib import Time
 
 from status.mission_status import MissionStatus, MissionPhase
+from entity.process import Process
+from util.time_utils import skyfield_to_datetime
 
 if TYPE_CHECKING:
-    from backend.topology.node import Node
+    from topology.node import Node
 
 class MissionSnapshot(BaseModel):
-    id: str
+    id: int
     status: str
-    position: dict
-    inference_layer: str
+    position: str
+    inference_layer: int
     data_size: float
     workload: float
     start_time: str
@@ -21,7 +24,7 @@ class MissionSnapshot(BaseModel):
 
 class Mission():
     _id_counter = itertools.count(1)
-    def __init__(self, position: "Node", start_time: str, start_slot: int):
+    def __init__(self, position: "Node", start_time: Any, start_slot: int):
         self.id = self._next_unique_id()
         self.status = MissionStatus.IDLE
         self.phase = MissionPhase.UPLOADING
@@ -48,7 +51,7 @@ class Mission():
         # 使用统一递增计数，确保当前进程内全局唯一。
         return next(cls._id_counter)
         
-    def setup(self, w_px: int, h_px: int, bpc: int, cpp: int):
+    def create(self, w_px: int, h_px: int, bpc: int, cpp: int):
         self.IMAGE_WIDTH_PX = w_px
         self.IMAGE_HEIGHT_PX = h_px
         self.BITS_PER_CHANNEL = bpc
@@ -56,9 +59,52 @@ class Mission():
         
         self.data_size = self.calc_image_data_size_mb()
         
-    def tick(self):
-        pass
+    def to_transmit(self, target: "Node", processed_vol: float) -> Process:
+        self.status = MissionStatus.TRANSMITTING
+        def done() -> None:
+            self.done_transmit(target=target)
+
+        _transmitted_data_size = self.data_size
+        _new_process = Process(
+            id=self.id, 
+            name=f"Transmitting_{self.id}", 
+            arrival_time=0, 
+            terminal_time=None, 
+            deadline=None, 
+            required_vol=_transmitted_data_size,
+            processed_vol=processed_vol,
+            callback=done,
+            )
+        return _new_process
+    
+    def done_transmit(self, target: "Node") -> None:
+        self.position = target
+        self.status = MissionStatus.IDLE
         
+    def to_compute(self, target: int, processed_vol: float) -> Process:
+        self.status = MissionStatus.COMPUTING
+        def done() -> None:
+            self.done_compute(target=target)
+
+        _remaining_workload = self.calc_layer_workload(target)
+        _new_process = Process(
+            id=self.id, 
+            name=f"Computing_{self.id}", 
+            arrival_time=0, 
+            terminal_time=None, 
+            deadline=None, 
+            required_vol=_remaining_workload,
+            processed_vol=processed_vol,
+            callback=done,
+            )
+        return _new_process
+    
+    def done_compute(self, target: int) -> None:
+        self.inference_layer = target
+        self.status = MissionStatus.IDLE
+        if self.inference_layer >= self.MAXIMUM_INFERENCE_LAYER:
+            self.status = MissionStatus.COMPLETED
+
     def _produce(self, clock_frequency_ghz: float, dt_s: float):
         # GHz 转换为 Hz，再乘以时间得到总的计算量
         produced_workload = clock_frequency_ghz * 1e9 * dt_s  
@@ -90,15 +136,26 @@ class Mission():
         return total_workload
 
     def snapshot(self) -> MissionSnapshot:
+        if isinstance(self.start_time, Time):
+            start_time = skyfield_to_datetime(self.start_time).isoformat()
+        else:
+            start_time = str(self.start_time)
+
+        if isinstance(self.end_time, Time):
+            end_time = skyfield_to_datetime(self.end_time).isoformat()
+        else:
+            end_time = str(self.end_time)
+
         return MissionSnapshot(
             id=self.id,
-            position=self.position,
+            status=self.status.value,
+            position=self.position.address,
             inference_layer=self.inference_layer,
             data_size=self.data_size,
             workload=self.workload,
-            start_time=self.start_time,
-            end_time=self.end_time,
-            deadline=self.deadline
+            start_time=start_time,
+            end_time=end_time,
+            deadline=str(self.deadline),
         )
 
     def serialize(self) -> dict:

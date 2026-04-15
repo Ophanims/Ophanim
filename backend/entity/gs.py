@@ -3,7 +3,8 @@ from typing import List
 import numpy as np
 from pydantic import BaseModel
 
-from backend.topology.node import Node
+from core.simulation_clock import CLOCK
+from topology.node import Node
 from util.time_utils import skyfield_to_datetime
 from entity.mission import Mission
 from entity.entity import Entity, EntityType
@@ -82,10 +83,10 @@ class GroundStation(Node):
         self.EFFICIENCY_OF_POWER_AMPLIFIER = float(project.efficiencyOfPowerAmplifier or 0.0)
         self.STATIC_POWER_OF_UP_TRANSMITTING = float(project.staticPowerOfUplinkTransmittingW or 0.0)
 
-    def tick(self, current_time: Time, current_slot: int):
+    def tick(self):
         # 更新 ECEF 坐标
         topos = wgs84.latlon(self.lat, self.lon, self.alt)
-        geocentric = topos.at(current_time).position.m
+        geocentric = topos.at(CLOCK.current_time).position.m
         self.x, self.y, self.z = geocentric
         self.transmit_signal_UL_power = self.calc_transmit_signal_power()
         
@@ -93,26 +94,6 @@ class GroundStation(Node):
         # _applied_missions = self.generate_missions(now=_now)
         
         # self.missions.extend(_applied_missions)
-        
-    def execute(self):
-        # if len(self.missions) > 0:
-        pass
-        
-    def generate_missions(self, now: str, start_slot: int) -> List[Mission]:
-        # 根据泊松分布和SEED生成新的Mission
-        lam = 0.2 * self.SLOT
-        num_missions = self.RNG.poisson(lam)
-        missions = []
-        for i in range(num_missions):
-            mission = Mission(
-                position=self.address,
-                start_time=now,
-                start_slot=start_slot,
-            )
-
-            missions.append(mission)
-
-        return missions
         
     def calc_transmit_signal_power(self) -> float:
         # 简化模型：假设发射功率与带宽成正比

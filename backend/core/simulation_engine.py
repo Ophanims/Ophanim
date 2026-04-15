@@ -5,8 +5,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
 from algorithm.algo_manager import ALGO_MANAGER
+from core.simulation_clock import CLOCK
+from entity.mission import Mission
 from entity.world import WORLD, World
-from backend.topology.link import Link
+from topology.link import Link
 from util.const import DEFAULT_SIMULATION_TIMESLOT
 from util.time_utils import parse_datetime, to_iso_string, to_skyfield_time
 
@@ -16,15 +18,10 @@ from controller.project_controller import GroundStationBase, ProjectBase
 
 class SimulationState(BaseModel):
     """全局快照，用于前端渲染"""
-    timestamp: float = 0.0
-    slot_count: int = 0
-    timeslot: float = 0.0
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    now: Optional[str] = None
-    maximum_slot: Optional[int] = None
+    clock: Dict[str, Any] = Field(default_factory=dict)  # 当前时间、时间槽等信息   
     entities: List[Dict[str, Any]] = Field(default_factory=list)  # 每个实体的快照数据列表
     links: List[Dict[str, Any]] = Field(default_factory=list)     # 每个链路的快照数据列表
+    missions: List[Dict[str, Any]] = Field(default_factory=list)   # 每个任务的快照数据列表
 
 class SimulatorEngine:
     def __init__(self):
@@ -35,13 +32,7 @@ class SimulatorEngine:
         self.state = SimulationState()
         
         self.world = WORLD  # 整合环境、实体和链路的容器
-
-        # 逻辑时间配置（由 project.timeSlot/startTime/endTime 驱动）
-        self.SLOT: float = 0.0
-        self.START_TIME: Optional[datetime] = None
-        self.END_TIME: Optional[datetime] = None
-        self.MAX_SLOT: Optional[int] = None
-        self.SEED: Optional[int] = None
+        self.clock = CLOCK  # 统一的模拟器时钟实例
         
         # 外部钩子（由 FastAPI 注入）
         self.on_render_hook = None 
@@ -58,6 +49,13 @@ class SimulatorEngine:
             snapshots.append(data)
         return snapshots
 
+    def _collect_mission_snapshots(self, missions: List[Mission]) -> List[Dict[str, Any]]:
+        snapshots: List[Dict[str, Any]] = []
+        for m in missions:
+            data = m.serialize()
+            snapshots.append(data)
+        return snapshots
+
     def _collect_link_snapshots(self, links: List[Link]) -> List[Dict[str, Any]]:
         snapshots: List[Dict[str, Any]] = []
         for l in links:
@@ -69,45 +67,19 @@ class SimulatorEngine:
     # --- 生命周期控制 ---
     async def initialize(self, project: ProjectBase, ground_stations: List[GroundStationBase]):
         print("[Engine] Initializing components...")
-        WORLD = World()  # 重置全局环境实例
-        self.world = WORLD
-
-        # timeSlot 作为逻辑步长（秒）
-        self.SLOT = project.timeSlot if project.timeSlot and project.timeSlot > 0 else DEFAULT_SIMULATION_TIMESLOT
-        self.SEED = project.seed if project.seed else None
-            
-        # startTime/endTime 作为逻辑时间范围    
-        T_START = parse_datetime(project.startTime) if project.startTime else None
-        if T_END is None or T_END < self.START_TIME:
-            self.END_TIME = self.START_TIME + timedelta(days=1)
-        else:
-            self.END_TIME = T_END
-            
-        T_END = parse_datetime(project.endTime) if project.endTime else None
-        if T_START is None:
-            self.START_TIME = datetime.now(timezone.utc)
-        else:
-            self.START_TIME = T_START
-
-        # 这里就安全了
-        self.state.start_time = to_iso_string(self.START_TIME)
-        self.state.end_time = to_iso_string(self.END_TIME)
-            
-        # 计算总步数（如果 endTime 可用）
-        SPAN = (self.END_TIME - self.START_TIME).total_seconds()
-        self.MAX_SLOT = max(0, math.floor(SPAN / self.SLOT)) + 1
         
-        self.world.setup(pjc_base=project, gs_base=ground_stations)
+        self.world = WORLD
+        self.world.setup(project, ground_stations)
+
+        self.clock = CLOCK
+        self.clock.setup(project)
             
-        self.state.slot_count = 0
-        self.state.timestamp = 0.0
-        self.state.timeslot = self.SLOT
-        self.state.start_time = to_iso_string(self.START_TIME)
-        self.state.end_time = to_iso_string(self.END_TIME)
-        self.state.now = self.state.start_time
-        self.state.maximum_slot = self.MAX_SLOT
+        self.state.clock = CLOCK.snapshot()
+        
         self.state.entities = self._collect_entity_snapshots(self.world.entities)
         self.state.links = self._collect_link_snapshots(self.world.links)
+        self.state.missions = self._collect_mission_snapshots(self.world.missions)
+        
         self.status = EngineStatus.IDLE
         
         # if self.on_render_hook:
@@ -130,7 +102,7 @@ class SimulatorEngine:
     async def run(self):
         print(f"[Engine] Main loop started at {self.hz}Hz")
         
-        while self.status != EngineStatus.STOPPED and self.state.slot_count < self.MAX_SLOT:
+        while self.status != EngineStatus.STOPPED and self.clock.current_slot < self.clock.END_SLOT:
             start_time = time.perf_counter()
 
             # 1. 处理输入
@@ -139,20 +111,17 @@ class SimulatorEngine:
             # 2. 逻辑更新 (仅在 RUNNING 状态)
             if self.status == EngineStatus.RUNNING:
                 # endTime 到达后自动停止
-                if self.MAX_SLOT is not None and self.state.slot_count >= self.MAX_SLOT:
+                if self.clock.END_SLOT is not None and self.clock.current_slot >= self.clock.END_SLOT:
                     self.status = EngineStatus.STOPPED
                     continue
+                self.clock.tick()  # 推进一个时间槽，更新 current_time 和 current_slot
+                self.world.tick()
 
-                now = self.START_TIME + timedelta(seconds=self.state.slot_count * self.SLOT)
-                skyfield_time = to_skyfield_time(now)
+                self.state.clock = CLOCK.snapshot()
                 
-                self.world.tick(current_time=skyfield_time, current_slot=self.state.slot_count)
-                
-                self.state.timestamp += self.SLOT
-                self.state.slot_count += 1
-                self.state.now = to_iso_string(now)
                 self.state.entities = self._collect_entity_snapshots(self.world.entities)
                 self.state.links = self._collect_link_snapshots(self.world.links)
+                self.state.missions = self._collect_mission_snapshots(self.world.missions)
 
                 # 3. 数据导出/渲染
                 if self.on_render_hook:
