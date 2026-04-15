@@ -4,14 +4,10 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
-from entity.world import World
-from entity.node import Node
-from entity.link import Link, LinkType
-from entity.eth import Earth
-from entity.sun import Sun
-from util.gs_generator import generate_stations
-from util.const import DEFAULT_ALTITUDE, DEFAULT_CONSTELLATION_SIZE, DEFAULT_INCLINATION, DEFAULT_PHASE_FACTOR, DEFAULT_PLANE_COUNT, DEFAULT_SIMULATION_TIMESLOT
-from util.sat_generator import generate_constellation
+from algorithm.algo_manager import ALGO_MANAGER
+from entity.world import WORLD, World
+from backend.topology.link import Link
+from util.const import DEFAULT_SIMULATION_TIMESLOT
 from util.time_utils import parse_datetime, to_iso_string, to_skyfield_time
 
 from entity.entity import Entity
@@ -37,10 +33,8 @@ class SimulatorEngine:
 
         self.status = EngineStatus.IDLE
         self.state = SimulationState()
-        # self.entities: List[Entity] = []
-        # self.links: List[Link] = []
         
-        self.world = World()  # 整合环境、实体和链路的容器
+        self.world = WORLD  # 整合环境、实体和链路的容器
 
         # 逻辑时间配置（由 project.timeSlot/startTime/endTime 驱动）
         self.SLOT: float = 0.0
@@ -52,9 +46,6 @@ class SimulatorEngine:
         # 外部钩子（由 FastAPI 注入）
         self.on_render_hook = None 
         self.input_queue = asyncio.Queue()
-
-    # def add_entity(self, entity: Entity):
-    #     self.entities.append(entity)
 
     def set_render_hook(self, callback):
         """注入 WebSocket 发送逻辑"""
@@ -78,24 +69,25 @@ class SimulatorEngine:
     # --- 生命周期控制 ---
     async def initialize(self, project: ProjectBase, ground_stations: List[GroundStationBase]):
         print("[Engine] Initializing components...")
-        # self.entities.clear()
+        WORLD = World()  # 重置全局环境实例
+        self.world = WORLD
 
         # timeSlot 作为逻辑步长（秒）
         self.SLOT = project.timeSlot if project.timeSlot and project.timeSlot > 0 else DEFAULT_SIMULATION_TIMESLOT
         self.SEED = project.seed if project.seed else None
             
-        # startTime/endTime 作为逻辑时间范围
+        # startTime/endTime 作为逻辑时间范围    
         T_START = parse_datetime(project.startTime) if project.startTime else None
+        if T_END is None or T_END < self.START_TIME:
+            self.END_TIME = self.START_TIME + timedelta(days=1)
+        else:
+            self.END_TIME = T_END
+            
         T_END = parse_datetime(project.endTime) if project.endTime else None
         if T_START is None:
             self.START_TIME = datetime.now(timezone.utc)
         else:
             self.START_TIME = T_START
-            
-        if T_END is None or T_END < self.START_TIME:
-            self.END_TIME = self.START_TIME + timedelta(days=1)
-        else:
-            self.END_TIME = T_END
 
         # 这里就安全了
         self.state.start_time = to_iso_string(self.START_TIME)
@@ -106,47 +98,9 @@ class SimulatorEngine:
         self.MAX_SLOT = max(0, math.floor(SPAN / self.SLOT)) + 1
         
         self.world.setup(pjc_base=project, gs_base=ground_stations)
-        
-        # 根据项目数据创建实体
-        # ALT = project.altitude if project.altitude and project.altitude > 0 else DEFAULT_ALTITUDE
-        # INC = project.inclination if project.inclination and 0 <= project.inclination <= 180 else DEFAULT_INCLINATION
-        # CON_SIZE = project.sizeOfConstellation if project.sizeOfConstellation else DEFAULT_CONSTELLATION_SIZE
-        # P_NUM = project.maximumNumberOfPlane if project.maximumNumberOfPlane else DEFAULT_PLANE_COUNT
-        # PF = project.phaseFactor if project.phaseFactor else DEFAULT_PHASE_FACTOR
-        
-        # satellites = generate_constellation(alt=ALT, inc=INC, P=P_NUM, T=CON_SIZE, F=PF)
-        # stations = generate_stations(gs_models=ground_stations)
-        
-        # sun = Sun()
-        # self.entities.append(sun)  # 添加太阳实体
-        
-        # earth = Earth()
-        # self.entities.append(earth) # 添加地球实体
-        
-        # nodes: List[Node] = satellites + stations
-        
-        # for sat in satellites:
-        #     self.entities.append(sat)
-        
-        # for station in stations:
-        #     self.entities.append(station)
             
-
-        # # 调用每个组件的 setup 方法，传入整个项目数据
-        # for e in self.entities:
-        #     e.setup(project)
-            
-        # # 根据实体列表生成链路（全连接，后续可优化为基于距离或其他规则）
-        # for u in nodes:
-        #     for v in nodes:
-        #         if u != v:
-        #             l = Link(src=u, dst=v)
-        #             l.setup(project)
-        #             self.links.append(l)
-                    
-            
-        self.state.timestamp = 0.0
         self.state.slot_count = 0
+        self.state.timestamp = 0.0
         self.state.timeslot = self.SLOT
         self.state.start_time = to_iso_string(self.START_TIME)
         self.state.end_time = to_iso_string(self.END_TIME)
@@ -192,17 +146,7 @@ class SimulatorEngine:
                 now = self.START_TIME + timedelta(seconds=self.state.slot_count * self.SLOT)
                 skyfield_time = to_skyfield_time(now)
                 
-                # for e in self.entities:
-                #     e.tick(skyfield_time)
-                #     if isinstance(e, Node):
-                #         e.connections.clear()  # 每轮清空连接
-                    
-                # for l in self.links:
-                #     l.refresh()
-                #     if l.status:
-                #         l.src.connections.append(l)
-                
-                self.world.tick(skyfield_time)
+                self.world.tick(current_time=skyfield_time, current_slot=self.state.slot_count)
                 
                 self.state.timestamp += self.SLOT
                 self.state.slot_count += 1

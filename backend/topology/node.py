@@ -3,7 +3,7 @@ from typing import Any, List, TYPE_CHECKING
 from entity.entity import Entity
 
 if TYPE_CHECKING:
-    from entity.link import Link
+    from backend.topology.link import Link
     from entity.mission import Mission
 
 class Node(Entity):

@@ -21,9 +21,9 @@ class Sun(Entity):
         self.y: float = 0.0
         self.z: float = 0.0
 
-    def tick(self, t: Time):
+    def tick(self, current_time: Time, current_slot: int):
         # 更新 ECEF 坐标
-        ast_sun = EARTH.at(t).observe(SUN)
+        ast_sun = EARTH.at(current_time).observe(SUN)
         sun_ecef = ast_sun.apparent().position.m.T
         self.x, self.y, self.z = sun_ecef
 

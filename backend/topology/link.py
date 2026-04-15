@@ -3,7 +3,7 @@ import math
 from typing import List
 import numpy as np
 from pydantic import BaseModel
-from entity.node import Node
+from backend.topology.node import Node
 from controller.project_controller import ProjectBase
 from entity.sat import Satellite
 from entity.gs import GroundStation

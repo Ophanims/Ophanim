@@ -30,6 +30,6 @@ class Entity:
         return f"@{next(cls._id_counter):08d}"
 
     def setup(self, project: ProjectBase): pass
-    def tick(self, t: Time): pass
+    def tick(self, current_time: Time, current_slot: int): pass
     def snapshot(self) -> BaseModel: pass
     def serialize(self) -> dict[str, Any]: pass

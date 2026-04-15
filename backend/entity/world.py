@@ -1,7 +1,7 @@
 from typing import List
 
-from entity.node import Node
-from entity.link import Link
+from backend.topology.node import Node
+from backend.topology.link import Link
 from entity.eth import Earth
 from entity.sun import Sun
 from util.const import DEFAULT_ALTITUDE, DEFAULT_CONSTELLATION_SIZE, DEFAULT_INCLINATION, DEFAULT_PHASE_FACTOR, DEFAULT_PLANE_COUNT
@@ -11,10 +11,14 @@ from controller.project_controller import GroundStationBase, ProjectBase
 from entity.entity import Entity
 from skyfield.timelib import Time
 
-
 class World(Entity):
     def __init__(self):
         super().__init__(type="world")
+        
+        # Environmental Parameters
+        self.SLOT: int = 0
+        self.current_time: Time = None
+        self.current_slot: int = 0
         
         # Environment Entities
         self.entities: List[Entity] = []
@@ -29,6 +33,9 @@ class World(Entity):
         
     def setup(self, pjc_base: ProjectBase, gs_base: List[GroundStationBase]):
         self.clear()  # 清空现有数据
+        
+        self.SLOT = pjc_base.timeSlot
+        
         # 根据项目数据创建实体
         ALT = pjc_base.altitude if pjc_base.altitude and pjc_base.altitude > 0 else DEFAULT_ALTITUDE
         INC = pjc_base.inclination if pjc_base.inclination and 0 <= pjc_base.inclination <= 180 else DEFAULT_INCLINATION
@@ -65,10 +72,12 @@ class World(Entity):
                     self.links.append(l)
                     
                     
-    def tick(self, t: Time):
+    def tick(self, current_time: Time, current_slot: int):
+        self.current_time = current_time
+        self.current_slot = current_slot
         # 更新每个实体的状态
         for e in self.entities:
-            e.tick(t)
+            e.tick(current_time=current_time, current_slot=current_slot)
         # 每个时刻重新计算链路状态
         for n in self.nodes:
             n.connections.clear()
@@ -85,5 +94,6 @@ class World(Entity):
         self.ground_stations.clear()
         self.nodes.clear()
         self.links.clear()
-        
-        
+
+
+WORLD = World()

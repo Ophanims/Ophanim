@@ -4,10 +4,9 @@ from typing import Optional, TYPE_CHECKING
 from pydantic import BaseModel
 
 from status.mission_status import MissionStatus, MissionPhase
-from controller.project_controller import ProjectBase
 
 if TYPE_CHECKING:
-    from entity.node import Node
+    from backend.topology.node import Node
 
 class MissionSnapshot(BaseModel):
     id: str
@@ -22,10 +21,11 @@ class MissionSnapshot(BaseModel):
 
 class Mission():
     _id_counter = itertools.count(1)
-    def __init__(self, position: "Node", start_time: str):
+    def __init__(self, position: "Node", start_time: str, start_slot: int):
         self.id = self._next_unique_id()
         self.status = MissionStatus.IDLE
         self.phase = MissionPhase.UPLOADING
+        self.src = position
         
         self.IMAGE_WIDTH_PX = 10000
         self.IMAGE_HEIGHT_PX = 10000
@@ -37,8 +37,9 @@ class Mission():
         self.position = position
         self.inference_layer = 0
         self.data_size = self.INITIAL_DATA_SIZE_MB
-        self.workload = 0
+        self.workload = self.calc_total_workload()
         self.start_time = start_time
+        self.start_slot = start_slot
         self.end_time = ""
         self.deadline = ""
         
@@ -81,6 +82,12 @@ class Mission():
         feature_height = self.IMAGE_HEIGHT_PX / (2 ** layer_num)
         workload = feature_width * feature_height * 256 * 1000  # 256是每层的特征图数量
         return workload
+    
+    def calc_total_workload(self):
+        total_workload = 0
+        for layer in range(self.MAXIMUM_INFERENCE_LAYER):
+            total_workload += self.calc_layer_workload(layer)
+        return total_workload
 
     def snapshot(self) -> MissionSnapshot:
         return MissionSnapshot(

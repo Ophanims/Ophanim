@@ -8,8 +8,10 @@ from skyfield.timelib import Time
 from skyfield.positionlib import Geocentric
 from status.mission_status import MissionPhase
 from util.time_utils import skyfield_to_datetime
+from algorithm.algo import Algorithm
+from algorithm.algo_manager import ALGO_MANAGER
 from entity.mission import Mission
-from entity.node import Node
+from backend.topology.node import Node
 from controller.project_controller import ProjectBase
 from entity.entity import Entity, EntityType
 from util.const import EARTH, EPHEMERIS, GEOD, SUN
@@ -129,6 +131,8 @@ class Satellite(EarthSatellite, Node):
         self.cor_y_4 = 0.0
         self.cor_z_4 = 0.0
         
+        self.SLOT: int = 0
+        
         # 观测参数
         self.IMAGERY_WIDTH: int = 0
         self.IMAGERY_HEIGHT: int = 0
@@ -196,8 +200,14 @@ class Satellite(EarthSatellite, Node):
         self.onCOM: bool = True
         self.onISL: bool = False
         self.onSUN: bool = False
+
+        # 可插拔算法（感知 -> 决策 -> 执行）
+        self.algorithm_name: str = "default"
+        self.algorithm: Algorithm = ALGO_MANAGER.create(self.algorithm_name)
         
     def setup(self, project: ProjectBase):
+        self.SLOT = int(project.timeSlot or 0)
+        
         # 从项目数据中提取卫星属性
         self.IMAGERY_WIDTH = int(project.imageryWidthPx or 0)
         self.IMAGERY_HEIGHT = int(project.imageryHeightPx or 0)
@@ -244,9 +254,9 @@ class Satellite(EarthSatellite, Node):
         self.STATIC_POWER_OF_OTHERS = float(project.staticPowerOfOthersW or 0.0)
         self.calc_transmit_signal_power()
 
-    def tick(self, t: Time):
+    def tick(self, current_time: Time, current_slot: int):
         # 1. 更新状态
-        self.move(t)
+        self.move(current_time, current_slot)
         # 2. 进行观测
         state = self.observe()
         # 3. 制定策略
@@ -256,7 +266,7 @@ class Satellite(EarthSatellite, Node):
        
     """为了专注于Task Offloading，创立此函数生成任务从而简化仿真流程，跳过上传和观测阶段""" 
     # =============================================================================
-    def generate_missions(self, t: Time) -> list[Mission]:
+    def generate_missions(self, t: Time, slot: int) -> list[Mission]:
         _now = skyfield_to_datetime(t).isoformat()
         # 随机数生成器，使用卫星地址的哈希值作为种子，确保同一卫星在不同轮次生成的任务分布相似
         rng = np.random.default_rng(hash(self.address) % (2**32))
@@ -266,6 +276,7 @@ class Satellite(EarthSatellite, Node):
             mission = Mission(
                 position=self,
                 start_time=_now,
+                start_slot=slot,
             )
             mission.setup(
                 w_px=self.IMAGERY_WIDTH, 
@@ -277,7 +288,7 @@ class Satellite(EarthSatellite, Node):
         return random_missions
     # =============================================================================
     
-    def move(self, t: Time):
+    def move(self, t: Time, slot: int):
         # 更新卫星状态
         geocentric = self.at(t)
         self.onSUN = geocentric.is_sunlit(EPHEMERIS)
@@ -287,16 +298,35 @@ class Satellite(EarthSatellite, Node):
         self.calc_subpoint(geocentric)
         self.calc_footprint(t)
         # 生成任务
-        self.missions.extend(self.generate_missions(t))
+        self.missions.extend(self.generate_missions(t, slot))
+        
+    def is_sunlit(self, t_slot: Time) -> bool:
+        geocentric = self.at(t_slot)
+        return geocentric.is_sunlit(EPHEMERIS)
+
+    def set_algorithm(self, name: str):
+        self.algorithm_name = name
+        self.algorithm = ALGO_MANAGER.create(name)
         
     def observe(self) -> Dict[str, Any]:
-        pass 
+        return self.algorithm.observe(self)
    
     def decide(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        pass
+        return self.algorithm.decide(self, state)
     
     def act(self, action: Dict[str, Any]):
-        pass
+        self.algorithm.act(self, action)
+        
+    def get_orbital_cycle(self) -> float:
+        """计算卫星的轨道周期，单位为秒"""
+        # SGP4 mean motion: radians per minute.
+        mean_motion_rad_per_min = float(self.model.no_kozai or 0.0)
+
+        if mean_motion_rad_per_min <= 0.0:
+            return 0.0
+
+        orbital_cycle_min = (2.0 * np.pi) / mean_motion_rad_per_min
+        return float(orbital_cycle_min * 60.0)
 
     def calc_transmit_signal_power(self):
         # 简化模型：假设发射功率与带宽成正比
