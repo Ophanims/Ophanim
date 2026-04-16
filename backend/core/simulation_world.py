@@ -17,7 +17,7 @@ from util.gs_generator import generate_stations
 from util.sat_generator import generate_constellation
 from controller.project_controller import GroundStationBase, ProjectBase
 from entity.entity import Entity
-from skyfield.timelib import Time
+from skyfield.timelib import Time, timedelta
 
 class SimulationWorld(Entity):
     def __init__(self):
@@ -71,17 +71,41 @@ class SimulationWorld(Entity):
         for e in self.entities:
             e.setup(pjc_base)
         
-        # 根据实体列表生成链路（全连接，后续可优化为基于距离或其他规则）
-        for u in self.nodes:
-            for v in self.nodes:
-                if u != v:
-                    l = Link(src=u, dst=v)
-                    l.setup(pjc_base)
-                    self.links.append(l)
+        # 仅构造物理上可能存在的链路，避免 O(N^2) 全连接导致初始化/每帧过慢。
+        for sat_src in self.satellites:
+            for sat_dst in self.satellites:
+                if sat_src is sat_dst:
+                    continue
+
+                plane_diff = abs(sat_src.plane - sat_dst.plane)
+                order_diff = abs(sat_src.order - sat_dst.order)
+                same_plane = plane_diff == 0
+                adjacent_plane_same_order = plane_diff == 1 and order_diff == 0
+
+                if not (same_plane or adjacent_plane_same_order):
+                    continue
+
+                link = Link(src=sat_src, dst=sat_dst)
+                link.setup(pjc_base)
+                self.links.append(link)
+
+        for sat in self.satellites:
+            for gs in self.ground_stations:
+                uplink = Link(src=gs, dst=sat)
+                uplink.setup(pjc_base)
+                self.links.append(uplink)
+
+                downlink = Link(src=sat, dst=gs)
+                downlink.setup(pjc_base)
+                self.links.append(downlink)
                     
                     
     def tick(self):
-        self.missions.extend(self.generate_missions())  # 生成新的任务
+        _new_missions = self.generate_missions()
+        self.missions.extend(_new_missions)
+        
+        for m in self.missions:
+            m.tick()
         # 更新每个实体的状态
         for e in self.entities:
             e.tick()
@@ -102,12 +126,22 @@ class SimulationWorld(Entity):
         rng = np.random.default_rng(self.SEED)
         num_missions = rng.poisson(lam)
         random_missions = []
+        
+        # 模拟预定/未来到达任务的生成，随机选择一个卫星和一个未来的时间点
+        # _cyc, _cyc_st = self.satellites[0].get_orbital_cycle()
+        # _max = _cyc_st - 1
+        _max = timedelta(days=1).seconds // CLOCK.SLOT  # 以一天为周期，单位为slot
+        _min = 0
+        _dt_st = rng.integers(_min, _max) if _max > _min else 0
+        _dt = _dt_st * CLOCK.SLOT
+        
         for i in range(num_missions):
-            random_pos = rng.choice(self.satellites)  # 从卫星列表中随机选择一个位置
+            # random_pos = rng.choice(self.ground_stations)
+            random_pos = rng.choice(self.satellites)
             mission = Mission(
                 position=random_pos,
-                start_time=CLOCK.current_time,
-                start_slot=CLOCK.current_slot,
+                start_time=CLOCK.current_time + _dt,
+                start_slot=CLOCK.current_slot + _dt_st,
             )
             mission.create(
                 w_px=random_pos.IMAGERY_WIDTH, 
@@ -126,6 +160,7 @@ class SimulationWorld(Entity):
         self.ground_stations.clear()
         self.nodes.clear()
         self.links.clear()
+        self.missions.clear()
 
 
 WORLD = SimulationWorld()

@@ -4,6 +4,7 @@ from typing import Any, Optional, TYPE_CHECKING
 from pydantic import BaseModel
 from skyfield.timelib import Time
 
+from core.simulation_clock import CLOCK
 from status.mission_status import MissionStatus, MissionPhase
 from entity.process import Process
 from util.time_utils import skyfield_to_datetime
@@ -24,7 +25,7 @@ class MissionSnapshot(BaseModel):
 
 class Mission():
     _id_counter = itertools.count(1)
-    def __init__(self, position: "Node", start_time: Any, start_slot: int):
+    def __init__(self, position: "Node", start_time: Time, start_slot: int):
         self.id = self._next_unique_id()
         self.status = MissionStatus.IDLE
         self.phase = MissionPhase.UPLOADING
@@ -43,8 +44,11 @@ class Mission():
         self.workload = self.calc_total_workload()
         self.start_time = start_time
         self.start_slot = start_slot
-        self.end_time = ""
-        self.deadline = ""
+        self.end_time = None
+        self.end_slot = 0
+        # ddl 为1分钟后，单位为秒
+        self.deadline = start_time + 60
+        self.deadline_slot = start_slot + int(60 / CLOCK.SLOT)
         
     @classmethod
     def _next_unique_id(cls) -> str:
@@ -58,6 +62,18 @@ class Mission():
         self.CHANNEL_PER_PIXEL = cpp
         
         self.data_size = self.calc_image_data_size_mb()
+        
+    def tick(self):
+        if CLOCK.current_time is not None and self.deadline is not None and \
+        CLOCK.current_time.utc_datetime() >= self.deadline.utc_datetime() and \
+        self.status != MissionStatus.COMPLETED:
+            self.status = MissionStatus.FAILED
+            
+        if CLOCK.current_time is not None and self.start_time is not None and \
+        CLOCK.current_time.utc_datetime() >= self.start_time.utc_datetime() and \
+        self.phase == MissionPhase.UPLOADING:
+            # 省略Sensoring的过程，直接进入Computing阶段
+            self.phase = MissionPhase.COMPUTING
         
     def to_transmit(self, target: "Node", processed_vol: float) -> Process:
         self.status = MissionStatus.TRANSMITTING

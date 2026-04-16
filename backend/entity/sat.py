@@ -1,3 +1,4 @@
+import math
 from typing import Any, Dict
 
 import numpy as np
@@ -260,11 +261,11 @@ class Satellite(EarthSatellite, Node):
         # 1. 更新状态
         self.move()
         # 2. 进行观测
-        state = self.observe()
-        # 3. 制定策略
-        action = self.decide(state)
-        # 4. 执行决策
-        self.act(action)
+        # state = self.observe()
+        # # 3. 制定策略
+        # action = self.decide(state)
+        # # 4. 执行决策
+        # self.act(action)
        
     
     def move(self):
@@ -297,15 +298,15 @@ class Satellite(EarthSatellite, Node):
         self.algorithm = ALGO_MANAGER.create(name)
         
     def observe(self) -> Dict[str, Any]:
-        pass
+        return self.algorithm.observe(self)
    
     def decide(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        pass
+        return self.algorithm.decide(self, state)
     
     def act(self, action: Dict[str, Any]):
-        pass
+        self.algorithm.act(self, action)
         
-    def get_orbital_cycle(self) -> float:
+    def get_orbital_cycle(self) -> tuple[float, int]:
         """计算卫星的轨道周期，单位为秒"""
         # SGP4 mean motion: radians per minute.
         mean_motion_rad_per_min = float(self.model.no_kozai or 0.0)
@@ -314,7 +315,9 @@ class Satellite(EarthSatellite, Node):
             return 0.0
 
         orbital_cycle_min = (2.0 * np.pi) / mean_motion_rad_per_min
-        return float(orbital_cycle_min * 60.0)
+        seconds = float(orbital_cycle_min * 60.0)
+        slots = math.ceil(seconds / CLOCK.SLOT) if CLOCK.SLOT > 0 else 0
+        return seconds, slots
 
     def calc_transmit_signal_power(self):
         # 简化模型：假设发射功率与带宽成正比
