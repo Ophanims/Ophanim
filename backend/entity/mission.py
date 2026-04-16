@@ -1,4 +1,5 @@
 import itertools
+from datetime import timedelta
 from typing import Any, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ from core.simulation_clock import CLOCK
 from status.mission_status import MissionStatus, MissionPhase
 from entity.process import Process
 from util.time_utils import skyfield_to_datetime
+from util.time_utils import to_skyfield_time
 
 if TYPE_CHECKING:
     from topology.node import Node
@@ -46,8 +48,8 @@ class Mission():
         self.start_slot = start_slot
         self.end_time = None
         self.end_slot = 0
-        # ddl 为1分钟后，单位为秒
-        self.deadline = start_time + 60
+        # ddl 精确为 start_time 之后 60 秒
+        self.deadline = to_skyfield_time(skyfield_to_datetime(start_time) + timedelta(seconds=60))
         self.deadline_slot = start_slot + int(60 / CLOCK.SLOT)
         
     @classmethod
@@ -161,6 +163,11 @@ class Mission():
             end_time = skyfield_to_datetime(self.end_time).isoformat()
         else:
             end_time = str(self.end_time)
+            
+        if isinstance(self.deadline, Time):
+            deadline = skyfield_to_datetime(self.deadline).isoformat()
+        else:
+            deadline = str(self.deadline)
 
         return MissionSnapshot(
             id=self.id,
@@ -171,7 +178,7 @@ class Mission():
             workload=self.workload,
             start_time=start_time,
             end_time=end_time,
-            deadline=str(self.deadline),
+            deadline=deadline,
         )
 
     def serialize(self) -> dict:
