@@ -19,6 +19,11 @@ if TYPE_CHECKING:
    from entity.sat import Satellite
 
 
+_CACHE_SLOT_ANCHOR: int | None = None
+_SLOT_TIME_CACHE: Dict[int, Any] = {}
+_SUNLIT_CACHE: Dict[Tuple[str, int], bool] = {}
+
+
 
 
 class PhoenixAlgorithm(Algorithm):
@@ -27,7 +32,6 @@ class PhoenixAlgorithm(Algorithm):
    2) Orbit-based Offloading
    3) Processing Arrangement
    """
-
 
    def observe(self, satellite: "Satellite") -> Dict[str, Any]:
        pending_tasks = [
@@ -316,12 +320,43 @@ class PhoenixAlgorithm(Algorithm):
    # ---------------------------
    # Helpers
    # ---------------------------
+   def _ensure_cache_epoch(self) -> None:
+       global _CACHE_SLOT_ANCHOR
+       current_slot = int(CLOCK.current_slot or 0)
+       if _CACHE_SLOT_ANCHOR != current_slot:
+           _CACHE_SLOT_ANCHOR = current_slot
+           _SLOT_TIME_CACHE.clear()
+           _SUNLIT_CACHE.clear()
+
+
    def _slot_to_time(self, slot: int):
+       self._ensure_cache_epoch()
+       slot_i = int(slot)
+       cached = _SLOT_TIME_CACHE.get(slot_i)
+       if cached is not None:
+           return cached
+
        if CLOCK.current_datetime is None:
            return CLOCK.current_time
        delta_slots = max(0, int(slot) - int(CLOCK.current_slot))
        dt = CLOCK.current_datetime + timedelta(seconds=delta_slots * CLOCK.SLOT)
-       return to_skyfield_time(dt)
+       t = to_skyfield_time(dt)
+       _SLOT_TIME_CACHE[slot_i] = t
+       return t
+
+
+   def _is_sunlit_cached(self, sat: "Satellite", slot: int) -> bool:
+       self._ensure_cache_epoch()
+       slot_i = int(slot)
+       key = (sat.address, slot_i)
+       cached = _SUNLIT_CACHE.get(key)
+       if cached is not None:
+           return cached
+
+       t = self._slot_to_time(slot_i)
+       value = bool(sat.is_sunlit(t))
+       _SUNLIT_CACHE[key] = value
+       return value
 
 
    def _sunlit_slots_for_sat(self, sat: "Satellite", start_slot: int, slots_num: int) -> int:
@@ -329,8 +364,7 @@ class PhoenixAlgorithm(Algorithm):
            return 0
        cnt = 0
        for tau in range(start_slot, start_slot + slots_num):
-           t = self._slot_to_time(tau)
-           if sat.is_sunlit(t):
+           if self._is_sunlit_cached(sat, tau):
                cnt += 1
        return cnt
 
@@ -346,8 +380,7 @@ class PhoenixAlgorithm(Algorithm):
        _, cyc_slots = sat.get_orbital_cycle()
        horizon = max(int(cyc_slots or 0), 1)
        for tau in range(earliest_slot, earliest_slot + horizon):
-           t = self._slot_to_time(tau)
-           if sat.is_sunlit(t):
+           if self._is_sunlit_cached(sat, tau):
                return tau
        return earliest_slot
 

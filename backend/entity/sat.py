@@ -261,11 +261,11 @@ class Satellite(EarthSatellite, Node):
         # 1. 更新状态
         self.move()
         # 2. 进行观测
-        # state = self.observe()
-        # # 3. 制定策略
-        # action = self.decide(state)
-        # # 4. 执行决策
-        # self.act(action)
+        state = self.observe()
+        # 3. 制定策略
+        action = self.decide(state)
+        # 4. 执行决策
+        self.act(action)
        
     
     def move(self):
