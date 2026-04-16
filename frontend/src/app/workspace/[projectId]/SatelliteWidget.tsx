@@ -133,20 +133,20 @@ export default function SatelliteWidget({ satellite, scale, showFootprint = true
       {showFootprint && geometries ? (
         <>
           <mesh geometry={geometries.side1}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} side={THREE.DoubleSide} />
+            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
           </mesh>
           <mesh geometry={geometries.side2}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} side={THREE.DoubleSide} />
+            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
           </mesh>
           <mesh geometry={geometries.side3}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} side={THREE.DoubleSide} />
+            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
           </mesh>
           <mesh geometry={geometries.side4}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} side={THREE.DoubleSide} />
+            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
           </mesh>
-          <mesh geometry={geometries.base}>
+          {/* <mesh geometry={geometries.base}>
             <meshStandardMaterial color={footprintColor} transparent opacity={0.5} side={THREE.DoubleSide} />
-          </mesh>
+          </mesh> */}
         </>
       ) : null}
     </group>
