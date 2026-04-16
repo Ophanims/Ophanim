@@ -16,7 +16,11 @@ function toScenePosition(x: number, y: number, z: number, scale: number): Vec3 {
   return [x * scale, y * scale, z * scale];
 }
 
-function createTriangleGeometry(a: Vec3, b: Vec3, c: Vec3): THREE.BufferGeometry {
+function createTriangleGeometry(
+  a: Vec3,
+  b: Vec3,
+  c: Vec3,
+): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
@@ -27,7 +31,12 @@ function createTriangleGeometry(a: Vec3, b: Vec3, c: Vec3): THREE.BufferGeometry
   return geometry;
 }
 
-function createQuadGeometry(a: Vec3, b: Vec3, c: Vec3, d: Vec3): THREE.BufferGeometry {
+function createQuadGeometry(
+  a: Vec3,
+  b: Vec3,
+  c: Vec3,
+  d: Vec3,
+): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
@@ -38,13 +47,22 @@ function createQuadGeometry(a: Vec3, b: Vec3, c: Vec3, d: Vec3): THREE.BufferGeo
   return geometry;
 }
 
-export default function SatelliteWidget({ satellite, scale, showFootprint = true }: SatelliteWidgetProps) {
+export default function SatelliteWidget({
+  satellite,
+  scale,
+  showFootprint = true,
+}: SatelliteWidgetProps) {
   const bodyColor = satellite.onSUN ? "#ffff00" : "#8000ff";
   const projectionColor = "#ffffff";
   const footprintColor = "#facc15";
 
   const bodySize: Vec3 = [0.03, 0.03, 0.03];
-  const position = toScenePosition(satellite.x, satellite.y, satellite.z, scale);
+  const position = toScenePosition(
+    satellite.x,
+    satellite.y,
+    satellite.z,
+    scale,
+  );
 
   const bodyQuaternion = useMemo(() => {
     const pos = new THREE.Vector3(...position);
@@ -60,11 +78,14 @@ export default function SatelliteWidget({ satellite, scale, showFootprint = true
     );
 
     // Use velocity projected onto the tangent plane as local +X axis.
-    let xAxis = velocity.clone().sub(zAxis.clone().multiplyScalar(velocity.dot(zAxis)));
+    let xAxis = velocity
+      .clone()
+      .sub(zAxis.clone().multiplyScalar(velocity.dot(zAxis)));
     if (xAxis.lengthSq() < 1e-12) {
-      const fallback = Math.abs(zAxis.y) < 0.95
-        ? new THREE.Vector3(0, 1, 0)
-        : new THREE.Vector3(1, 0, 0);
+      const fallback =
+        Math.abs(zAxis.y) < 0.95
+          ? new THREE.Vector3(0, 1, 0)
+          : new THREE.Vector3(1, 0, 0);
       xAxis = fallback.sub(zAxis.clone().multiplyScalar(fallback.dot(zAxis)));
     }
     xAxis.normalize();
@@ -76,10 +97,30 @@ export default function SatelliteWidget({ satellite, scale, showFootprint = true
   }, [position, satellite.velocityVector]);
 
   const corners = useMemo<Vec3[]>(() => {
-    const c1 = toScenePosition(satellite.corX1, satellite.corY1, satellite.corZ1, scale);
-    const c2 = toScenePosition(satellite.corX2, satellite.corY2, satellite.corZ2, scale);
-    const c3 = toScenePosition(satellite.corX3, satellite.corY3, satellite.corZ3, scale);
-    const c4 = toScenePosition(satellite.corX4, satellite.corY4, satellite.corZ4, scale);
+    const c1 = toScenePosition(
+      satellite.corX1,
+      satellite.corY1,
+      satellite.corZ1,
+      scale,
+    );
+    const c2 = toScenePosition(
+      satellite.corX2,
+      satellite.corY2,
+      satellite.corZ2,
+      scale,
+    );
+    const c3 = toScenePosition(
+      satellite.corX3,
+      satellite.corY3,
+      satellite.corZ3,
+      scale,
+    );
+    const c4 = toScenePosition(
+      satellite.corX4,
+      satellite.corY4,
+      satellite.corZ4,
+      scale,
+    );
 
     const all = [c1, c2, c3, c4];
     return all.filter((p) => p.every((v) => Number.isFinite(v)));
@@ -127,22 +168,54 @@ export default function SatelliteWidget({ satellite, scale, showFootprint = true
     <group>
       <mesh position={position} quaternion={bodyQuaternion}>
         <boxGeometry args={bodySize} />
-        <meshStandardMaterial color={bodyColor} emissive={bodyColor} emissiveIntensity={0.2} />
+        <meshStandardMaterial
+          color={bodyColor}
+          emissive={bodyColor}
+          emissiveIntensity={0.2}
+        />
       </mesh>
 
       {showFootprint && geometries ? (
         <>
           <mesh geometry={geometries.side1}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
+            <meshStandardMaterial
+              color={projectionColor}
+              transparent
+              opacity={0.2}
+              emissiveIntensity={0.2}
+              emissive={projectionColor}
+              side={THREE.DoubleSide}
+            />
           </mesh>
           <mesh geometry={geometries.side2}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
+            <meshStandardMaterial
+              color={projectionColor}
+              transparent
+              opacity={0.2}
+              emissiveIntensity={0.2}
+              emissive={projectionColor}
+              side={THREE.DoubleSide}
+            />
           </mesh>
           <mesh geometry={geometries.side3}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
+            <meshStandardMaterial
+              color={projectionColor}
+              transparent
+              opacity={0.2}
+              emissiveIntensity={0.2}
+              emissive={projectionColor}
+              side={THREE.DoubleSide}
+            />
           </mesh>
           <mesh geometry={geometries.side4}>
-            <meshStandardMaterial color={projectionColor} transparent opacity={0.2} emissive={0.5} side={THREE.DoubleSide} />
+            <meshStandardMaterial
+              color={projectionColor}
+              transparent
+              opacity={0.2}
+              emissiveIntensity={0.2}
+              emissive={projectionColor}
+              side={THREE.DoubleSide}
+            />
           </mesh>
           {/* <mesh geometry={geometries.base}>
             <meshStandardMaterial color={footprintColor} transparent opacity={0.5} side={THREE.DoubleSide} />
