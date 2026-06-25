@@ -252,7 +252,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
 
               {draftProject ? (
                 <div className="space-y-3">
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">Basic</p>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
                       <div>
@@ -276,7 +276,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">
                       Simulation Parameters
                     </p>
@@ -344,7 +344,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">
                       Orbital Parameters
                     </p>
@@ -439,7 +439,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">
                       Observation Parameters
                     </p>
@@ -560,7 +560,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">
                       Computation Parameters
                     </p>
@@ -660,7 +660,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">
                       Communication Parameters
                     </p>
@@ -1000,7 +1000,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded border p-3">
+                  <div className="p-4 border-b">
                     <p className="mb-2 text-sm font-semibold">
                       Energy Parameters
                     </p>
