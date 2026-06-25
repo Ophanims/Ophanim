@@ -10,8 +10,8 @@ export default function SaveConfirmDialog({ open, onSave, onDiscard }: SaveConfi
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-80 rounded-xl border border-white/15 bg-neutral-900 p-6 shadow-2xl backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+      <div className="w-80 rounded-xl border bg-black/30 p-6">
         <h2 className="mb-2 text-lg font-semibold">Save Record?</h2>
         <p className="mb-6 text-sm text-white/70">
           Do you want to save the simulation timeline data?
@@ -19,7 +19,7 @@ export default function SaveConfirmDialog({ open, onSave, onDiscard }: SaveConfi
         <div className="flex justify-end gap-3">
           <button
             onClick={onDiscard}
-            className="rounded-lg border border-white/20 px-4 py-2 text-sm transition hover:bg-white/10"
+            className="rounded-lg border px-4 py-2 text-sm transition hover:bg-white/10"
           >
             Discard
           </button>
