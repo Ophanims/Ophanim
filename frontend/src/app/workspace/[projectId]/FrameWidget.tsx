@@ -86,7 +86,7 @@ export default function FrameWidget({
       >
         <color attach="background" args={[bgColor]} />
         <ambientLight intensity={ambientIntensity} />
-        <directionalLight position={sunLightPosition} intensity={2} />
+        {!isLight ? <directionalLight position={sunLightPosition} intensity={2} /> : null}
         <EarthWidget
           mode={earthMode}
           radius={earthRadius}

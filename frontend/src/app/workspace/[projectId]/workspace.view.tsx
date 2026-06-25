@@ -13,7 +13,6 @@ import type {
   SatelliteSummary,
   SimulationRecord,
 } from "./workspace.model";
-import Earth from "@/app/section/earthbg";
 
 type WorkspaceViewProps = {
   projectId: string;
@@ -162,10 +161,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
     Number.isFinite(newStationAlt);
 
   return (
-    <main className="w-full h-screen bg-black text-white relative font-sans overflow-hidden">
-      <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <Earth isFull={false} />
-      </div>
+    <main className="w-full h-screen text-white relative font-sans overflow-hidden">
       <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
         <div className="h-screen w-full mx-auto max-w-6xl overflow-y-auto p-20">
           <div className="mb-6 flex items-center justify-between">

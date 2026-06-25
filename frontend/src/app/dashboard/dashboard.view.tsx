@@ -6,7 +6,6 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import Earth from "../section/earthbg";
 import type { FormState, Project } from "./dashboard.model";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -505,10 +504,7 @@ export default function DashboardView(props: DashboardViewProps) {
   const [showButtons, setShowButtons] = useState<boolean>(false);
 
   return (
-    <main className="w-full h-screen bg-black text-white relative font-sans overflow-hidden">
-      <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <Earth isFull={false} />
-      </div>
+    <main className="w-full h-screen text-white relative font-sans overflow-hidden">
       <div className="absolute inset-0 flex flex-col items-center justify-center px-40 z-20">
         <div className="flex w-full">
           <section className="w-1/2 px-12">

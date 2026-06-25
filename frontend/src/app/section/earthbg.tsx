@@ -1,24 +1,60 @@
+"use client";
+
 import { useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { PerspectiveCamera, Stars, useTexture } from "@react-three/drei";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { PerspectiveCamera, Stars } from "@react-three/drei";
+import { TextureLoader } from "three";
 import * as THREE from "three";
+
+const INITIAL_ROTATION_OFFSET_Y = -2.63;
 
 // 只能在 Canvas 内部调用 hooks
 function EarthModel() {
-  const mesh = useRef<THREE.Mesh>(null);
-  const texture = useTexture("/planet_texture/earth_texture.jpg");
+  const earthGroup = useRef<THREE.Group>(null);
+  const atmoGroup = useRef<THREE.Group>(null);
+  const texture = useLoader(TextureLoader, "/planet_texture/earth_texture_hd.jpg");
+  const cloudTexture = useLoader(TextureLoader, "/planet_texture/clouds_texture_hd.jpg");
 
   useFrame(() => {
-    if (mesh.current) {
-      mesh.current.rotation.y += 0.0005;
+    if (earthGroup.current) {
+      earthGroup.current.rotation.y += 0.0005;
+    }
+    if (atmoGroup.current) {
+      atmoGroup.current.rotation.y += 0.0009; // 大气/云层比地表快 1.8 倍
     }
   });
 
   return (
-    <mesh ref={mesh} position={[0, 0, 0]}>
-      <sphereGeometry args={[2, 64, 64]} />
-      <meshStandardMaterial map={texture} roughness={1} metalness={0.1} />
-    </mesh>
+    <>
+      {/* 大气与云层（快速旋转） */}
+      <group ref={atmoGroup} rotation={[0, INITIAL_ROTATION_OFFSET_Y, 0]}>
+        {/* 大气发光层 */}
+        <mesh>
+          <sphereGeometry args={[2.08, 64, 64]} />
+          <meshBasicMaterial color={0xffffff} transparent opacity={0.1} depthWrite={false} />
+        </mesh>
+
+        {/* 云层 */}
+        <mesh>
+          <sphereGeometry args={[2.04, 64, 64]} />
+          <meshPhongMaterial
+            color={0xffffff}
+            alphaMap={cloudTexture}
+            transparent
+            opacity={0.8}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+
+      {/* 地表（慢速旋转） */}
+      <group ref={earthGroup} rotation={[0, INITIAL_ROTATION_OFFSET_Y, 0]}>
+        <mesh>
+          <sphereGeometry args={[2, 64, 64]} />
+          <meshStandardMaterial map={texture} roughness={0.8} metalness={0.02} />
+        </mesh>
+      </group>
+    </>
   );
 }
 

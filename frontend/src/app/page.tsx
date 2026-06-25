@@ -1,8 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Navbar from "./section/navbar";
-import Earth from "./section/earthbg";
 
 export default function Home() {
   const router = useRouter();
@@ -12,9 +10,6 @@ export default function Home() {
   };
   return (
     <div className="w-full h-screen text-white relative font-sans overflow-hidden">
-      <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <Earth isFull={false} />
-      </div>
       {/* Hero Section */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-20 px-6 max-w-3xl mx-auto select-none">
         <h1 className="text-6xl font-extrabold mb-6 tracking-tight drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">

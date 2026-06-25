@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import Navbar from "./section/navbar";
+import Earth from "./section/earthbg";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +30,12 @@ export default function RootLayout({
         className={`select-none ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar />
-        {children}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <Earth isFull={false} />
+        </div>
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );
