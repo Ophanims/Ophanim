@@ -121,7 +121,7 @@ export default function RecordView({
       </div>
 
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <FrameWidget satellites={satellites} slotCount={Math.max(frameIndex, 0)} settings={settings} />
+        <FrameWidget satellites={satellites} slotCount={frameIndex >= 0 ? frameSlots[frameIndex] : 0} settings={settings} />
       </div>
     </main>
   );

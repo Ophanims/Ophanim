@@ -112,7 +112,7 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     return frameSlots.indexOf(selectedFrameSlot);
   }, [frameSlots, selectedFrameSlot]);
 
-  // 当前帧对应的卫星快照
+  // 当前帧对应的卫星快照（坐标转换与 simulation.controller.ts 一致）
   const satellites = useMemo(() => {
     if (!recordSeries || selectedFrameSlot === null) return [];
     const out: SatellitePoint[] = [];
@@ -123,8 +123,8 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
       if (!payload || (entityType !== "satellite" && entityType !== "earth_satellite")) continue;
 
       const x = Number(payload.x);
-      const y = Number(payload.y);
-      const z = Number(payload.z);
+      const y = Number(payload.z);        // backend z → scene y
+      const z = -Number(payload.y);       // backend y → scene -z
       if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
       out.push({
         addr: String(p.entity_id ?? payload.id ?? "unknown"),
@@ -135,35 +135,43 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
         x,
         y,
         z,
-        velocityVector: [0, 0, 0],
-        solarVector: [0, 0, 0],
-        corLat1: 0,
-        corLon1: 0,
-        corLat2: 0,
-        corLon2: 0,
-        corLat3: 0,
-        corLon3: 0,
-        corLat4: 0,
-        corLon4: 0,
-        corX1: 0,
-        corY1: 0,
-        corZ1: 0,
-        corX2: 0,
-        corY2: 0,
-        corZ2: 0,
-        corX3: 0,
-        corY3: 0,
-        corZ3: 0,
-        corX4: 0,
-        corY4: 0,
-        corZ4: 0,
-        batteryLevel: 0,
-        processorClockFrequency: 0,
-        onROI: false,
-        onSUN: false,
-        onSGL: false,
-        onISL: false,
-        onCOM: false,
+        velocityVector: [
+          Number(payload.velocityVectorX ?? 0),
+          Number(payload.velocityVectorZ ?? 0),
+          -Number(payload.velocityVectorY ?? 0),
+        ] as [number, number, number],
+        solarVector: [
+          Number(payload.solarVectorX ?? 0),
+          Number(payload.solarVectorZ ?? 0),
+          -Number(payload.solarVectorY ?? 0),
+        ] as [number, number, number],
+        corLat1: Number(payload.corLat1 ?? 0),
+        corLon1: Number(payload.corLon1 ?? 0),
+        corLat2: Number(payload.corLat2 ?? 0),
+        corLon2: Number(payload.corLon2 ?? 0),
+        corLat3: Number(payload.corLat3 ?? 0),
+        corLon3: Number(payload.corLon3 ?? 0),
+        corLat4: Number(payload.corLat4 ?? 0),
+        corLon4: Number(payload.corLon4 ?? 0),
+        corX1: Number(payload.corX1 ?? 0),
+        corY1: Number(payload.corZ1 ?? 0),
+        corZ1: -Number(payload.corY1 ?? 0),
+        corX2: Number(payload.corX2 ?? 0),
+        corY2: Number(payload.corZ2 ?? 0),
+        corZ2: -Number(payload.corY2 ?? 0),
+        corX3: Number(payload.corX3 ?? 0),
+        corY3: Number(payload.corZ3 ?? 0),
+        corZ3: -Number(payload.corY3 ?? 0),
+        corX4: Number(payload.corX4 ?? 0),
+        corY4: Number(payload.corZ4 ?? 0),
+        corZ4: -Number(payload.corY4 ?? 0),
+        batteryLevel: Number(payload.batteryLevel ?? 0),
+        processorClockFrequency: Number(payload.processorClockFrequency ?? 0),
+        onROI: Boolean(payload.onROI ?? false),
+        onSUN: Boolean(payload.onSUN ?? false),
+        onSGL: Boolean(payload.onSGL ?? false),
+        onISL: Boolean(payload.onISL ?? false),
+        onCOM: Boolean(payload.onCOM ?? false),
       });
     }
     return out;
