@@ -1292,7 +1292,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     {groundStations.map((gs) => (
                       <div
                         key={gs.id}
-                        className="flex items-center justify-between rounded border p-2 text-sm"
+                        className="flex items-center justify-between rounded py-2 text-sm"
                       >
                         <div>
                           <p className="font-medium">{gs.name}</p>
@@ -1323,10 +1323,10 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                 <h2 className="mb-3 text-lg font-semibold">Satellite List (Default)</h2>
                 <div className="flex-1 max-h-120 space-y-2 overflow-auto">
                   {satellites.map((sat) => (
-                    <div key={sat.id} className="rounded border p-2 text-sm">
-                      <p className="font-medium">{sat.id}</p>
+                    <div key={sat.id} className="rounded py-2 text-sm">
+                      <p className="font-medium">SAT {sat.id}</p>
                       <p className="opacity-70">
-                        Plane {sat.plane}, Order {sat.order}
+                        The satellite {sat.id} is located in plane {sat.plane} order {sat.order}
                       </p>
                     </div>
                   ))}
