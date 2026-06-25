@@ -60,6 +60,8 @@ export default function SimulationView({
     setFootprintMode,
     linkMode,
     setLinkMode,
+    lightMode,
+    setLightMode,
   } = useFrameWidgetSettings({
     earthMode: EARTH_MODE.REALISTIC,
     latLonMode: LATLON_MODE.HIDDEN,
@@ -114,12 +116,14 @@ export default function SimulationView({
                 stationMode={stationMode}
                 footprintMode={footprintMode}
                 linkMode={linkMode}
+                lightMode={lightMode}
                 onEarthModeChange={setEarthMode}
                 onLatLonModeChange={setLatLonMode}
                 onSatelliteModeChange={setSatelliteMode}
                 onStationModeChange={setStationMode}
                 onFootprintModeChange={setFootprintMode}
                 onLinkModeChange={setLinkMode}
+                onLightModeChange={setLightMode}
               />
             }
           />

@@ -314,14 +314,22 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
         if (idx < 0) return frameSlots[0] ?? null;
         if (idx < frameSlots.length - 1) return frameSlots[idx + 1] ?? currentSlot;
         if (hasMore) return currentSlot; // 等待预取完成
-        // 播完后回到开头
-        setPlaying(false);
-        return currentSlot;
+        return currentSlot; // 播完后保持最后一帧
       });
     }, 100);
 
     return () => window.clearInterval(timer);
   }, [frameSlots, hasMore, playing]);
+
+  // —— 播放完毕时停止 ——
+  useEffect(() => {
+    if (!playing || hasMore || frameSlots.length === 0 || selectedFrameSlot === null) return;
+    const idx = frameSlots.indexOf(selectedFrameSlot);
+    if (idx === frameSlots.length - 1) {
+      setPlaying(false);
+      setSelectedFrameSlot(frameSlots[0] ?? null);
+    }
+  }, [playing, hasMore, frameSlots, selectedFrameSlot]);
 
   // 初始化时自动播放
   useEffect(() => {

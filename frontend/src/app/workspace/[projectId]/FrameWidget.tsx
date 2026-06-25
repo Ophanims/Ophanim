@@ -10,6 +10,7 @@ import SatelliteWidget from "@/app/workspace/[projectId]/SatelliteWidget";
 import {
   EARTH_MODE,
   FOOTPRINT_MODE,
+  LIGHT_MODE,
   LINK_MODE,
   LATLON_MODE,
   SATELLITE_MODE,
@@ -50,6 +51,10 @@ export default function FrameWidget({
   const stationMode = settings?.stationMode ?? STATION_MODE.SHOW;
   const footprintMode = settings?.footprintMode ?? FOOTPRINT_MODE.SHOW;
   const linkMode = settings?.linkMode ?? LINK_MODE.ALL;
+  const lightMode = settings?.lightMode ?? LIGHT_MODE.OFF;
+  const isLight = lightMode === LIGHT_MODE.ON;
+  const bgColor = isLight ? "#ffffff" : "#000000";
+  const ambientIntensity = isLight ? 0.8 : 0.01;
   const earthRotationSpeed =
     earth?.rotationalAngularVelocity ??
     settings?.earthRotationSpeed ??
@@ -73,12 +78,14 @@ export default function FrameWidget({
   }, [sun, scale]);
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-black pointer-events-auto">
+    <div className="h-screen w-full overflow-hidden pointer-events-auto" style={{ backgroundColor: bgColor }}>
       <Canvas
         className="pointer-events-auto touch-none"
         camera={{ position: [0, 0, 8], fov: 45 }}
+        gl={{ alpha: false }}
       >
-        <ambientLight intensity={0.01} />
+        <color attach="background" args={[bgColor]} />
+        <ambientLight intensity={ambientIntensity} />
         <directionalLight position={sunLightPosition} intensity={2} />
         <EarthWidget
           mode={earthMode}
@@ -171,7 +178,7 @@ export default function FrameWidget({
             endVec,
           ]);
 
-          const linkColor = link.type === "ISL" ? "#ffffff" : link.type === "UPLINK" ? "#3cff00" : "#00ffa6";
+          const linkColor = link.type === "ISL" ? (isLight ? "#333333" : "#ffffff") : link.type === "UPLINK" ? (isLight ? "#1a7a00" : "#3cff00") : (isLight ? "#008a5c" : "#00ffa6");
 
           return (
             <line key={`${link.id}`}>

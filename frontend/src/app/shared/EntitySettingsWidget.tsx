@@ -6,10 +6,12 @@ import {
   LATLON_MODE_OPTIONS,
   FOOTPRINT_MODE_OPTIONS,
   LINK_MODE_OPTIONS,
+  LIGHT_MODE_OPTIONS,
   SATELLITE_MODE_OPTIONS,
   STATION_MODE_OPTIONS,
   type EarthMode,
   type FootprintMode,
+  type LightMode,
   type LinkMode,
   type LatLonMode,
   type SatelliteMode,
@@ -24,12 +26,14 @@ type EntitySettingsWidgetProps = {
   stationMode: StationMode;
   footprintMode: FootprintMode;
   linkMode: LinkMode;
+  lightMode: LightMode;
   onEarthModeChange: (mode: EarthMode) => void;
   onLatLonModeChange: (mode: LatLonMode) => void;
   onSatelliteModeChange: (mode: SatelliteMode) => void;
   onStationModeChange: (mode: StationMode) => void;
   onFootprintModeChange: (mode: FootprintMode) => void;
   onLinkModeChange: (mode: LinkMode) => void;
+  onLightModeChange: (mode: LightMode) => void;
 };
 
 export default function EntitySettingsWidget({
@@ -39,12 +43,14 @@ export default function EntitySettingsWidget({
   stationMode,
   footprintMode,
   linkMode,
+  lightMode,
   onEarthModeChange,
   onLatLonModeChange,
   onSatelliteModeChange,
   onStationModeChange,
   onFootprintModeChange,
   onLinkModeChange,
+  onLightModeChange,
 }: EntitySettingsWidgetProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -186,6 +192,25 @@ export default function EntitySettingsWidget({
                 onChange={(e) => onLinkModeChange(e.target.value as LinkMode)}
               >
                 {LINK_MODE_OPTIONS.map((mode) => (
+                  <option
+                    key={mode.value}
+                    value={mode.value}
+                    className="text-black"
+                  >
+                    {mode.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-white/70">Light</span>
+              <select
+                className="rounded bg-white/10 px-2 py-1.5 text-white"
+                value={lightMode}
+                onChange={(e) => onLightModeChange(e.target.value as LightMode)}
+              >
+                {LIGHT_MODE_OPTIONS.map((mode) => (
                   <option
                     key={mode.value}
                     value={mode.value}

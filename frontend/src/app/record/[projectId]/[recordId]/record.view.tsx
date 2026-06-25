@@ -67,6 +67,8 @@ export default function RecordView({
     setFootprintMode,
     linkMode,
     setLinkMode,
+    lightMode,
+    setLightMode,
   } = useFrameWidgetSettings({
     earthMode: EARTH_MODE.REALISTIC,
     latLonMode: LATLON_MODE.HIDDEN,
@@ -110,12 +112,14 @@ export default function RecordView({
                 stationMode={stationMode}
                 footprintMode={footprintMode}
                 linkMode={linkMode}
+                lightMode={lightMode}
                 onEarthModeChange={setEarthMode}
                 onLatLonModeChange={setLatLonMode}
                 onSatelliteModeChange={setSatelliteMode}
                 onStationModeChange={setStationMode}
                 onFootprintModeChange={setFootprintMode}
                 onLinkModeChange={setLinkMode}
+                onLightModeChange={setLightMode}
               />
             }
           />
