@@ -66,7 +66,7 @@ export default function Earth({ isFull }: { isFull: boolean }) {
         position={[0, 0, isFull ? 12 : 5]}
         fov={30}
       />
-      <directionalLight position={[10, 10, 10]} intensity={3} color="#fff" />
+      <directionalLight position={[10, 10, 10]} intensity={1} color="#fff" />
       <ambientLight intensity={0.2} />
       <Stars radius={150} depth={50} count={600} factor={3} fade speed={0.1} />
       <EarthModel />
