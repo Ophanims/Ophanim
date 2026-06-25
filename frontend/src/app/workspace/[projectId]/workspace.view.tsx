@@ -1366,29 +1366,29 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                 <table className="min-w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="px-2 py-2">Record ID</th>
-                      <th className="px-2 py-2">Status</th>
-                      <th className="px-2 py-2">Started</th>
-                      <th className="px-2 py-2">Ended</th>
-                      <th className="px-2 py-2">Actions</th>
+                      <th className="px-3 py-3">Record ID</th>
+                      <th className="px-3 py-3">Status</th>
+                      <th className="px-3 py-3">Started</th>
+                      <th className="px-3 py-3">Ended</th>
+                      <th className="px-3 py-3">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {records.map((r) => (
-                      <tr key={r.id} className="border-b">
-                        <td className="px-2 py-2">{r.id}</td>
-                        <td className="px-2 py-2">{r.status}</td>
-                        <td className="px-2 py-2">
+                      <tr key={r.id}>
+                        <td className="px-3 py-3">{r.id}</td>
+                        <td className="px-3 py-3">{r.status}</td>
+                        <td className="px-3 py-3">
                           {r.started_at
                             ? new Date(r.started_at).toLocaleString()
                             : "-"}
                         </td>
-                        <td className="px-2 py-2">
+                        <td className="px-3 py-3">
                           {r.ended_at
                             ? new Date(r.ended_at).toLocaleString()
                             : "-"}
                         </td>
-                        <td className="px-2 py-2">
+                        <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
                             <Link
                               href={`/record/${projectId}/${r.id}`}
