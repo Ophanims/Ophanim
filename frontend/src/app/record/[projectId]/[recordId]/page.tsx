@@ -18,6 +18,10 @@ export default function RecordPage() {
       frameSlots={controller.frameSlots}
       frameIndex={controller.frameIndex}
       satellites={controller.satellites}
+      sun={controller.sun}
+      earth={controller.earth}
+      stations={controller.stations}
+      links={controller.links}
       playing={controller.playing}
       hasMore={controller.hasMore}
       onTogglePlay={() => controller.setPlaying(!controller.playing)}

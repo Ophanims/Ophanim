@@ -1,4 +1,4 @@
-import type { SatellitePoint } from "@/app/simulation/[projectId]/simulation.model";
+import type { EarthPoint, LinkPoint, SatellitePoint, StationPoint, SunPoint } from "@/app/simulation/[projectId]/simulation.model";
 
 export type RecordSeriesEntityPoint = {
   slot_count: number;
@@ -45,6 +45,11 @@ export type RecordSeriesEntityPoint = {
     onSGL?: boolean;
     onISL?: boolean;
     onCOM?: boolean;
+    addr?: string;
+    null_island_x?: number;
+    null_island_y?: number;
+    null_island_z?: number;
+    rotational_angular_velocity?: number;
   };
 };
 
@@ -60,6 +65,18 @@ export type RecordSeriesPayload = {
     slot_count: number;
     maximum_slot?: number;
     timeslot?: number;
+    payload?: {
+      links?: Array<{
+        id?: string;
+        type?: string;
+        status?: boolean;
+        distance?: number;
+        capacity?: number;
+        src?: string;
+        dst?: string;
+      }>;
+      [key: string]: unknown;
+    };
   }>;
   entity_points: RecordSeriesEntityPoint[];
   window?: {
@@ -70,4 +87,4 @@ export type RecordSeriesPayload = {
   };
 };
 
-export type { SatellitePoint };
+export type { EarthPoint, LinkPoint, SatellitePoint, StationPoint, SunPoint };

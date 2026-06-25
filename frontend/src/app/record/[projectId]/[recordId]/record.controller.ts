@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { RecordSeriesPayload, SatellitePoint } from "./record.model";
+import type {
+  EarthPoint,
+  LinkPoint,
+  RecordSeriesPayload,
+  SatellitePoint,
+  StationPoint,
+  SunPoint,
+} from "./record.model";
 
 const INITIAL_WINDOW_SLOT_LIMIT = 120;
 const PREFETCH_TRIGGER_RATIO = 0.7;
@@ -177,6 +184,110 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     return out;
   }, [recordSeries, selectedFrameSlot]);
 
+  // 当前帧对应的太阳
+  const sun = useMemo<SunPoint | null>(() => {
+    if (!recordSeries || selectedFrameSlot === null) return null;
+    for (const p of recordSeries.entity_points ?? []) {
+      if (p.slot_count !== selectedFrameSlot) continue;
+      const payload = p.payload;
+      if (!payload || payload.type !== "the_sun") continue;
+      return {
+        addr: String(payload.addr ?? "sun"),
+        x: Number(payload.x ?? 0),
+        y: Number(payload.z ?? 0),
+        z: -Number(payload.y ?? 0),
+      };
+    }
+    return null;
+  }, [recordSeries, selectedFrameSlot]);
+
+  // 当前帧对应的地球
+  const earth = useMemo<EarthPoint | null>(() => {
+    if (!recordSeries || selectedFrameSlot === null) return null;
+    for (const p of recordSeries.entity_points ?? []) {
+      if (p.slot_count !== selectedFrameSlot) continue;
+      const payload = p.payload;
+      if (!payload || payload.type !== "the_earth") continue;
+      return {
+        addr: String(payload.addr ?? "earth"),
+        nullIslandX: Number(payload.null_island_x ?? 0),
+        nullIslandY: Number(payload.null_island_z ?? 0),
+        nullIslandZ: -Number(payload.null_island_y ?? 0),
+        rotationalAngularVelocity: Number(payload.rotational_angular_velocity ?? 0),
+      };
+    }
+    return null;
+  }, [recordSeries, selectedFrameSlot]);
+
+  // 当前帧对应的地面站
+  const stations = useMemo<StationPoint[]>(() => {
+    if (!recordSeries || selectedFrameSlot === null) return [];
+    const out: StationPoint[] = [];
+    for (const p of recordSeries.entity_points ?? []) {
+      if (p.slot_count !== selectedFrameSlot) continue;
+      const payload = p.payload;
+      if (!payload || payload.type !== "ground_station") continue;
+      out.push({
+        addr: String(payload.addr ?? "unknown"),
+        x: Number(payload.x ?? 0),
+        y: Number(payload.z ?? 0),
+        z: -Number(payload.y ?? 0),
+      });
+    }
+    return out;
+  }, [recordSeries, selectedFrameSlot]);
+
+  // 当前帧对应的链路（从 state_points payload.links 中提取，并匹配实体坐标）
+  const links = useMemo<LinkPoint[]>(() => {
+    if (!recordSeries || selectedFrameSlot === null) return [];
+    const statePoint = (recordSeries.state_points ?? []).find(
+      (sp) => sp.slot_count === selectedFrameSlot,
+    );
+    const rawLinks = statePoint?.payload?.links ?? [];
+    if (rawLinks.length === 0) return [];
+
+    // 构建 addr → { x, y, z } 的查找表
+    const entityPos = new Map<string, { x: number; y: number; z: number }>();
+    for (const p of recordSeries.entity_points ?? []) {
+      if (p.slot_count !== selectedFrameSlot) continue;
+      const payload = p.payload;
+      if (!payload) continue;
+      const addr = String(payload.addr ?? p.entity_id ?? "");
+      if (!addr) continue;
+      entityPos.set(addr, {
+        x: Number(payload.x ?? 0),
+        y: Number(payload.z ?? 0),
+        z: -Number(payload.y ?? 0),
+      });
+    }
+
+    const out: LinkPoint[] = [];
+    for (const raw of rawLinks) {
+      const type = String(raw.type ?? "");
+      const srcId = String(raw.src ?? "");
+      const dstId = String(raw.dst ?? "");
+      const src = entityPos.get(srcId);
+      const dst = entityPos.get(dstId);
+      if (!src || !dst) continue;
+      out.push({
+        id: String(raw.id ?? ""),
+        type,
+        status: String(raw.status ?? false),
+        distance: Number(raw.distance ?? 0),
+        capacity: Number(raw.capacity ?? 0),
+        srcId,
+        dstId,
+        srcX: src.x,
+        srcY: src.y,
+        srcZ: src.z,
+        dstX: dst.x,
+        dstY: dst.y,
+        dstZ: dst.z,
+      });
+    }
+    return out;
+  }, [recordSeries, selectedFrameSlot]);
+
   // —— 预取（播放到当前窗口尾部时加载下一段）——
   useEffect(() => {
     if (!playing || loading || buffering || !hasMore || frameSlots.length === 0 || selectedFrameSlot === null) {
@@ -279,6 +390,10 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     recordSeries,
     frameSlots,
     satellites,
+    sun,
+    earth,
+    stations,
+    links,
     frameIndex,
     playing,
     hasMore,

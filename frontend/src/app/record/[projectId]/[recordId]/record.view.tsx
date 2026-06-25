@@ -12,7 +12,7 @@ import {
   STATION_MODE,
   useFrameWidgetSettings,
 } from "../../../workspace/[projectId]/useFrameWidgetSettings";
-import type { SatellitePoint } from "./record.model";
+import type { EarthPoint, LinkPoint, SatellitePoint, StationPoint, SunPoint } from "./record.model";
 
 type RecordViewProps = {
   projectId: string;
@@ -23,6 +23,10 @@ type RecordViewProps = {
   frameSlots: number[];
   frameIndex: number;
   satellites: SatellitePoint[];
+  sun: SunPoint | null;
+  earth: EarthPoint | null;
+  stations: StationPoint[];
+  links: LinkPoint[];
   playing: boolean;
   hasMore: boolean;
   onTogglePlay: () => void;
@@ -39,6 +43,10 @@ export default function RecordView({
   frameSlots,
   frameIndex,
   satellites,
+  sun,
+  earth,
+  stations,
+  links,
   playing,
   hasMore,
   onTogglePlay,
@@ -121,7 +129,15 @@ export default function RecordView({
       </div>
 
       <div className="absolute bottom-0 w-full h-full pointer-events-none z-0">
-        <FrameWidget satellites={satellites} slotCount={frameIndex >= 0 ? frameSlots[frameIndex] : 0} settings={settings} />
+        <FrameWidget
+          sun={sun}
+          earth={earth}
+          satellites={satellites}
+          stations={stations}
+          links={links}
+          slotCount={frameIndex >= 0 ? frameSlots[frameIndex] : 0}
+          settings={settings}
+        />
       </div>
     </main>
   );
