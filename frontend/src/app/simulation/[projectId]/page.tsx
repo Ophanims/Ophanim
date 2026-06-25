@@ -23,6 +23,9 @@ export default function SimulationPage() {
       onPlay={controller.play}
       onPause={controller.pause}
       onStop={controller.stop}
+      showSaveDialog={controller.showSaveDialog}
+      onSave={controller.onSave}
+      onDiscard={controller.onDiscard}
     />
   );
 }

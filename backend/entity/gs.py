@@ -13,6 +13,7 @@ from skyfield.timelib import Time
 
 class GroundStationSnapshot(BaseModel):
     addr: str
+    id: str
     type: str
     name: str
     x: float
@@ -103,6 +104,7 @@ class GroundStation(Node):
     def snapshot(self) -> GroundStationSnapshot:
         return GroundStationSnapshot(
             addr=self.address,
+            id=self.address,
             type=self.type,
             name=self.name,
             x=self.x,

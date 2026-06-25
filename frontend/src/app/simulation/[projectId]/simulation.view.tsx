@@ -4,6 +4,7 @@ import { useProgress } from "@react-three/drei";
 import type { EarthPoint, LinkPoint, SatellitePoint, StationPoint, SunPoint } from "./simulation.model";
 import FrameWidget from "@/app/workspace/[projectId]/FrameWidget";
 import PlaybackControlWidget from "@/app/shared/PlaybackControlWidget";
+import SaveConfirmDialog from "@/app/shared/SaveConfirmDialog";
 import {
   EARTH_MODE,
   FOOTPRINT_MODE,
@@ -29,6 +30,9 @@ type SimulationViewProps = {
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
+  showSaveDialog: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
 };
 
 export default function SimulationView({
@@ -45,6 +49,9 @@ export default function SimulationView({
   onPlay,
   onPause,
   onStop,
+  showSaveDialog,
+  onSave,
+  onDiscard,
 }: SimulationViewProps) {
   const {
     settings,
@@ -151,6 +158,7 @@ export default function SimulationView({
           </div>
         </div>
       ) : null}
+      <SaveConfirmDialog open={showSaveDialog} onSave={onSave} onDiscard={onDiscard} />
     </main>
   );
 }

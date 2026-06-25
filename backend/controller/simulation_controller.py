@@ -6,8 +6,9 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from fastapi.encoders import jsonable_encoder
 
 from core.simulation_engine import SimulatorEngine
-from controller.record_controller import create_record, append_record_state, finish_record, get_record_series, list_records, delete_record, delete_records_by_project
+from controller.record_controller import get_record_series, list_records, delete_record, delete_records_by_project
 from controller.project_controller import GroundStationBase, ProjectBase, fetch_project_by_id, get_mysql_conn
+from persistence import temp_recorder
 
 router = APIRouter(tags=["simulation"])
 
@@ -64,6 +65,24 @@ async def clear_project_records(project_id: int):
         raise HTTPException(status_code=500, detail=f"Failed to clear records: {exc}")
 
 
+@router.post("/record/{session_id}/save")
+async def save_temp_record(session_id: str, status: str = "completed"):
+    """保存临时记录到时序数据库"""
+    record_id = await temp_recorder.save_session(session_id, record_status=status)
+    if record_id is None:
+        raise HTTPException(status_code=404, detail="Session not found or empty")
+    return {"recordId": record_id, "saved": True}
+
+
+@router.post("/record/{session_id}/discard")
+async def discard_temp_record(session_id: str):
+    """丢弃临时记录"""
+    ok = await temp_recorder.discard_session(session_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"discarded": True}
+
+
 @router.websocket("/ws/{project_id}")
 async def simulation_ws(websocket: WebSocket, project_id: int):
     await websocket.accept()
@@ -114,22 +133,11 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
     
     # 初始化仿真引擎
     engine = SimulatorEngine()
-    record_id: int | None = None
-    record_status = "stopped"
-    record_error: str | None = None
-
-    try:
-        record_id = await create_record(project_id=project_id, run_config=project_model.model_dump())
-    except Exception as exc:
-        # 记录创建失败不阻断仿真，避免影响在线播放。
-        print(f"[Record] failed to create record for project {project_id}: {exc}")
+    session_id: str | None = None
 
     async def render_hook(state: dict):
-        if record_id is not None:
-            try:
-                await append_record_state(record_id=record_id, project_id=project_id, state=state)
-            except Exception as exc:
-                print(f"[Record] failed to append state for record {record_id}: {exc}")
+        if session_id is not None:
+            temp_recorder.append_state(session_id, state)
         await websocket.send_json(
             jsonable_encoder({"type": "state", "projectId": project_id, "state": state})
         )
@@ -145,7 +153,6 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
         await websocket.send_json({
             "type": "connected",
             "projectId": project_id,
-            "recordId": record_id,
             "project": jsonable_encoder(project_model),
             "groundStations": jsonable_encoder(ground_stations),
         })
@@ -161,30 +168,42 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
                     recv_task.cancel()
                     with suppress(asyncio.CancelledError):
                         await recv_task
-
-                exc = run_task.exception()
-                if exc is not None:
-                    record_status = "failed"
-                    record_error = str(exc)
+                # 不发 DB，通知前端弹窗
+                try:
                     await websocket.send_json({
-                        "type": "error",
-                        "projectId": project_id,
-                        "message": f"Simulation engine crashed: {exc}",
+                        "type": "simulation_ended",
+                        "sessionId": session_id,
                     })
-                elif engine.MAX_SLOT is not None and engine.state.slot_count >= engine.MAX_SLOT:
-                    record_status = "completed"
+                except RuntimeError:
+                    pass  # WebSocket 已关闭
                 break
 
             msg = recv_task.result()
             action = msg.get("action")
             if action in {"play", "pause", "stop"}:
+                # 首次 play 创建 temp session
+                if action == "play" and session_id is None:
+                    try:
+                        session_id = temp_recorder.create_session(
+                            project_id=project_id,
+                            run_config=project_model.model_dump(),
+                        )
+                        await websocket.send_json({"type": "session_created", "sessionId": session_id})
+                    except Exception as exc:
+                        print(f"[Record] failed to create temp session: {exc}")
                 await engine.input_queue.put({"action": action})
 
             if action == "stop":
-                record_status = "stopped"
+                try:
+                    await websocket.send_json({
+                        "type": "simulation_ended",
+                        "sessionId": session_id,
+                    })
+                except RuntimeError:
+                    pass  # WebSocket 已关闭
                 break
     except WebSocketDisconnect:
-        record_status = "stopped"
+        pass
     finally:
         await engine.input_queue.put({"action": "stop"})
         try:
@@ -193,22 +212,5 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
             run_task.cancel()
             with suppress(asyncio.CancelledError):
                 await run_task
-            if record_status not in {"failed", "completed"}:
-                record_status = "stopped"
-        except Exception as exc:
+        except Exception:
             run_task.cancel()
-            if record_status != "failed":
-                record_status = "failed"
-                record_error = f"run task cancelled on shutdown: {exc}"
-
-        if run_task.done() and not run_task.cancelled():
-            exc = run_task.exception()
-            if exc is not None:
-                record_status = "failed"
-                record_error = str(exc)
-
-        if record_id is not None:
-            try:
-                await finish_record(record_id=record_id, status=record_status, error_message=record_error)
-            except Exception as exc:
-                print(f"[Record] failed to finish record {record_id}: {exc}")

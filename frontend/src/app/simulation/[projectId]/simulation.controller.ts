@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EarthPoint, LinkPoint, SatellitePoint, SimulationStatus, StationPoint, SunPoint } from "@/app/simulation/[projectId]/simulation.model";
 
 type UseSimulationControllerArgs = {
@@ -7,6 +7,9 @@ type UseSimulationControllerArgs = {
 
 export function useSimulationController({ projectId }: UseSimulationControllerArgs) {
   const wsRef = useRef<WebSocket | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const dialogResolvedRef = useRef(false);
+  const hasReceivedStateRef = useRef(false);
 
   const [status, setStatus] = useState<SimulationStatus>("idle");
   const [tickCount, setTickCount] = useState(0);
@@ -17,6 +20,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
   const [links, setLinks] = useState<LinkPoint[]>([]);
   const [sun, setSun] = useState<SunPoint | null>(null);
   const [earth, setEarth] = useState<EarthPoint | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000", []);
   const wsBase = useMemo(() => {
@@ -33,12 +37,29 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     ws.onopen = () => {
       setStatus("connected");
       setError(null);
+      setShowSaveDialog(false);
+      dialogResolvedRef.current = false;
+      hasReceivedStateRef.current = false;
     };
 
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
         console.debug("Received WebSocket message:", msg);
+        if (msg?.type === "connected") {
+          return;
+        }
+        if (msg?.type === "simulation_ended") {
+          sessionIdRef.current = msg.sessionId ?? null;
+          if (!dialogResolvedRef.current && hasReceivedStateRef.current) {
+            setShowSaveDialog(true);
+          }
+          return;
+        }
+        if (msg?.type === "session_created") {
+          sessionIdRef.current = msg.sessionId ?? null;
+          return;
+        }
         if (msg?.type === "error") {
           setStatus("error");
           setError(msg?.message ?? "Simulation engine error");
@@ -46,6 +67,7 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
         }
 
         if (msg?.type === "state") {
+          hasReceivedStateRef.current = true;
           const state = msg.state ?? {};
           setTickCount(state.clock.slot_count ?? 0);
           const nextMaxSlot = Number(state.clock.maximum_slot);
@@ -192,7 +214,10 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     };
 
     ws.onclose = () => {
-      setStatus((prev) => (prev === "stopped" ? "stopped" : "closed"));
+      setStatus((prev) => {
+        if (prev === "stopped" || prev === "closed") return prev;
+        return "closed";
+      });
       wsRef.current = null;
     };
 
@@ -231,6 +256,10 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
   };
 
   const stop = () => {
+    setShowSaveDialog(true);
+  };
+
+  const doCleanup = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ action: "stop" }));
     }
@@ -239,7 +268,52 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     setSatellites([]);
     setStations([]);
     setLinks([]);
-  };
+  }, []);
+
+  // 保存：先停止引擎（引擎会发送 simulation_ended 包含 sessionId），再写入 DB
+  const handleSave = useCallback(async () => {
+    setShowSaveDialog(false);
+    dialogResolvedRef.current = true;
+    doCleanup(); // 先停止引擎，确保 temp file 完整
+    // 等 simulation_ended 消息到达并设置 sessionIdRef，再读 sid
+    await new Promise((r) => setTimeout(r, 500));
+    const sid = sessionIdRef.current;
+    if (sid) {
+      try {
+        const resp = await fetch(`${apiBase}/api/simulation/record/${sid}/save?status=completed`, { method: "POST" });
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.error("Save failed:", resp.status, text);
+          setError(`Save failed (${resp.status})`);
+        } else {
+          const data = await resp.json();
+          console.log("Record saved:", data);
+        }
+      } catch (err) {
+        console.error("Save error:", err);
+        setError(String(err));
+      }
+    } else {
+      console.error("Save skipped: no sessionId");
+      setError("Save skipped: no session ID");
+    }
+  }, [apiBase, doCleanup, setError]);
+
+  // 丢弃：先停止引擎，再删除 temp file
+  const handleDiscard = useCallback(async () => {
+    setShowSaveDialog(false);
+    dialogResolvedRef.current = true;
+    doCleanup();
+    await new Promise((r) => setTimeout(r, 500));
+    const sid = sessionIdRef.current;
+    if (sid) {
+      try {
+        await fetch(`${apiBase}/api/simulation/record/${sid}/discard`, { method: "POST" });
+      } catch {
+        // ignore
+      }
+    }
+  }, [apiBase, doCleanup]);
 
   useEffect(() => {
     const ws = connectIfNeeded();
@@ -266,8 +340,11 @@ export function useSimulationController({ projectId }: UseSimulationControllerAr
     satellites,
     stations,
     links,
+    showSaveDialog,
     play,
     pause,
     stop,
+    onSave: handleSave,
+    onDiscard: handleDiscard,
   };
 }
