@@ -140,8 +140,10 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
       efficiencyOfPowerAmplifier: draftProject.efficiencyOfPowerAmplifier,
       staticPowerOfProcessingW: draftProject.staticPowerOfProcessingW,
       staticPowerOfIslTransmittingW: draftProject.staticPowerOfIslTransmittingW,
-      staticPowerOfUplinkTransmittingW: draftProject.staticPowerOfUplinkTransmittingW,
-      staticPowerOfDownlinkTransmittingW: draftProject.staticPowerOfDownlinkTransmittingW,
+      staticPowerOfUplinkTransmittingW:
+        draftProject.staticPowerOfUplinkTransmittingW,
+      staticPowerOfDownlinkTransmittingW:
+        draftProject.staticPowerOfDownlinkTransmittingW,
       staticPowerOfOthersW: draftProject.staticPowerOfOthersW,
     };
 
@@ -177,7 +179,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
             <div className="flex gap-2">
               <Link
                 href={`/simulation/${projectId}`}
-                className="flex items-center justify-center gap-2 px-3 py-2 mx-4 border rounded-xl text-sm"
+                className="flex items-center justify-center gap-2 px-3 py-2 mx-4 border rounded-xl text-sm transition hover:bg-white hover:text-black"
               >
                 <PlayIcon className="h-4 w-4" />
                 <span className="">Run Simulation</span>
@@ -378,18 +380,25 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                         )}
                       </div>
                       <div>
-                        <span className="opacity-70">Maximum Number of Plane: </span>
+                        <span className="opacity-70">
+                          Maximum Number of Plane:{" "}
+                        </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
                             value={draftProject.maximumNumberOfPlane ?? ""}
                             onChange={(e) =>
-                              setNumberField("maximumNumberOfPlane", e.target.value)
+                              setNumberField(
+                                "maximumNumberOfPlane",
+                                e.target.value,
+                              )
                             }
                           />
                         ) : (
-                          <span>{draftProject.maximumNumberOfPlane ?? "-"}</span>
+                          <span>
+                            {draftProject.maximumNumberOfPlane ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -484,7 +493,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.lengthOfCameraFocalMm ?? "-"}</span>
+                          <span>
+                            {draftProject.lengthOfCameraFocalMm ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -495,7 +506,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.lengthOfCameraSensorUnitUm ?? ""}
+                            value={
+                              draftProject.lengthOfCameraSensorUnitUm ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "lengthOfCameraSensorUnitUm",
@@ -525,14 +538,19 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                         )}
                       </div>
                       <div>
-                        <span className="opacity-70">Bits per Channel (bit): </span>
+                        <span className="opacity-70">
+                          Bits per Channel (bit):{" "}
+                        </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
                             value={draftProject.bitsPerChannelBit ?? ""}
                             onChange={(e) =>
-                              setNumberField("bitsPerChannelBit", e.target.value)
+                              setNumberField(
+                                "bitsPerChannelBit",
+                                e.target.value,
+                              )
                             }
                           />
                         ) : (
@@ -577,7 +595,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.maximumNumberOfProcessorCore ?? ""}
+                            value={
+                              draftProject.maximumNumberOfProcessorCore ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "maximumNumberOfProcessorCore",
@@ -621,7 +641,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.maximumConcurrentComputation ?? ""}
+                            value={
+                              draftProject.maximumConcurrentComputation ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "maximumConcurrentComputation",
@@ -660,7 +682,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.carrierFrequencyOfIslGhz ?? "-"}</span>
+                          <span>
+                            {draftProject.carrierFrequencyOfIslGhz ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -680,7 +704,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.carrierFrequencyOfUpGhz ?? "-"}</span>
+                          <span>
+                            {draftProject.carrierFrequencyOfUpGhz ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -700,7 +726,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.carrierFrequencyOfDlGhz ?? "-"}</span>
+                          <span>
+                            {draftProject.carrierFrequencyOfDlGhz ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -733,10 +761,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             className="ml-2 rounded border px-2 py-1"
                             value={draftProject.bandwidthOfUlMhz ?? ""}
                             onChange={(e) =>
-                              setNumberField(
-                                "bandwidthOfUlMhz",
-                                e.target.value,
-                              )
+                              setNumberField("bandwidthOfUlMhz", e.target.value)
                             }
                           />
                         ) : (
@@ -753,10 +778,7 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             className="ml-2 rounded border px-2 py-1"
                             value={draftProject.bandwidthOfDlMhz ?? ""}
                             onChange={(e) =>
-                              setNumberField(
-                                "bandwidthOfDlMhz",
-                                e.target.value,
-                              )
+                              setNumberField("bandwidthOfDlMhz", e.target.value)
                             }
                           />
                         ) : (
@@ -771,7 +793,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.factorOfTransmissionEnergy ?? ""}
+                            value={
+                              draftProject.factorOfTransmissionEnergy ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "factorOfTransmissionEnergy",
@@ -780,7 +804,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.factorOfTransmissionEnergy ?? "-"}</span>
+                          <span>
+                            {draftProject.factorOfTransmissionEnergy ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -791,7 +817,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.efficiencyOfTargetSpectrum ?? ""}
+                            value={
+                              draftProject.efficiencyOfTargetSpectrum ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "efficiencyOfTargetSpectrum",
@@ -800,7 +828,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.efficiencyOfTargetSpectrum ?? "-"}</span>
+                          <span>
+                            {draftProject.efficiencyOfTargetSpectrum ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -811,7 +841,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.antennaGainOfIslTransmitDbi ?? ""}
+                            value={
+                              draftProject.antennaGainOfIslTransmitDbi ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "antennaGainOfIslTransmitDbi",
@@ -820,7 +852,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.antennaGainOfIslTransmitDbi ?? "-"}</span>
+                          <span>
+                            {draftProject.antennaGainOfIslTransmitDbi ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -831,7 +865,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.antennaGainOfIslReceiveDbi ?? ""}
+                            value={
+                              draftProject.antennaGainOfIslReceiveDbi ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "antennaGainOfIslReceiveDbi",
@@ -840,7 +876,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.antennaGainOfIslReceiveDbi ?? "-"}</span>
+                          <span>
+                            {draftProject.antennaGainOfIslReceiveDbi ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -851,7 +889,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.antennaGainOfUlTransmitDbi ?? ""}
+                            value={
+                              draftProject.antennaGainOfUlTransmitDbi ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "antennaGainOfUlTransmitDbi",
@@ -860,7 +900,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.antennaGainOfUlTransmitDbi ?? "-"}</span>
+                          <span>
+                            {draftProject.antennaGainOfUlTransmitDbi ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -880,7 +922,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.antennaGainOfUlReceiveDbi ?? "-"}</span>
+                          <span>
+                            {draftProject.antennaGainOfUlReceiveDbi ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -891,7 +935,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.antennaGainOfDlTransmitDbi ?? ""}
+                            value={
+                              draftProject.antennaGainOfDlTransmitDbi ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "antennaGainOfDlTransmitDbi",
@@ -900,7 +946,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.antennaGainOfDlTransmitDbi ?? "-"}</span>
+                          <span>
+                            {draftProject.antennaGainOfDlTransmitDbi ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -920,7 +968,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.antennaGainOfDlReceiveDbi ?? "-"}</span>
+                          <span>
+                            {draftProject.antennaGainOfDlReceiveDbi ?? "-"}
+                          </span>
                         )}
                       </div>
                       <div>
@@ -931,7 +981,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.maximumConcurrentTransmission ?? ""}
+                            value={
+                              draftProject.maximumConcurrentTransmission ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "maximumConcurrentTransmission",
@@ -954,14 +1006,19 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                     </p>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
                       <div>
-                        <span className="opacity-70">Battery Capacity (Wh): </span>
+                        <span className="opacity-70">
+                          Battery Capacity (Wh):{" "}
+                        </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
                             value={draftProject.batteryCapacityWh ?? ""}
                             onChange={(e) =>
-                              setNumberField("batteryCapacityWh", e.target.value)
+                              setNumberField(
+                                "batteryCapacityWh",
+                                e.target.value,
+                              )
                             }
                           />
                         ) : (
@@ -969,14 +1026,19 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                         )}
                       </div>
                       <div>
-                        <span className="opacity-70">Area of Solar Panel (m²): </span>
+                        <span className="opacity-70">
+                          Area of Solar Panel (m²):{" "}
+                        </span>
                         {isEditingProject ? (
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
                             value={draftProject.areaOfSolarPanelM2 ?? ""}
                             onChange={(e) =>
-                              setNumberField("areaOfSolarPanelM2", e.target.value)
+                              setNumberField(
+                                "areaOfSolarPanelM2",
+                                e.target.value,
+                              )
                             }
                           />
                         ) : (
@@ -1013,7 +1075,9 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.efficiencyOfPowerAmplifier ?? ""}
+                            value={
+                              draftProject.efficiencyOfPowerAmplifier ?? ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "efficiencyOfPowerAmplifier",
@@ -1057,9 +1121,14 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.staticPowerOfIslTransmittingW ?? ""}
+                            value={
+                              draftProject.staticPowerOfIslTransmittingW ?? ""
+                            }
                             onChange={(e) =>
-                              setNumberField("staticPowerOfIslTransmittingW", e.target.value)
+                              setNumberField(
+                                "staticPowerOfIslTransmittingW",
+                                e.target.value,
+                              )
                             }
                           />
                         ) : (
@@ -1076,7 +1145,10 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.staticPowerOfUplinkTransmittingW ?? ""}
+                            value={
+                              draftProject.staticPowerOfUplinkTransmittingW ??
+                              ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "staticPowerOfUplinkTransmittingW",
@@ -1086,7 +1158,8 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           />
                         ) : (
                           <span>
-                            {draftProject.staticPowerOfUplinkTransmittingW ?? "-"}
+                            {draftProject.staticPowerOfUplinkTransmittingW ??
+                              "-"}
                           </span>
                         )}
                       </div>
@@ -1098,7 +1171,10 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           <input
                             type="number"
                             className="ml-2 rounded border px-2 py-1"
-                            value={draftProject.staticPowerOfDownlinkTransmittingW ?? ""}
+                            value={
+                              draftProject.staticPowerOfDownlinkTransmittingW ??
+                              ""
+                            }
                             onChange={(e) =>
                               setNumberField(
                                 "staticPowerOfDownlinkTransmittingW",
@@ -1108,7 +1184,8 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                           />
                         ) : (
                           <span>
-                            {draftProject.staticPowerOfDownlinkTransmittingW ?? "-"}
+                            {draftProject.staticPowerOfDownlinkTransmittingW ??
+                              "-"}
                           </span>
                         )}
                       </div>
@@ -1129,12 +1206,13 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                             }
                           />
                         ) : (
-                          <span>{draftProject.staticPowerOfOthersW ?? "-"}</span>
+                          <span>
+                            {draftProject.staticPowerOfOthersW ?? "-"}
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
-
 
                   {/* <div className="rounded border p-3">
                   <p className="mb-2 text-sm font-semibold">Description</p>
@@ -1156,9 +1234,94 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
 
           {activeSection === "entities" ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <section className="p-4">
-                <h2 className="mb-3 text-lg font-semibold">Satellite List</h2>
-                <div className="max-h-80 space-y-2 overflow-auto">
+              <section className="flex flex-col p-4">
+                <h2 className="mb-3 text-lg font-semibold">Ground Stations</h2>
+                <div className="flex-1 max-h-120 space-y-2 overflow-auto">
+                  <div className="mb-4 space-y-2">
+                    <div className="grid grid-cols-4 gap-2">
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs opacity-70">Name</span>
+                        <input
+                          placeholder="Name"
+                          className="rounded border px-2 py-1 text-sm"
+                          value={newStationName}
+                          onChange={(e) => setNewStationName(e.target.value)}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs opacity-70">Latitude</span>
+                        <input
+                          type="number"
+                          placeholder="Latitude"
+                          className="rounded border px-2 py-1 text-sm"
+                          value={newStationLat}
+                          onChange={(e) => setNewStationLat(Number(e.target.value))}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs opacity-70">Longitude</span>
+                        <input
+                          type="number"
+                          placeholder="Longitude"
+                          className="rounded border px-2 py-1 text-sm"
+                          value={newStationLon}
+                          onChange={(e) => setNewStationLon(Number(e.target.value))}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs opacity-70">Altitude</span>
+                        <input
+                          type="number"
+                          placeholder="Altitude"
+                          className="rounded border px-2 py-1 text-sm"
+                          value={newStationAlt}
+                          onChange={(e) => setNewStationAlt(Number(e.target.value))}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      onClick={onAddGroundStation}
+                      disabled={saving || !canAddGroundStation}
+                      className="w-full rounded border px-3 py-2 text-sm"
+                    >
+                      Add Ground Station
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {groundStations.map((gs) => (
+                      <div
+                        key={gs.id}
+                        className="flex items-center justify-between rounded border p-2 text-sm"
+                      >
+                        <div>
+                          <p className="font-medium">{gs.name}</p>
+                          <p className="opacity-70">
+                            Lat {gs.latitude}, Lon {gs.longitude}, Alt{" "}
+                            {gs.altitude}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => onDeleteGroundStation(gs.id)}
+                            className="rounded border p-1 text-red-600"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {groundStations.length === 0 ? (
+                      <p className="text-sm opacity-70">
+                        No ground stations yet.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+              <section className="flex flex-col p-4">
+                <h2 className="mb-3 text-lg font-semibold">Satellite List (Default)</h2>
+                <div className="flex-1 max-h-120 space-y-2 overflow-auto">
                   {satellites.map((sat) => (
                     <div key={sat.id} className="rounded border p-2 text-sm">
                       <p className="font-medium">{sat.id}</p>
@@ -1174,77 +1337,6 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                   ) : null}
                 </div>
               </section>
-
-              <section className="p-4">
-                <h2 className="mb-3 text-lg font-semibold">Ground Stations</h2>
-
-                <div className="mb-4 grid grid-cols-2 gap-2">
-                  <input
-                    placeholder="Name"
-                    className="rounded border px-2 py-1"
-                    value={newStationName}
-                    onChange={(e) => setNewStationName(e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Latitude"
-                    className="rounded border px-2 py-1"
-                    value={newStationLat}
-                    onChange={(e) => setNewStationLat(Number(e.target.value))}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Longitude"
-                    className="rounded border px-2 py-1"
-                    value={newStationLon}
-                    onChange={(e) => setNewStationLon(Number(e.target.value))}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Altitude"
-                    className="rounded border px-2 py-1"
-                    value={newStationAlt}
-                    onChange={(e) => setNewStationAlt(Number(e.target.value))}
-                  />
-                  <button
-                    onClick={onAddGroundStation}
-                    disabled={saving || !canAddGroundStation}
-                    className="col-span-2 rounded border px-3 py-2 text-sm"
-                  >
-                    Add Ground Station
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {groundStations.map((gs) => (
-                    <div
-                      key={gs.id}
-                      className="flex items-center justify-between rounded border p-2 text-sm"
-                    >
-                      <div>
-                        <p className="font-medium">{gs.name}</p>
-                        <p className="opacity-70">
-                          Lat {gs.latitude}, Lon {gs.longitude}, Alt{" "}
-                          {gs.altitude}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => onDeleteGroundStation(gs.id)}
-                          className="rounded border p-1 text-red-600"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {groundStations.length === 0 ? (
-                    <p className="text-sm opacity-70">
-                      No ground stations yet.
-                    </p>
-                  ) : null}
-                </div>
-              </section>
             </div>
           ) : null}
 
@@ -1256,8 +1348,10 @@ export default function WorkspaceView(props: WorkspaceViewProps) {
                   type="button"
                   onClick={() => {
                     if (
-                      records.length > 0
-                      && window.confirm("Delete all records? This action cannot be undone.")
+                      records.length > 0 &&
+                      window.confirm(
+                        "Delete all records? This action cannot be undone.",
+                      )
                     ) {
                       onClearRecords();
                     }
