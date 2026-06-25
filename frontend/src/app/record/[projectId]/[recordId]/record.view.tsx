@@ -27,6 +27,7 @@ type RecordViewProps = {
   hasMore: boolean;
   onTogglePlay: () => void;
   onRefresh: () => void;
+  onSeek: (percent: number) => void;
 };
 
 export default function RecordView({
@@ -42,6 +43,7 @@ export default function RecordView({
   hasMore,
   onTogglePlay,
   onRefresh,
+  onSeek,
 }: RecordViewProps) {
   const {
     settings,
@@ -89,6 +91,7 @@ export default function RecordView({
             onPlay={onTogglePlay}
             onPause={onTogglePlay}
             onRefresh={onRefresh}
+            onSeek={onSeek}
             error={error}
             progressLabel={`Frame: ${frameIndex < 0 ? "-" : frameIndex + 1} / ${frameSlots.length}${hasMore ? "+" : ""}`}
             rightHeader={

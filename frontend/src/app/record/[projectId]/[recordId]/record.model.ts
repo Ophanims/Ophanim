@@ -7,6 +7,8 @@ export type RecordSeriesEntityPoint = {
   payload?: {
     id?: string;
     type?: string;
+    plane?: number;
+    order?: number;
     x?: number;
     y?: number;
     z?: number;
@@ -21,7 +23,11 @@ export type RecordSeriesPayload = {
     started_at?: string;
     ended_at?: string;
   } | null;
-  state_points: Array<{ slot_count: number }>;
+  state_points: Array<{
+    slot_count: number;
+    maximum_slot?: number;
+    timeslot?: number;
+  }>;
   entity_points: RecordSeriesEntityPoint[];
   window?: {
     start_slot: number;

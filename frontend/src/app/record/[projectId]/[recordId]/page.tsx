@@ -24,6 +24,7 @@ export default function RecordPage() {
       onRefresh={() => {
         void controller.loadSeries();
       }}
+      onSeek={controller.seekToPercent}
     />
   );
 }

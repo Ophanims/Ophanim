@@ -13,6 +13,7 @@ type PlaybackControlWidgetProps = {
   onPause: () => void;
   onStop?: () => void;
   onRefresh?: () => void;
+  onSeek?: (percent: number) => void;
   error?: string | null;
   barTrackClassName?: string;
   barFillClassName?: string;
@@ -32,12 +33,22 @@ export default function PlaybackControlWidget({
   barTrackClassName = "bg-white/20",
   barFillClassName = "bg-white",
   rightHeader,
+  onSeek,
 }: PlaybackControlWidgetProps) {
+  const handleBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!onSeek) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = Math.min(100, Math.max(0, (x / rect.width) * 100));
+    onSeek(percent);
+  };
+
   return (
     <div className="absolute bottom-0 w-full mb-4 pointer-events-auto">
       <div className="flex items-center justify-center gap-4">
         <div
-          className={`h-1 w-full overflow-hidden rounded-full bg-white/20 ${barTrackClassName}`}
+          className={`h-1 w-full overflow-hidden rounded-full bg-white/20 ${barTrackClassName} cursor-pointer`}
+          onClick={handleBarClick}
         >
           <div
             className={`h-full transition-all bg-white ${barFillClassName}`}

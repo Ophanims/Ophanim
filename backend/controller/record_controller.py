@@ -34,6 +34,10 @@ async def ensure_record_schema() -> None:
             return
         recorder = _get_recorder()
         await recorder.ensure_schema(_schema_sql_text())
+        # Backfill slot_count for records created before the nesting fix
+        backfill_path = Path(__file__).resolve().parents[1] / "sql" / "backfill_slot_count.sql"
+        if backfill_path.exists():
+            await recorder.ensure_schema(backfill_path.read_text(encoding="utf-8"))
         _schema_ready = True
 
 

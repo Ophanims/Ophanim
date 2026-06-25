@@ -18,8 +18,17 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
   const [error, setError] = useState<string | null>(null);
   const [recordSeries, setRecordSeries] = useState<RecordSeriesPayload | null>(null);
   const [selectedFrameSlot, setSelectedFrameSlot] = useState<number | null>(null);
-  const [playing, setPlaying] = useState(true);
+  const [playing, setPlaying] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  // 整体记录的总 slot 数（从 state_points 的 maximum_slot 获取）
+  const totalSlots = useMemo(() => {
+    const points = recordSeries?.state_points ?? [];
+    for (const p of points) {
+      if (typeof p.maximum_slot === "number" && p.maximum_slot > 0) return p.maximum_slot;
+    }
+    return 0;
+  }, [recordSeries]);
 
   const mergeRecordSeries = (previous: RecordSeriesPayload, next: RecordSeriesPayload): RecordSeriesPayload => {
     const mergedStatePoints = [...(previous.state_points ?? []), ...(next.state_points ?? [])].sort(
@@ -87,6 +96,7 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     void loadSeries();
   }, [loadSeries, recordId]);
 
+  // 可用帧列表（已加载的 slot 去重排序）
   const frameSlots = useMemo(() => {
     const points = recordSeries?.state_points ?? [];
     const slots = new Set<number>();
@@ -96,17 +106,13 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     return Array.from(slots).sort((a, b) => a - b);
   }, [recordSeries]);
 
-  useEffect(() => {
-    if (frameSlots.length === 0) {
-      setSelectedFrameSlot(null);
-      return;
-    }
-    setSelectedFrameSlot((currentSlot) => {
-      if (currentSlot === null) return frameSlots[0] ?? null;
-      return frameSlots.includes(currentSlot) ? currentSlot : frameSlots[0] ?? null;
-    });
-  }, [frameSlots]);
+  // 当前帧在前端的帧列表中的索引
+  const frameIndex = useMemo(() => {
+    if (selectedFrameSlot === null) return -1;
+    return frameSlots.indexOf(selectedFrameSlot);
+  }, [frameSlots, selectedFrameSlot]);
 
+  // 当前帧对应的卫星快照
   const satellites = useMemo(() => {
     if (!recordSeries || selectedFrameSlot === null) return [];
     const out: SatellitePoint[] = [];
@@ -124,8 +130,8 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
         addr: String(p.entity_id ?? payload.id ?? "unknown"),
         type: String(payload.type ?? p.entity_type ?? "earth_satellite"),
         id: String(payload.id ?? p.entity_id ?? "unknown"),
-        plane: 0,
-        order: 0,
+        plane: Number(payload.plane ?? 0),
+        order: Number(payload.order ?? 0),
         x,
         y,
         z,
@@ -163,11 +169,7 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     return out;
   }, [recordSeries, selectedFrameSlot]);
 
-  const frameIndex = useMemo(() => {
-    if (selectedFrameSlot === null) return -1;
-    return frameSlots.indexOf(selectedFrameSlot);
-  }, [frameSlots, selectedFrameSlot]);
-
+  // —— 预取（播放到当前窗口尾部时加载下一段）——
   useEffect(() => {
     if (!playing || loading || buffering || !hasMore || frameSlots.length === 0 || selectedFrameSlot === null) {
       return;
@@ -183,6 +185,7 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     void loadSeriesWindow(nextStartSlot, WINDOW_SLOT_LIMIT, "append");
   }, [buffering, frameSlots, hasMore, loadSeriesWindow, loading, playing, selectedFrameSlot]);
 
+  // —— 自动播放下一个帧 ——
   useEffect(() => {
     if (!playing || frameSlots.length === 0) return;
     const timer = window.setInterval(() => {
@@ -191,13 +194,75 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
         const idx = frameSlots.indexOf(currentSlot);
         if (idx < 0) return frameSlots[0] ?? null;
         if (idx < frameSlots.length - 1) return frameSlots[idx + 1] ?? currentSlot;
-        if (hasMore) return currentSlot;
-        return frameSlots[0] ?? currentSlot;
+        if (hasMore) return currentSlot; // 等待预取完成
+        // 播完后回到开头
+        setPlaying(false);
+        return currentSlot;
       });
     }, 100);
 
     return () => window.clearInterval(timer);
   }, [frameSlots, hasMore, playing]);
+
+  // 初始化时自动播放
+  useEffect(() => {
+    if (!loading && !buffering && frameSlots.length > 0 && selectedFrameSlot === null) {
+      setSelectedFrameSlot(frameSlots[0] ?? null);
+      setPlaying(true);
+    }
+  }, [loading, buffering, frameSlots, selectedFrameSlot]);
+
+  // —— 跳转到某个百分比位置 ——
+  const seekToPercent = useCallback((percent: number) => {
+    if (frameSlots.length === 0) return;
+
+    // 计算目标 slot
+    let targetSlot: number;
+    if (totalSlots > 0 && hasMore) {
+      // 知道总条数：按比例算出 slot
+      targetSlot = Math.round((percent / 100) * totalSlots);
+    } else {
+      // 不知道总条数：按已加载的帧比例算
+      const idx = Math.round((percent / 100) * (frameSlots.length - 1));
+      targetSlot = frameSlots[Math.max(0, Math.min(idx, frameSlots.length - 1))];
+      setSelectedFrameSlot(targetSlot);
+      setPlaying(true);
+      return;
+    }
+
+    // 查找已加载范围内最接近的 slot
+    const closest = frameSlots.reduce((best, s) =>
+      Math.abs(s - targetSlot) < Math.abs(best - targetSlot) ? s : best,
+    );
+
+    // 如果目标 slot 远超出当前窗口，加载对应区间
+    const loadNeeded =
+      targetSlot < frameSlots[0] ||
+      targetSlot > frameSlots[frameSlots.length - 1] ||
+      Math.abs(closest - targetSlot) > WINDOW_SLOT_LIMIT;
+
+    if (loadNeeded) {
+      const windowStart = Math.max(0, targetSlot - Math.floor(WINDOW_SLOT_LIMIT / 2));
+      setLoading(true);
+      loadSeriesWindow(windowStart, WINDOW_SLOT_LIMIT, "initial").then(() => {
+        // 加载后重新在 frameSlots 中找最近 slot（useState 更新后自动触发）
+      });
+    }
+
+    setSelectedFrameSlot(closest);
+    setPlaying(true);
+  }, [frameSlots, hasMore, loadSeriesWindow, totalSlots]);
+
+  // 数据加载完成后，如果 selectedFrameSlot 不在 frameSlots 中（如 seek 后新数据到），跳到最近
+  useEffect(() => {
+    if (selectedFrameSlot === null || frameSlots.length === 0) return;
+    if (!frameSlots.includes(selectedFrameSlot)) {
+      const closest = frameSlots.reduce((best, s) =>
+        Math.abs(s - selectedFrameSlot) < Math.abs(best - selectedFrameSlot) ? s : best,
+      );
+      setSelectedFrameSlot(closest);
+    }
+  }, [frameSlots, selectedFrameSlot]);
 
   return {
     loading,
@@ -209,7 +274,9 @@ export function useRecordPlaybackController({ recordId }: UseRecordPlaybackContr
     frameIndex,
     playing,
     hasMore,
+    totalSlots,
     setPlaying,
     loadSeries,
+    seekToPercent,
   };
 }

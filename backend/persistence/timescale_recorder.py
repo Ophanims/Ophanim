@@ -49,6 +49,14 @@ class TimescaleRecorder:
     ) -> None:
         await asyncio.to_thread(self._append_state_sync, record_id, project_id, state)
 
+    @staticmethod
+    def _clock_get(state: Dict[str, Any], top_key: str, clock_key: str, default: Any = None) -> Any:
+        """Read a field from the top level first, then fall back to the nested clock dict."""
+        val = state.get(top_key)
+        if val is not None:
+            return val
+        return state.get("clock", {}).get(clock_key, default)
+
     def _append_state_sync(self, record_id: int, project_id: int, state: Dict[str, Any]) -> None:
         ts = self._extract_ts(state)
         sql_state = (
@@ -59,10 +67,10 @@ class TimescaleRecorder:
             "payload = EXCLUDED.payload, now_iso = EXCLUDED.now_iso, status = EXCLUDED.status"
         )
 
-        slot_count = int(state.get("slot_count", 0))
-        timeslot = float(state.get("timeslot", 0.0))
-        now_iso = state.get("now")
-        maximum_slot = state.get("maximum_slot")
+        slot_count = int(self._clock_get(state, "slot_count", "slot_count", 0))
+        timeslot = float(self._clock_get(state, "timeslot", "slot_duration", 0.0))
+        now_iso = self._clock_get(state, "now", "current_datetime")
+        maximum_slot = self._clock_get(state, "maximum_slot", "maximum_slot")
         status = state.get("status")
 
         entities = state.get("entities") or []
@@ -275,7 +283,7 @@ class TimescaleRecorder:
 
     @staticmethod
     def _extract_ts(state: Dict[str, Any]) -> datetime:
-        now_iso = state.get("now")
+        now_iso = state.get("now") or state.get("clock", {}).get("current_datetime")
         if isinstance(now_iso, str):
             return datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
         return datetime.now(timezone.utc)
