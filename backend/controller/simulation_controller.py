@@ -135,18 +135,39 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
     engine = SimulatorEngine()
     session_id: str | None = None
 
+    # 快照发送：引擎写最新 state，独立定时任务每秒发 ~15 帧
+    _latest_snapshot: dict | None = None
+
+    async def _snapshot_sender():
+        """每秒约 15 帧，将最新快照发往 WebSocket"""
+        while True:
+            data = _latest_snapshot
+            if data is not None:
+                try:
+                    await asyncio.wait_for(
+                        websocket.send_json(jsonable_encoder(data)),
+                        timeout=0.5,
+                    )
+                except Exception:
+                    break
+            await asyncio.sleep(0.066)  # ~15fps
+
     async def render_hook(state: dict):
         if session_id is not None:
-            temp_recorder.append_state(session_id, state)
-        await websocket.send_json(
-            jsonable_encoder({"type": "state", "projectId": project_id, "state": state})
-        )
+            try:
+                temp_recorder.append_state(session_id, state)
+            except Exception as exc:
+                print(f"[Record] append_state error: {exc}")
+        # 只更新快照，不发送 — 由 _snapshot_sender 定时发送
+        nonlocal _latest_snapshot
+        _latest_snapshot = {"type": "state", "projectId": project_id, "state": state}
 
     engine.set_render_hook(render_hook)
     
     # 传递整个项目数据，供引擎内部解析使用
     await engine.initialize(project_model, ground_stations)
     
+    sender_task = asyncio.create_task(_snapshot_sender())
     run_task = asyncio.create_task(engine.run())
 
     try:
@@ -168,7 +189,27 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
                     recv_task.cancel()
                     with suppress(asyncio.CancelledError):
                         await recv_task
-                # 不发 DB，通知前端弹窗
+                else:
+                    with suppress(BaseException):
+                        recv_task.exception()
+                # 检查 run_task 是否有异常
+                try:
+                    exc = run_task.exception()
+                    if exc is not None:
+                        print(f"[Engine] run_task exception: {exc}")
+                        try:
+                            await websocket.send_json({
+                                "type": "error",
+                                "projectId": project_id,
+                                "message": f"Engine crashed: {exc}",
+                            })
+                        except Exception:
+                            pass
+                except asyncio.CancelledError:
+                    print("[Engine] run_task was cancelled")
+                except Exception as exc:
+                    print(f"[Engine] unexpected error retrieving exception: {exc}")
+                # 通知前端弹窗
                 try:
                     await websocket.send_json({
                         "type": "simulation_ended",
@@ -202,10 +243,13 @@ async def simulation_ws(websocket: WebSocket, project_id: int):
                 except RuntimeError:
                     pass  # WebSocket 已关闭
                 break
-    except WebSocketDisconnect:
-        pass
+    except WebSocketDisconnect as exc:
+        print(f"[WS] WebSocket disconnected: code={exc.code}, reason={exc.reason}", flush=True)
     finally:
         await engine.input_queue.put({"action": "stop"})
+        sender_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await sender_task
         try:
             await asyncio.wait_for(run_task, timeout=2.0)
         except asyncio.TimeoutError:

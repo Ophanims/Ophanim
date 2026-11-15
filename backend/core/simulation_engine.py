@@ -94,13 +94,18 @@ class SimulatorEngine:
 
     async def _process_command(self, cmd: dict):
         action = cmd.get("action")
-        if action == "play": self.status = EngineStatus.RUNNING
-        elif action == "pause": self.status = EngineStatus.PAUSED
-        elif action == "stop": self.status = EngineStatus.STOPPED
+        if action == "play":
+            self.status = EngineStatus.RUNNING
+            print(f"[Engine] status → RUNNING", flush=True)
+        elif action == "pause":
+            self.status = EngineStatus.PAUSED
+        elif action == "stop":
+            self.status = EngineStatus.STOPPED
+            print(f"[Engine] status → STOPPED (by command)", flush=True)
 
     # --- 主循环 ---
     async def run(self):
-        print(f"[Engine] Main loop started at {self.hz}Hz")
+        print(f"[Engine] Main loop started at {self.hz}Hz, status={self.status.value}, END_SLOT={self.clock.END_SLOT}", flush=True)
         
         while self.status != EngineStatus.STOPPED and self.clock.current_slot < self.clock.END_SLOT:
             start_time = time.perf_counter()
@@ -113,6 +118,7 @@ class SimulatorEngine:
                 # endTime 到达后自动停止
                 if self.clock.END_SLOT is not None and self.clock.current_slot >= self.clock.END_SLOT:
                     self.status = EngineStatus.STOPPED
+                    print(f"[Engine] status → STOPPED (END_SLOT reached)", flush=True)
                     continue
                 self.clock.tick()  # 推进一个时间槽，更新 current_time 和 current_slot
                 self.world.tick()
@@ -133,4 +139,5 @@ class SimulatorEngine:
             sleep_time = max(0, self.dt - elapsed)
             await asyncio.sleep(sleep_time)
 
-        print("[Engine] Loop terminated.")
+        print("[Engine] Loop terminated.", flush=True)
+        print(f"[Engine] Final status={self.status.value}, slot={self.clock.current_slot}/{self.clock.END_SLOT}", flush=True)
