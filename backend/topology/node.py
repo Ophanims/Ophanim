@@ -21,4 +21,4 @@ class Node(Entity):
          
     def list_connection_addresses(self) -> List[str]:
         """返回当前连接的节点地址列表"""
-        return [l.dst.address for l in self.connections]
+        return [l.dst.addr for l in self.connections]

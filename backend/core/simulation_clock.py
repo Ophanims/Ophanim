@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from skyfield.timelib import Time
 from util.time_utils import parse_datetime, to_skyfield_time
-from controller.project_controller import ProjectBase
+from simulator.schemas.engine_config import EngineConfig
 
 class SimulatorClock:
     """模拟器时钟，负责管理当前时间和时间槽的转换"""
@@ -22,11 +22,11 @@ class SimulatorClock:
         self.current_time: Time = None
         self.current_slot: int = 0
         
-    def setup(self, project: ProjectBase):
-        self.SLOT = project.timeSlot if project.timeSlot and project.timeSlot > 0 else 1
+    def setup(self, project: EngineConfig):
+        self.SLOT = project.time_slot if project.time_slot and project.time_slot > 0 else 1
         
-        T_START = parse_datetime(project.startTime) if project.startTime else None
-        T_END = parse_datetime(project.endTime) if project.endTime else None
+        T_START = parse_datetime(project.start_time) if project.start_time else None
+        T_END = parse_datetime(project.end_time) if project.end_time else None
         
         if T_START is None:
             self.START_DATETIME = datetime.now(timezone.utc)
@@ -68,4 +68,4 @@ class SimulatorClock:
         }
         
         
-CLOCK = SimulatorClock()
+from core.session_context import CLOCK

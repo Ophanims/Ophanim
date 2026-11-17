@@ -11,3 +11,11 @@ frontend/node_modules/
 # OS/editor
 .DS_Store
 .vscode/
+
+# Generated runtime state and development tools
+.venv/
+**/.next/
+**/*.tsbuildinfo
+**/.pytest_cache/
+frontend/test-results/
+frontend/playwright-report/

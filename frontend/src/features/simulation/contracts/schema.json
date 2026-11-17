@@ -1,0 +1,1688 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Constellation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "number_of_planes": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Number Of Planes",
+          "type": "integer"
+        },
+        "number_of_sat_per_planes": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Number Of Sat Per Planes",
+          "type": "integer"
+        },
+        "phase_factor": {
+          "title": "Phase Factor",
+          "type": "number"
+        },
+        "altitude": {
+          "exclusiveMinimum": 0,
+          "title": "Altitude",
+          "type": "number"
+        },
+        "inclination": {
+          "maximum": 180,
+          "minimum": 0,
+          "title": "Inclination",
+          "type": "number"
+        },
+        "orbital_period": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Orbital Period"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "name",
+        "number_of_planes",
+        "number_of_sat_per_planes",
+        "phase_factor",
+        "altitude",
+        "inclination"
+      ],
+      "title": "Constellation",
+      "type": "object"
+    },
+    "Experiment": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "start_time": {
+          "title": "Start Time",
+          "type": "string"
+        },
+        "end_time": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Time"
+        },
+        "time_slot": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Slot"
+        },
+        "missions": {
+          "items": {
+            "$ref": "#/$defs/Mission"
+          },
+          "title": "Missions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "start_time",
+        "missions"
+      ],
+      "title": "Experiment",
+      "type": "object"
+    },
+    "GroundStation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "altitude_m": {
+          "default": 0,
+          "title": "Altitude M",
+          "type": "number"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/LatLon"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "name",
+        "location"
+      ],
+      "title": "GroundStation",
+      "type": "object"
+    },
+    "Hardware": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "focal_length_mm": {
+          "default": 50.0,
+          "exclusiveMinimum": 0,
+          "title": "Focal Length Mm",
+          "type": "number"
+        },
+        "width_px": {
+          "default": 1920,
+          "exclusiveMinimum": 0,
+          "title": "Width Px",
+          "type": "integer"
+        },
+        "length_px": {
+          "default": 1080,
+          "exclusiveMinimum": 0,
+          "title": "Length Px",
+          "type": "integer"
+        },
+        "px_size_width": {
+          "default": 5.5,
+          "exclusiveMinimum": 0,
+          "title": "Px Size Width",
+          "type": "number"
+        },
+        "px_size_length": {
+          "default": 5.5,
+          "exclusiveMinimum": 0,
+          "title": "Px Size Length",
+          "type": "number"
+        },
+        "channels_per_pixel": {
+          "default": 3,
+          "exclusiveMinimum": 0,
+          "title": "Channels Per Pixel",
+          "type": "integer"
+        },
+        "bits_per_channel": {
+          "default": 8,
+          "exclusiveMinimum": 0,
+          "title": "Bits Per Channel",
+          "type": "integer"
+        },
+        "downlink_frequency_hz": {
+          "default": 26000000000.0,
+          "exclusiveMinimum": 0,
+          "title": "Downlink Frequency Hz",
+          "type": "number"
+        },
+        "downlink_bandwidth_hz": {
+          "default": 500000000.0,
+          "exclusiveMinimum": 0,
+          "title": "Downlink Bandwidth Hz",
+          "type": "number"
+        },
+        "downlink_tx_power_w": {
+          "default": 10.0,
+          "exclusiveMinimum": 0,
+          "title": "Downlink Tx Power W",
+          "type": "number"
+        },
+        "downlink_gain_tx_dbi": {
+          "default": 30.0,
+          "title": "Downlink Gain Tx Dbi",
+          "type": "number"
+        },
+        "downlink_gain_rx_dbi": {
+          "default": 40.0,
+          "title": "Downlink Gain Rx Dbi",
+          "type": "number"
+        },
+        "downlink_noise_temp_k": {
+          "default": 300.0,
+          "exclusiveMinimum": 0,
+          "title": "Downlink Noise Temp K",
+          "type": "number"
+        },
+        "uplink_frequency_hz": {
+          "default": 30000000000.0,
+          "exclusiveMinimum": 0,
+          "title": "Uplink Frequency Hz",
+          "type": "number"
+        },
+        "uplink_bandwidth_hz": {
+          "default": 500000000.0,
+          "exclusiveMinimum": 0,
+          "title": "Uplink Bandwidth Hz",
+          "type": "number"
+        },
+        "uplink_gain_tx_dbi": {
+          "default": 40.0,
+          "title": "Uplink Gain Tx Dbi",
+          "type": "number"
+        },
+        "uplink_tx_power_w": {
+          "default": 50.0,
+          "exclusiveMinimum": 0,
+          "title": "Uplink Tx Power W",
+          "type": "number"
+        },
+        "uplink_gain_rx_dbi": {
+          "default": 20.0,
+          "title": "Uplink Gain Rx Dbi",
+          "type": "number"
+        },
+        "uplink_noise_temp_k": {
+          "default": 500.0,
+          "exclusiveMinimum": 0,
+          "title": "Uplink Noise Temp K",
+          "type": "number"
+        },
+        "isl_frequency_hz": {
+          "default": 50000000000.0,
+          "exclusiveMinimum": 0,
+          "title": "Isl Frequency Hz",
+          "type": "number"
+        },
+        "isl_bandwidth_hz": {
+          "default": 2000000000.0,
+          "exclusiveMinimum": 0,
+          "title": "Isl Bandwidth Hz",
+          "type": "number"
+        },
+        "isl_tx_power_w": {
+          "default": 5.0,
+          "exclusiveMinimum": 0,
+          "title": "Isl Tx Power W",
+          "type": "number"
+        },
+        "isl_gain_tx_dbi": {
+          "default": 32.0,
+          "title": "Isl Gain Tx Dbi",
+          "type": "number"
+        },
+        "isl_gain_rx_dbi": {
+          "default": 32.0,
+          "title": "Isl Gain Rx Dbi",
+          "type": "number"
+        },
+        "isl_noise_temp_k": {
+          "default": 400.0,
+          "exclusiveMinimum": 0,
+          "title": "Isl Noise Temp K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "project_id"
+      ],
+      "title": "Hardware",
+      "type": "object"
+    },
+    "LatLon": {
+      "additionalProperties": false,
+      "properties": {
+        "lat": {
+          "maximum": 90,
+          "minimum": -90,
+          "title": "Lat",
+          "type": "number"
+        },
+        "lon": {
+          "maximum": 180,
+          "minimum": -180,
+          "title": "Lon",
+          "type": "number"
+        }
+      },
+      "required": [
+        "lat",
+        "lon"
+      ],
+      "title": "LatLon",
+      "type": "object"
+    },
+    "Mission": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        },
+        "source_node_id": {
+          "title": "Source Node Id",
+          "type": "string"
+        },
+        "end_node_id": {
+          "title": "End Node Id",
+          "type": "string"
+        },
+        "start_time": {
+          "title": "Start Time",
+          "type": "string"
+        },
+        "end_time": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Time"
+        },
+        "duration": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "name",
+        "target_id",
+        "source_node_id",
+        "end_node_id",
+        "start_time"
+      ],
+      "title": "Mission",
+      "type": "object"
+    },
+    "ROI": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "length": {
+          "exclusiveMinimum": 0,
+          "title": "Length",
+          "type": "number"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        },
+        "location": {
+          "$ref": "#/$defs/LatLon"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "name",
+        "length",
+        "location"
+      ],
+      "title": "ROI",
+      "type": "object"
+    },
+    "Resources": {
+      "additionalProperties": false,
+      "properties": {
+        "processor_core_count": {
+          "default": 4,
+          "minimum": 0,
+          "title": "Processor Core Count",
+          "type": "integer"
+        },
+        "computation_energy_factor": {
+          "default": 1e-27,
+          "minimum": 0,
+          "title": "Computation Energy Factor",
+          "type": "number"
+        },
+        "max_concurrent_computations": {
+          "default": 4,
+          "minimum": 0,
+          "title": "Max Concurrent Computations",
+          "type": "integer"
+        },
+        "max_clock_frequency_ghz": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Max Clock Frequency Ghz",
+          "type": "number"
+        },
+        "transmission_energy_factor": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Transmission Energy Factor",
+          "type": "number"
+        },
+        "spectral_efficiency": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Spectral Efficiency",
+          "type": "number"
+        },
+        "max_concurrent_transmissions": {
+          "default": 4,
+          "minimum": 0,
+          "title": "Max Concurrent Transmissions",
+          "type": "integer"
+        },
+        "battery_capacity_wh": {
+          "default": 60,
+          "exclusiveMinimum": 0,
+          "title": "Battery Capacity Wh",
+          "type": "number"
+        },
+        "solar_panel_area_m2": {
+          "default": 0.3,
+          "exclusiveMinimum": 0,
+          "title": "Solar Panel Area M2",
+          "type": "number"
+        },
+        "solar_panel_efficiency": {
+          "default": 0.3,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Solar Panel Efficiency",
+          "type": "number"
+        },
+        "amplifier_efficiency": {
+          "default": 0.8,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Amplifier Efficiency",
+          "type": "number"
+        },
+        "static_processing_power_w": {
+          "default": 10,
+          "minimum": 0,
+          "title": "Static Processing Power W",
+          "type": "number"
+        },
+        "static_isl_power_w": {
+          "default": 5,
+          "minimum": 0,
+          "title": "Static Isl Power W",
+          "type": "number"
+        },
+        "static_uplink_power_w": {
+          "default": 5,
+          "minimum": 0,
+          "title": "Static Uplink Power W",
+          "type": "number"
+        },
+        "static_downlink_power_w": {
+          "default": 5,
+          "minimum": 0,
+          "title": "Static Downlink Power W",
+          "type": "number"
+        },
+        "static_other_power_w": {
+          "default": 10,
+          "minimum": 0,
+          "title": "Static Other Power W",
+          "type": "number"
+        }
+      },
+      "title": "Resources",
+      "type": "object"
+    },
+    "SatelliteConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "constellation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Constellation Id"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "order": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Order"
+        },
+        "plane": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plane"
+        },
+        "tle1": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tle1"
+        },
+        "tle2": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tle2"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "SatelliteConfig",
+      "type": "object"
+    },
+    "Project": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "algorithm": {
+          "default": "geometry",
+          "enum": [
+            "ophanim",
+            "geometry",
+            "l2d2",
+            "phoenix",
+            "mhspo",
+            "ppo"
+          ],
+          "title": "Algorithm",
+          "type": "string"
+        },
+        "resources": {
+          "$ref": "#/$defs/Resources"
+        },
+        "seed": {
+          "default": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "User Id"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "hardware": {
+          "$ref": "#/$defs/Hardware"
+        },
+        "experiment": {
+          "$ref": "#/$defs/Experiment"
+        },
+        "constellation": {
+          "$ref": "#/$defs/Constellation"
+        },
+        "satellites": {
+          "items": {
+            "$ref": "#/$defs/SatelliteConfig"
+          },
+          "title": "Satellites",
+          "type": "array"
+        },
+        "ground_stations": {
+          "items": {
+            "$ref": "#/$defs/GroundStation"
+          },
+          "title": "Ground Stations",
+          "type": "array"
+        },
+        "rois": {
+          "items": {
+            "$ref": "#/$defs/ROI"
+          },
+          "title": "Rois",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project_id",
+        "title",
+        "description",
+        "hardware",
+        "experiment",
+        "constellation",
+        "satellites",
+        "ground_stations",
+        "rois"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "ControlMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "init",
+            "play",
+            "pause",
+            "stop"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Project"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "algorithm": {
+          "default": "geometry",
+          "enum": [
+            "ophanim",
+            "geometry",
+            "l2d2",
+            "phoenix",
+            "mhspo",
+            "ppo"
+          ],
+          "title": "Algorithm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "title": "ControlMessage",
+      "type": "object"
+    },
+    "EarthSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "pos": {
+          "$ref": "#/$defs/XYZ"
+        },
+        "rotation": {
+          "title": "Rotation",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "pos",
+        "rotation"
+      ],
+      "title": "EarthSnapshot",
+      "type": "object"
+    },
+    "LinkSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "src": {
+          "title": "Src",
+          "type": "string"
+        },
+        "dst": {
+          "title": "Dst",
+          "type": "string"
+        },
+        "distance": {
+          "title": "Distance",
+          "type": "number"
+        },
+        "link_pos": {
+          "items": {
+            "$ref": "#/$defs/XYZ"
+          },
+          "title": "Link Pos",
+          "type": "array"
+        },
+        "link_loc": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/LatLon"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Link Loc"
+        },
+        "snr": {
+          "title": "Snr",
+          "type": "number"
+        },
+        "rate": {
+          "title": "Rate",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "src",
+        "dst",
+        "distance",
+        "link_pos",
+        "link_loc",
+        "snr",
+        "rate"
+      ],
+      "title": "LinkSnapshot",
+      "type": "object"
+    },
+    "PhysicalMissionSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "position": {
+          "title": "Position",
+          "type": "string"
+        },
+        "inference_layer": {
+          "title": "Inference Layer",
+          "type": "integer"
+        },
+        "data_size": {
+          "title": "Data Size",
+          "type": "number"
+        },
+        "workload": {
+          "title": "Workload",
+          "type": "number"
+        },
+        "start_time": {
+          "title": "Start Time",
+          "type": "string"
+        },
+        "end_time": {
+          "title": "End Time",
+          "type": "string"
+        },
+        "deadline": {
+          "title": "Deadline",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "position",
+        "inference_layer",
+        "data_size",
+        "workload",
+        "start_time",
+        "end_time",
+        "deadline"
+      ],
+      "title": "PhysicalMissionSnapshot",
+      "type": "object"
+    },
+    "ROISnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "corners_pos": {
+          "items": {
+            "$ref": "#/$defs/XYZ"
+          },
+          "title": "Corners Pos",
+          "type": "array"
+        },
+        "corners_loc": {
+          "items": {
+            "$ref": "#/$defs/LatLon"
+          },
+          "title": "Corners Loc",
+          "type": "array"
+        },
+        "centre_pos": {
+          "$ref": "#/$defs/XYZ"
+        },
+        "centre_loc": {
+          "$ref": "#/$defs/LatLon"
+        }
+      },
+      "required": [
+        "id",
+        "corners_pos",
+        "corners_loc",
+        "centre_pos",
+        "centre_loc"
+      ],
+      "title": "ROISnapshot",
+      "type": "object"
+    },
+    "RunInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "num_nodes": {
+          "default": 0,
+          "title": "Num Nodes",
+          "type": "integer"
+        },
+        "num_edges": {
+          "default": 0,
+          "title": "Num Edges",
+          "type": "integer"
+        },
+        "num_tasks": {
+          "default": 0,
+          "title": "Num Tasks",
+          "type": "integer"
+        },
+        "reward": {
+          "default": 0,
+          "title": "Reward",
+          "type": "number"
+        },
+        "action_mask": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Action Mask",
+          "type": "array"
+        },
+        "allowed_actions": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Allowed Actions",
+          "type": "array"
+        },
+        "valid_dirs": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Valid Dirs",
+          "type": "array"
+        },
+        "acted": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acted"
+        },
+        "truncated_reason": {
+          "default": "None",
+          "title": "Truncated Reason",
+          "type": "string"
+        },
+        "terminated_reason": {
+          "default": "None",
+          "title": "Terminated Reason",
+          "type": "string"
+        },
+        "is_truncated": {
+          "default": false,
+          "title": "Is Truncated",
+          "type": "boolean"
+        },
+        "is_terminated": {
+          "default": false,
+          "title": "Is Terminated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "num_nodes",
+        "num_edges",
+        "num_tasks",
+        "reward",
+        "action_mask",
+        "allowed_actions",
+        "valid_dirs",
+        "acted",
+        "truncated_reason",
+        "terminated_reason",
+        "is_truncated",
+        "is_terminated"
+      ],
+      "title": "RunInfo",
+      "type": "object"
+    },
+    "SatelliteSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "processor_clock_frequency_ghz": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processor Clock Frequency Ghz"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "plane": {
+          "title": "Plane",
+          "type": "integer"
+        },
+        "order": {
+          "title": "Order",
+          "type": "integer"
+        },
+        "dimensions": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Dimensions",
+          "type": "array"
+        },
+        "pos": {
+          "$ref": "#/$defs/XYZ"
+        },
+        "loc": {
+          "$ref": "#/$defs/LatLon"
+        },
+        "velocity_vector": {
+          "$ref": "#/$defs/XYZ"
+        },
+        "solar_vector": {
+          "$ref": "#/$defs/XYZ"
+        },
+        "img_corners_pos": {
+          "items": {
+            "$ref": "#/$defs/XYZ"
+          },
+          "title": "Img Corners Pos",
+          "type": "array"
+        },
+        "img_corners_loc": {
+          "items": {
+            "$ref": "#/$defs/LatLon"
+          },
+          "title": "Img Corners Loc",
+          "type": "array"
+        },
+        "battery_percent": {
+          "title": "Battery Percent",
+          "type": "number"
+        },
+        "cost_percent": {
+          "title": "Cost Percent",
+          "type": "number"
+        },
+        "gain_percent": {
+          "title": "Gain Percent",
+          "type": "number"
+        },
+        "task_queue": {
+          "default": 0,
+          "title": "Task Queue",
+          "type": "integer"
+        },
+        "max_task_queue": {
+          "default": 5,
+          "title": "Max Task Queue",
+          "type": "integer"
+        },
+        "task_queue_percent": {
+          "default": 0.0,
+          "title": "Task Queue Percent",
+          "type": "number"
+        },
+        "is_observing": {
+          "title": "Is Observing",
+          "type": "boolean"
+        },
+        "is_communicating_sgl": {
+          "title": "Is Communicating Sgl",
+          "type": "boolean"
+        },
+        "is_processing": {
+          "title": "Is Processing",
+          "type": "boolean"
+        },
+        "is_communicating_isl": {
+          "title": "Is Communicating Isl",
+          "type": "boolean"
+        },
+        "is_charging": {
+          "title": "Is Charging",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "processor_clock_frequency_ghz",
+        "id",
+        "plane",
+        "order",
+        "dimensions",
+        "pos",
+        "loc",
+        "velocity_vector",
+        "solar_vector",
+        "img_corners_pos",
+        "img_corners_loc",
+        "battery_percent",
+        "cost_percent",
+        "gain_percent",
+        "task_queue",
+        "max_task_queue",
+        "task_queue_percent",
+        "is_observing",
+        "is_communicating_sgl",
+        "is_processing",
+        "is_communicating_isl",
+        "is_charging"
+      ],
+      "title": "SatelliteSnapshot",
+      "type": "object"
+    },
+    "SimulationSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "time": {
+          "title": "Time",
+          "type": "string"
+        },
+        "frame_counter": {
+          "title": "Frame Counter",
+          "type": "integer"
+        },
+        "slot_counter": {
+          "title": "Slot Counter",
+          "type": "integer"
+        },
+        "max_slot_number": {
+          "title": "Max Slot Number",
+          "type": "integer"
+        },
+        "period_counter": {
+          "title": "Period Counter",
+          "type": "integer"
+        },
+        "max_period_numbers": {
+          "title": "Max Period Numbers",
+          "type": "integer"
+        },
+        "satellites": {
+          "items": {
+            "$ref": "#/$defs/SatelliteSnapshot"
+          },
+          "title": "Satellites",
+          "type": "array"
+        },
+        "stations": {
+          "items": {
+            "$ref": "#/$defs/StationSnapshot"
+          },
+          "title": "Stations",
+          "type": "array"
+        },
+        "rois": {
+          "items": {
+            "$ref": "#/$defs/ROISnapshot"
+          },
+          "title": "Rois",
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/LinkSnapshot"
+          },
+          "title": "Links",
+          "type": "array"
+        },
+        "sun": {
+          "$ref": "#/$defs/SunSnapshot"
+        },
+        "earth": {
+          "$ref": "#/$defs/EarthSnapshot"
+        },
+        "tasks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Task"
+          },
+          "title": "Tasks",
+          "type": "array"
+        },
+        "missions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PhysicalMissionSnapshot"
+          },
+          "title": "Missions",
+          "type": "array"
+        },
+        "info": {
+          "$ref": "#/$defs/RunInfo"
+        }
+      },
+      "required": [
+        "schema_version",
+        "time",
+        "frame_counter",
+        "slot_counter",
+        "max_slot_number",
+        "period_counter",
+        "max_period_numbers",
+        "satellites",
+        "stations",
+        "rois",
+        "links",
+        "sun",
+        "earth",
+        "tasks",
+        "missions",
+        "info"
+      ],
+      "title": "SimulationSnapshot",
+      "type": "object"
+    },
+    "StationSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "pos": {
+          "$ref": "#/$defs/XYZ"
+        },
+        "loc": {
+          "$ref": "#/$defs/LatLon"
+        },
+        "on_upload": {
+          "title": "On Upload",
+          "type": "boolean"
+        },
+        "on_download": {
+          "title": "On Download",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "pos",
+        "loc",
+        "on_upload",
+        "on_download"
+      ],
+      "title": "StationSnapshot",
+      "type": "object"
+    },
+    "SunSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "pos": {
+          "$ref": "#/$defs/XYZ"
+        }
+      },
+      "required": [
+        "id",
+        "pos"
+      ],
+      "title": "SunSnapshot",
+      "type": "object"
+    },
+    "Task": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "plane_at": {
+          "title": "Plane At",
+          "type": "integer"
+        },
+        "order_at": {
+          "title": "Order At",
+          "type": "integer"
+        },
+        "t_start": {
+          "title": "T Start",
+          "type": "integer"
+        },
+        "t_end": {
+          "title": "T End",
+          "type": "integer"
+        },
+        "layer_id": {
+          "default": 0,
+          "title": "Layer Id",
+          "type": "integer"
+        },
+        "completion": {
+          "default": 0.0,
+          "title": "Completion",
+          "type": "number"
+        },
+        "acted": {
+          "default": 0,
+          "title": "Acted",
+          "type": "integer"
+        },
+        "workload_done": {
+          "default": 0,
+          "title": "Workload Done",
+          "type": "integer"
+        },
+        "workload_percent": {
+          "default": 0.0,
+          "title": "Workload Percent",
+          "type": "number"
+        },
+        "data_sent": {
+          "default": 0.0,
+          "title": "Data Sent",
+          "type": "number"
+        },
+        "data_percent": {
+          "default": 0.0,
+          "title": "Data Percent",
+          "type": "number"
+        },
+        "is_done": {
+          "default": false,
+          "title": "Is Done",
+          "type": "boolean"
+        },
+        "ddl": {
+          "default": 0,
+          "title": "Ddl",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "plane_at",
+        "order_at",
+        "t_start",
+        "t_end",
+        "layer_id",
+        "completion",
+        "acted",
+        "workload_done",
+        "workload_percent",
+        "data_sent",
+        "data_percent",
+        "is_done",
+        "ddl"
+      ],
+      "title": "Task",
+      "type": "object"
+    },
+    "XYZ": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "title": "XYZ",
+      "type": "object"
+    },
+    "StateMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "state",
+          "default": "state",
+          "title": "Type",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/SimulationSnapshot"
+        }
+      },
+      "required": [
+        "type",
+        "state"
+      ],
+      "title": "StateMessage",
+      "type": "object"
+    },
+    "StatusMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "status",
+          "default": "status",
+          "title": "Type",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "connected",
+            "ready",
+            "running",
+            "paused",
+            "stopped",
+            "completed"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "status"
+      ],
+      "title": "StatusMessage",
+      "type": "object"
+    },
+    "ErrorMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "error",
+          "default": "error",
+          "title": "Type",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "message"
+      ],
+      "title": "ErrorMessage",
+      "type": "object"
+    },
+    "JobSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "job_type": {
+          "enum": [
+            "train",
+            "auto_test"
+          ],
+          "title": "Job Type",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exit Code"
+        }
+      },
+      "required": [
+        "job_id",
+        "job_type",
+        "status",
+        "exit_code"
+      ],
+      "title": "JobSnapshot",
+      "type": "object"
+    },
+    "RecordSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/$defs/Project"
+        },
+        "code_hash": {
+          "title": "Code Hash",
+          "type": "string"
+        },
+        "algorithm": {
+          "title": "Algorithm",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "frame_count": {
+          "default": 0,
+          "title": "Frame Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "record_id",
+        "project_id",
+        "project",
+        "code_hash",
+        "algorithm",
+        "status",
+        "frame_count"
+      ],
+      "title": "RecordSnapshot",
+      "type": "object"
+    },
+    "RecordWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "record": {
+          "$ref": "#/$defs/RecordSnapshot"
+        },
+        "frames": {
+          "items": {
+            "$ref": "#/$defs/SimulationSnapshot"
+          },
+          "title": "Frames",
+          "type": "array"
+        },
+        "start_frame": {
+          "title": "Start Frame",
+          "type": "integer"
+        },
+        "has_more": {
+          "title": "Has More",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "record",
+        "frames",
+        "start_frame",
+        "has_more"
+      ],
+      "title": "RecordWindow",
+      "type": "object"
+    }
+  }
+}

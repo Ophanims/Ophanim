@@ -1,33 +1,15 @@
+"use client";
 import Link from "next/link";
 
-// Navbar.tsx
+function navigate_home(event: { preventDefault: () => void }, hash: string) {
+  if (window.location.pathname !== "/") return;
+  event.preventDefault();
+  window.location.hash = hash;
+}
+
 export default function Navbar() {
-
-  const navItems = [
-    { name: "MySQL", href: "http://localhost:8081/?server=mysql&username=mysql_admin&db=mysql_db" },
-    { name: "Timescale", href: "http://localhost:5050/" },
-    // { name: "Docs", href: "#" },
-    { name: "Github", href: "https://github.com/MaaZiJyun" },
-  ];
-
-  return (
-    <nav className="absolute text-white top-0 left-0 w-full px-8 py-4 flex items-center justify-between z-50">
-      <div className="text-2xl font-semibold tracking-wide select-none">
-        <Link href="/" className="relative">
-          OPHANIM
-        </Link>
-      </div>
-      <div className="flex space-x-10 text-sm font-medium items-center">
-        {navItems.map((item) => (
-          <a
-            key={item.name}
-            href={item.href}
-            className="relative"
-          >
-            {item.name}
-          </a>
-        ))}
-      </div>
-    </nav>
-  );
+  return <nav className="flex h-14 shrink-0 items-center justify-between border-b border-white/20 bg-black px-6 text-white">
+    <Link href="/" onNavigate={(event) => navigate_home(event, "")} className="text-xl font-semibold">OPHANIM</Link>
+    <div className="flex gap-8 text-sm"><Link href="/#projects" onNavigate={(event) => navigate_home(event, "projects")}>Projects</Link><Link href="/records">Records</Link></div>
+  </nav>;
 }

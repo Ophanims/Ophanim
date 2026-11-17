@@ -22,8 +22,8 @@ class GroundStationSnapshot(BaseModel):
     lat: float
     lon: float
     alt: float
-    onUpload: bool
-    onDownload: bool
+    on_upload: bool
+    on_download: bool
     connections: List[str]
 
 class GroundStation(Node):
@@ -67,22 +67,22 @@ class GroundStation(Node):
         self.power_of_UL_transmission: float = 500  # 传输动态功率（W）
         
         # 状态
-        self.onUpload: bool = False
-        self.onDownload: bool = False
+        self.on_upload: bool = False
+        self.on_download: bool = False
         
     def setup(self, project):
         self.RNG = np.random.default_rng(getattr(project, "seed", None))
-        self.CARRIER_FREQUENCY_OF_UP = float(project.carrierFrequencyOfUpGhz or 0.0)
-        self.CARRIER_FREQUENCY_OF_DL = float(project.carrierFrequencyOfDlGhz or 0.0)
-        self.BANDWIDTH_OF_UL = float(project.bandwidthOfUlMhz or 0.0)
-        self.BANDWIDTH_OF_DL = float(project.bandwidthOfDlMhz or 0.0)
-        self.ANTENNA_GAIN_OF_UL_TRANSMIT = float(project.antennaGainOfUlTransmitDbi or 0.0)
-        self.ANTENNA_GAIN_OF_DL_RECEIVE = float(project.antennaGainOfDlReceiveDbi or 0.0)
-        self.FACTOR_OF_TRANSMISSION_ENERGY = float(project.factorOfTransmissionEnergy or 0.0)
-        self.EFFICIENCY_OF_TARGET_SPECTRUM = float(project.efficiencyOfTargetSpectrum or 0.0)
-        self.MAXIMUM_CONCURRENT_TRANSMISSION = int(project.maximumConcurrentTransmission or 0)
-        self.EFFICIENCY_OF_POWER_AMPLIFIER = float(project.efficiencyOfPowerAmplifier or 0.0)
-        self.STATIC_POWER_OF_UP_TRANSMITTING = float(project.staticPowerOfUplinkTransmittingW or 0.0)
+        self.CARRIER_FREQUENCY_OF_UP = float(project.uplink_frequency_ghz or 0.0)
+        self.CARRIER_FREQUENCY_OF_DL = float(project.downlink_frequency_ghz or 0.0)
+        self.BANDWIDTH_OF_UL = float(project.uplink_bandwidth_mhz or 0.0)
+        self.BANDWIDTH_OF_DL = float(project.downlink_bandwidth_mhz or 0.0)
+        self.ANTENNA_GAIN_OF_UL_TRANSMIT = float(project.uplink_gain_tx_dbi or 0.0)
+        self.ANTENNA_GAIN_OF_DL_RECEIVE = float(project.downlink_gain_rx_dbi or 0.0)
+        self.FACTOR_OF_TRANSMISSION_ENERGY = float(project.transmission_energy_factor or 0.0)
+        self.EFFICIENCY_OF_TARGET_SPECTRUM = float(project.spectral_efficiency or 0.0)
+        self.MAXIMUM_CONCURRENT_TRANSMISSION = int(project.max_concurrent_transmissions or 0)
+        self.EFFICIENCY_OF_POWER_AMPLIFIER = float(project.amplifier_efficiency or 0.0)
+        self.STATIC_POWER_OF_UP_TRANSMITTING = float(project.static_uplink_power_w or 0.0)
 
     def tick(self):
         # 更新 ECEF 坐标
@@ -103,8 +103,8 @@ class GroundStation(Node):
 
     def snapshot(self) -> GroundStationSnapshot:
         return GroundStationSnapshot(
-            addr=self.address,
-            id=self.address,
+            addr=self.addr,
+            id=self.addr,
             type=self.type,
             name=self.name,
             x=self.x,
@@ -113,8 +113,8 @@ class GroundStation(Node):
             lat=self.lat,
             lon=self.lon,
             alt=self.alt,
-            onUpload=self.onUpload,
-            onDownload=self.onDownload,
+            on_upload=self.on_upload,
+            on_download=self.on_download,
             connections=self.list_connection_addresses(),
         )
         

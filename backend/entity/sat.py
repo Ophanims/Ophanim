@@ -10,76 +10,18 @@ from algorithm.algo import Algorithm
 from algorithm.algo_manager import ALGO_MANAGER
 from core.simulation_clock import CLOCK
 from topology.node import Node
-from controller.project_controller import ProjectBase
+from simulator.schemas.engine_config import EngineConfig
 from entity.entity import Entity, EntityType
 from util.const import EARTH, EPHEMERIS, GEOD, SUN
 
-class SatelliteSnapshot(BaseModel):
-    addr: str
-    type: str
-    # spatial
-    id: str
-    plane: int
-    order: int
-    lat: float
-    lon: float
-    alt: float
-    x: float
-    y: float
-    z: float
-    
-    # Velocity Vector
-    velocityVectorX: float
-    velocityVectorY: float
-    velocityVectorZ: float
-    
-    # Solar Vector
-    solarVectorX: float
-    solarVectorY: float
-    solarVectorZ: float
-
-    # imagery
-    corLat1: float
-    corLon1: float
-    corLat2: float
-    corLon2: float
-    corLat3: float
-    corLon3: float
-    corLat4: float
-    corLon4: float
-    
-    corX1: float
-    corY1: float
-    corZ1: float
-    corX2: float
-    corY2: float
-    corZ2: float
-    corX3: float
-    corY3: float
-    corZ3: float
-    corX4: float
-    corY4: float
-    corZ4: float
-
-    # energy
-    batteryLevel: float
-    processorClockFrequency: float
-
-    # indicators
-    onROI: bool
-    onSGL: bool
-    onCOM: bool
-    onISL: bool
-    onSUN: bool
-    
-    connections: list[str] = []
+from entity.satellite_snapshot import SatelliteSnapshot
 
 class Satellite(EarthSatellite, Node):
     def __init__(self,l1: str, l2: str, id: int = 0, plane: int = 0, order: int = 0):
         super().__init__(line1=l1, line2=l2, name=str(id))
         Node.__init__(self, EntityType.SAT)
         
-        self.id = id
+        self.id = str(id)
         self.plane = plane
         self.order = order
         self.azimuth = 0.0
@@ -106,28 +48,28 @@ class Satellite(EarthSatellite, Node):
         self.solar_vector_z: float = 0.0
         
         # 4 footprint corners (lat, lon)
-        self.cor_lat_1 = 0.0
-        self.cor_lon_1 = 0.0
-        self.cor_lat_2 = 0.0
-        self.cor_lon_2 = 0.0
-        self.cor_lat_3 = 0.0
-        self.cor_lon_3 = 0.0
-        self.cor_lat_4 = 0.0
-        self.cor_lon_4 = 0.0
+        self.cor_lat1 = 0.0
+        self.cor_lon1 = 0.0
+        self.cor_lat2 = 0.0
+        self.cor_lon2 = 0.0
+        self.cor_lat3 = 0.0
+        self.cor_lon3 = 0.0
+        self.cor_lat4 = 0.0
+        self.cor_lon4 = 0.0
         
         # 4 footprint corners (x, y, z)
-        self.cor_x_1 = 0.0
-        self.cor_y_1 = 0.0
-        self.cor_z_1 = 0.0
-        self.cor_x_2 = 0.0
-        self.cor_y_2 = 0.0
-        self.cor_z_2 = 0.0
-        self.cor_x_3 = 0.0
-        self.cor_y_3 = 0.0
-        self.cor_z_3 = 0.0
-        self.cor_x_4 = 0.0
-        self.cor_y_4 = 0.0
-        self.cor_z_4 = 0.0
+        self.cor_x1 = 0.0
+        self.cor_y1 = 0.0
+        self.cor_z1 = 0.0
+        self.cor_x2 = 0.0
+        self.cor_y2 = 0.0
+        self.cor_z2 = 0.0
+        self.cor_x3 = 0.0
+        self.cor_y3 = 0.0
+        self.cor_z3 = 0.0
+        self.cor_x4 = 0.0
+        self.cor_y4 = 0.0
+        self.cor_z4 = 0.0
         
         self.SLOT: int = 0
         
@@ -180,8 +122,8 @@ class Satellite(EarthSatellite, Node):
         self.STATIC_POWER_OF_OTHERS: float = 0.0  # 其他静态功率
         
         # 动态变量
-        self.battery_level: float = 100.0  # 当前电池电量
-        self.processor_clock_frequency: float = 0.0  # 当前处理器时钟频率
+        self.battery_percent: float = 100.0  # 当前电池电量
+        self.processor_clock_frequency_ghz: float = 0.0  # 当前处理器时钟频率
         self.tasks_in_processing: int = 0  # 当前正在处理的任务数量
         self.tasks_in_transmitting: int = 0  # 当前正在传输的任务
         self.power_of_computing: float = 0.0  # 计算动态功率
@@ -195,11 +137,11 @@ class Satellite(EarthSatellite, Node):
         self.power_of_solar_panel: float = 0.0  # 太阳能板功率
         
         # 状态
-        self.onROI: bool = True
-        self.onSGL: bool = True
-        self.onCOM: bool = True
-        self.onISL: bool = False
-        self.onSUN: bool = False
+        self.is_observing: bool = True
+        self.is_communicating_sgl: bool = True
+        self.is_processing: bool = True
+        self.is_communicating_isl: bool = False
+        self.is_charging: bool = False
         
         # 任务列表
 
@@ -207,52 +149,52 @@ class Satellite(EarthSatellite, Node):
         self.algorithm_name: str = "phoenix"
         self.algorithm: Algorithm = ALGO_MANAGER.create(self.algorithm_name)
         
-    def setup(self, project: ProjectBase):
+    def setup(self, project: EngineConfig):
         
         # 从项目数据中提取卫星属性
-        self.IMAGERY_WIDTH = int(project.imageryWidthPx or 0)
-        self.IMAGERY_HEIGHT = int(project.imageryHeightPx or 0)
-        self.LENGTH_OF_CAMERA_FOCAL = float(project.lengthOfCameraFocalMm or 0.0)
-        self.LENGTH_OF_CAMERA_SENSOR_UNIT = float(project.lengthOfCameraSensorUnitUm or 0.0)
-        self.CHANNELS_PER_PIXEL = int(project.channelsPerPixel or 0)
-        self.BITS_PER_CHANNEL = int(project.bitsPerChannelBit or 0)
+        self.IMAGERY_WIDTH = int(project.width_px or 0)
+        self.IMAGERY_HEIGHT = int(project.length_px or 0)
+        self.LENGTH_OF_CAMERA_FOCAL = float(project.focal_length_mm or 0.0)
+        self.LENGTH_OF_CAMERA_SENSOR_UNIT = float(project.pixel_size_um or 0.0)
+        self.CHANNELS_PER_PIXEL = int(project.channels_per_pixel or 0)
+        self.BITS_PER_CHANNEL = int(project.bits_per_channel or 0)
 
         # 计算属性
-        self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE = int(project.maximumNumberOfProcessorCore or 0)
-        self.FACTOR_OF_COMPUTATION_ENERGY = float(project.factorOfComputationEnergy or 0.0)
-        self.MAXIMUM_CONCURRENT_COMPUTATION = int(project.maximumConcurrentComputation or 0)
-        self.processor_clock_frequency = float(project.maximumClockFrequencyGhz or 0.0)
+        self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE = int(project.processor_core_count or 0)
+        self.FACTOR_OF_COMPUTATION_ENERGY = float(project.computation_energy_factor or 0.0)
+        self.MAXIMUM_CONCURRENT_COMPUTATION = int(project.max_concurrent_computations or 0)
+        self.processor_clock_frequency_ghz = float(project.max_clock_frequency_ghz or 0.0)
         
         # 通信属性
         # ISL
-        self.CARRIER_FREQUENCY_OF_ISL = float(project.carrierFrequencyOfIslGhz or 0.0)
-        self.BANDWIDTH_OF_ISL = float(project.bandwidthOfIslMhz or 0.0)
-        self.ANTENNA_GAIN_OF_ISL_TRANSMIT = float(project.antennaGainOfIslTransmitDbi or 0.0)
-        self.ANTENNA_GAIN_OF_ISL_RECEIVE = float(project.antennaGainOfIslReceiveDbi or 0.0)
+        self.CARRIER_FREQUENCY_OF_ISL = float(project.isl_frequency_ghz or 0.0)
+        self.BANDWIDTH_OF_ISL = float(project.isl_bandwidth_mhz or 0.0)
+        self.ANTENNA_GAIN_OF_ISL_TRANSMIT = float(project.isl_gain_tx_dbi or 0.0)
+        self.ANTENNA_GAIN_OF_ISL_RECEIVE = float(project.isl_gain_rx_dbi or 0.0)
         
         # Uplink
-        self.CARRIER_FREQUENCY_OF_UL = float(project.carrierFrequencyOfUpGhz or 0.0)
-        self.BANDWIDTH_OF_UL = float(project.bandwidthOfUlMhz or 0.0)
-        self.ANTENNA_GAIN_OF_UL_RECEIVE = float(project.antennaGainOfUlReceiveDbi or 0.0)
+        self.CARRIER_FREQUENCY_OF_UL = float(project.uplink_frequency_ghz or 0.0)
+        self.BANDWIDTH_OF_UL = float(project.uplink_bandwidth_mhz or 0.0)
+        self.ANTENNA_GAIN_OF_UL_RECEIVE = float(project.uplink_gain_rx_dbi or 0.0)
         
         # Downlink
-        self.CARRIER_FREQUENCY_OF_DL = float(project.carrierFrequencyOfDlGhz or 0.0)
-        self.BANDWIDTH_OF_DL = float(project.bandwidthOfDlMhz or 0.0)
-        self.ANTENNA_GAIN_OF_DL_TRANSMIT = float(project.antennaGainOfDlTransmitDbi or 0.0)
+        self.CARRIER_FREQUENCY_OF_DL = float(project.downlink_frequency_ghz or 0.0)
+        self.BANDWIDTH_OF_DL = float(project.downlink_bandwidth_mhz or 0.0)
+        self.ANTENNA_GAIN_OF_DL_TRANSMIT = float(project.downlink_gain_tx_dbi or 0.0)
         
-        self.FACTOR_OF_TRANSMISSION_ENERGY = float(project.factorOfTransmissionEnergy or 0.0)
-        self.EFFICIENCY_OF_TARGET_SPECTRUM = float(project.efficiencyOfTargetSpectrum or 0.0)
-        self.MAXIMUM_CONCURRENT_TRANSMISSION = int(project.maximumConcurrentTransmission or 0)
+        self.FACTOR_OF_TRANSMISSION_ENERGY = float(project.transmission_energy_factor or 0.0)
+        self.EFFICIENCY_OF_TARGET_SPECTRUM = float(project.spectral_efficiency or 0.0)
+        self.MAXIMUM_CONCURRENT_TRANSMISSION = int(project.max_concurrent_transmissions or 0)
         
         # 能量属性
-        self.BATTERY_CAPACITY = float(project.batteryCapacityWh or 0.0)
-        self.AREA_OF_SOLAR_PANEL = float(project.areaOfSolarPanelM2 or 0.0)
-        self.EFFICIENCY_OF_SOLAR_PANEL = float(project.efficiencyOfSolarPanel or 0.0)
-        self.EFFICIENCY_OF_POWER_AMPLIFIER = float(project.efficiencyOfPowerAmplifier or 1)
-        self.STATIC_POWER_OF_PROCESSING = float(project.staticPowerOfProcessingW or 0.0)
-        self.STATIC_POWER_OF_ISL_TRANSMITTING = float(project.staticPowerOfIslTransmittingW or 0.0)
-        self.STATIC_POWER_OF_DL_TRANSMITTING = float(project.staticPowerOfDownlinkTransmittingW or 0.0)
-        self.STATIC_POWER_OF_OTHERS = float(project.staticPowerOfOthersW or 0.0)
+        self.BATTERY_CAPACITY = float(project.battery_capacity_wh or 0.0)
+        self.AREA_OF_SOLAR_PANEL = float(project.solar_panel_area_m2 or 0.0)
+        self.EFFICIENCY_OF_SOLAR_PANEL = float(project.solar_panel_efficiency or 0.0)
+        self.EFFICIENCY_OF_POWER_AMPLIFIER = float(project.amplifier_efficiency or 1)
+        self.STATIC_POWER_OF_PROCESSING = float(project.static_processing_power_w or 0.0)
+        self.STATIC_POWER_OF_ISL_TRANSMITTING = float(project.static_isl_power_w or 0.0)
+        self.STATIC_POWER_OF_DL_TRANSMITTING = float(project.static_downlink_power_w or 0.0)
+        self.STATIC_POWER_OF_OTHERS = float(project.static_other_power_w or 0.0)
         self.calc_transmit_signal_power()
         
         self.power_of_solar_panel = self.AREA_OF_SOLAR_PANEL * self.EFFICIENCY_OF_SOLAR_PANEL * 1361  # 太阳常数约为 1361 W/m^2
@@ -271,7 +213,7 @@ class Satellite(EarthSatellite, Node):
     def move(self):
         # 更新卫星状态
         geocentric = self.at(CLOCK.current_time)
-        self.onSUN = geocentric.is_sunlit(EPHEMERIS)
+        self.is_charging = bool(geocentric.is_sunlit(EPHEMERIS))
         self.calc_position(geocentric)
         self.calc_velocity_vector(geocentric)
         self.calc_solar_vector(CLOCK.current_time, geocentric)
@@ -360,7 +302,7 @@ class Satellite(EarthSatellite, Node):
         
     def calc_dpc(self) -> float:
         """计算计算动态功率 (DPC)，单位 W"""
-        computing_power = self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE * self.FACTOR_OF_COMPUTATION_ENERGY * self.processor_clock_frequency ** 3
+        computing_power = self.MAXIMUM_NUMBER_OF_PROCESSOR_CORE * self.FACTOR_OF_COMPUTATION_ENERGY * self.processor_clock_frequency_ghz ** 3
         return computing_power
     
     def calc_dpt(self) -> float:
@@ -428,19 +370,19 @@ class Satellite(EarthSatellite, Node):
         )
         lons_out = ((lons_out + 180) % 360) - 180
 
-        self.cor_lat_1, self.cor_lon_1 = float(lats_out[0]), float(lons_out[0])
-        self.cor_lat_2, self.cor_lon_2 = float(lats_out[1]), float(lons_out[1])
-        self.cor_lat_3, self.cor_lon_3 = float(lats_out[2]), float(lons_out[2])
-        self.cor_lat_4, self.cor_lon_4 = float(lats_out[3]), float(lons_out[3])
+        self.cor_lat1, self.cor_lon1 = float(lats_out[0]), float(lons_out[0])
+        self.cor_lat2, self.cor_lon2 = float(lats_out[1]), float(lons_out[1])
+        self.cor_lat3, self.cor_lon3 = float(lats_out[2]), float(lons_out[2])
+        self.cor_lat4, self.cor_lon4 = float(lats_out[3]), float(lons_out[3])
 
-        self.cor_x_1, self.cor_y_1, self.cor_z_1 = wgs84.latlon(self.cor_lat_1, self.cor_lon_1).at(t).position.m
-        self.cor_x_2, self.cor_y_2, self.cor_z_2 = wgs84.latlon(self.cor_lat_2, self.cor_lon_2).at(t).position.m
-        self.cor_x_3, self.cor_y_3, self.cor_z_3 = wgs84.latlon(self.cor_lat_3, self.cor_lon_3).at(t).position.m
-        self.cor_x_4, self.cor_y_4, self.cor_z_4 = wgs84.latlon(self.cor_lat_4, self.cor_lon_4).at(t).position.m
+        self.cor_x1, self.cor_y1, self.cor_z1 = wgs84.latlon(self.cor_lat1, self.cor_lon1).at(t).position.m
+        self.cor_x2, self.cor_y2, self.cor_z2 = wgs84.latlon(self.cor_lat2, self.cor_lon2).at(t).position.m
+        self.cor_x3, self.cor_y3, self.cor_z3 = wgs84.latlon(self.cor_lat3, self.cor_lon3).at(t).position.m
+        self.cor_x4, self.cor_y4, self.cor_z4 = wgs84.latlon(self.cor_lat4, self.cor_lon4).at(t).position.m
     
     def snapshot(self):
         return SatelliteSnapshot(
-            addr=self.address,
+            addr=self.addr,
             type=self.type,
             id=self.id,
             plane=self.plane,
@@ -451,39 +393,39 @@ class Satellite(EarthSatellite, Node):
             x=self.x,
             y=self.y,
             z=self.z,
-            velocityVectorX=self.velocity_vector_x,
-            velocityVectorY=self.velocity_vector_y,
-            velocityVectorZ=self.velocity_vector_z,
-            solarVectorX=self.solar_vector_x,
-            solarVectorY=self.solar_vector_y,
-            solarVectorZ=self.solar_vector_z,
-            corLat1=self.cor_lat_1,
-            corLon1=self.cor_lon_1,
-            corLat2=self.cor_lat_2,
-            corLon2=self.cor_lon_2,
-            corLat3=self.cor_lat_3,
-            corLon3=self.cor_lon_3,
-            corLat4=self.cor_lat_4,
-            corLon4=self.cor_lon_4,
-            corX1=self.cor_x_1,
-            corY1=self.cor_y_1,
-            corZ1=self.cor_z_1,
-            corX2=self.cor_x_2,
-            corY2=self.cor_y_2,
-            corZ2=self.cor_z_2,
-            corX3=self.cor_x_3,
-            corY3=self.cor_y_3,
-            corZ3=self.cor_z_3,
-            corX4=self.cor_x_4,
-            corY4=self.cor_y_4,
-            corZ4=self.cor_z_4,
-            batteryLevel=self.battery_level,
-            processorClockFrequency=self.processor_clock_frequency,
-            onROI=self.onROI,
-            onSGL=self.onSGL,
-            onCOM=self.onCOM,
-            onISL=self.onISL,
-            onSUN=self.onSUN,
+            velocity_vector_x=self.velocity_vector_x,
+            velocity_vector_y=self.velocity_vector_y,
+            velocity_vector_z=self.velocity_vector_z,
+            solar_vector_x=self.solar_vector_x,
+            solar_vector_y=self.solar_vector_y,
+            solar_vector_z=self.solar_vector_z,
+            cor_lat1=self.cor_lat1,
+            cor_lon1=self.cor_lon1,
+            cor_lat2=self.cor_lat2,
+            cor_lon2=self.cor_lon2,
+            cor_lat3=self.cor_lat3,
+            cor_lon3=self.cor_lon3,
+            cor_lat4=self.cor_lat4,
+            cor_lon4=self.cor_lon4,
+            cor_x1=self.cor_x1,
+            cor_y1=self.cor_y1,
+            cor_z1=self.cor_z1,
+            cor_x2=self.cor_x2,
+            cor_y2=self.cor_y2,
+            cor_z2=self.cor_z2,
+            cor_x3=self.cor_x3,
+            cor_y3=self.cor_y3,
+            cor_z3=self.cor_z3,
+            cor_x4=self.cor_x4,
+            cor_y4=self.cor_y4,
+            cor_z4=self.cor_z4,
+            battery_percent=self.battery_percent,
+            processor_clock_frequency_ghz=self.processor_clock_frequency_ghz,
+            is_observing=self.is_observing,
+            is_communicating_sgl=self.is_communicating_sgl,
+            is_processing=self.is_processing,
+            is_communicating_isl=self.is_communicating_isl,
+            is_charging=self.is_charging,
             connections=self.list_connection_addresses(),
         )
         

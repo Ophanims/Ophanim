@@ -30,7 +30,7 @@ class Sun(Entity):
 
     def snapshot(self) -> SunSnapshot:
         return SunSnapshot(
-            addr=self.address,
+            addr=self.addr,
             type=self.type,
             x=self.x,
             y=self.y,

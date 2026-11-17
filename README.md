@@ -1,5 +1,9 @@
 # Ophanim
 
+Ophanim 与 SCOPE 已合为一个 Webapp。启动后访问 `/`，点击 **Get Started** 在同一页面展开项目管理；所有项目共用配置、工作区、运行控制和记录回放。完整运行、数据迁移与验证方式见 [合并说明](docs/SCOPE_MERGE.md)。
+
+编码规范：[通用编码法则](CODING_RULES.md)。
+
 ## 数据库可视化入口
 
 - TimescaleDB（PostgreSQL）可视化：pgAdmin

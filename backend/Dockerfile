@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
@@ -11,8 +11,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY requirements.txt .
+ARG INSTALL_ML=false
+COPY requirements*.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+RUN if [ "$INSTALL_ML" = "true" ]; then pip install --no-cache-dir -r requirements-ml.txt; fi
 
 COPY . .
 

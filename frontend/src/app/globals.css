@@ -24,3 +24,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@theme {
+  --color-gray-01: #fafafa;
+  --color-gray-02: #e5e5e5;
+  --color-gray-03: #cccccc;
+  --color-gray-04: #999999;
+  --color-gray-05: #777777;
+  --color-gray-06: #555555;
+  --color-gray-07: #333333;
+  --color-gray-08: #1a1a1a;
+  --color-gray-09: #0d0d0d;
+}
+.leaflet-container { background: #171717; }

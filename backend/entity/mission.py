@@ -14,7 +14,9 @@ from util.time_utils import to_skyfield_time
 if TYPE_CHECKING:
     from topology.node import Node
 
-class MissionSnapshot(BaseModel):
+from simulator.schemas.base import SnapshotModel
+
+class PhysicalMissionSnapshot(SnapshotModel):
     id: int
     status: str
     position: str
@@ -26,7 +28,7 @@ class MissionSnapshot(BaseModel):
     deadline: str
 
 class Mission():
-    _id_counter = itertools.count(1)
+
     def __init__(self, position: "Node", start_time: Time, start_slot: int):
         self.id = self._next_unique_id()
         self.status = MissionStatus.IDLE
@@ -55,7 +57,8 @@ class Mission():
     @classmethod
     def _next_unique_id(cls) -> str:
         # 使用统一递增计数，确保当前进程内全局唯一。
-        return next(cls._id_counter)
+        from core.session_context import next_identity
+        return next_identity("mission")
         
     def create(self, w_px: int, h_px: int, bpc: int, cpp: int):
         self.IMAGE_WIDTH_PX = w_px
@@ -66,13 +69,13 @@ class Mission():
         self.data_size = self.calc_image_data_size_mb()
         
     def tick(self):
-        if CLOCK.current_time is not None and self.deadline is not None and \
-        CLOCK.current_time.utc_datetime() >= self.deadline.utc_datetime() and \
+        if CLOCK.current_time is not None and self.deadline is not None and\
+        CLOCK.current_time.utc_datetime() >= self.deadline.utc_datetime() and\
         self.status != MissionStatus.COMPLETED:
             self.status = MissionStatus.FAILED
             
-        if CLOCK.current_time is not None and self.start_time is not None and \
-        CLOCK.current_time.utc_datetime() >= self.start_time.utc_datetime() and \
+        if CLOCK.current_time is not None and self.start_time is not None and\
+        CLOCK.current_time.utc_datetime() >= self.start_time.utc_datetime() and\
         self.phase == MissionPhase.UPLOADING:
             # 省略Sensoring的过程，直接进入Computing阶段
             self.phase = MissionPhase.COMPUTING
@@ -153,7 +156,7 @@ class Mission():
             total_workload += self.calc_layer_workload(layer)
         return total_workload
 
-    def snapshot(self) -> MissionSnapshot:
+    def snapshot(self) -> PhysicalMissionSnapshot:
         if isinstance(self.start_time, Time):
             start_time = skyfield_to_datetime(self.start_time).isoformat()
         else:
@@ -169,10 +172,10 @@ class Mission():
         else:
             deadline = str(self.deadline)
 
-        return MissionSnapshot(
+        return PhysicalMissionSnapshot(
             id=self.id,
             status=self.status.value,
-            position=self.position.address,
+            position=self.position.addr,
             inference_layer=self.inference_layer,
             data_size=self.data_size,
             workload=self.workload,

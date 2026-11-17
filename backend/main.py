@@ -1,15 +1,14 @@
 import os
 import sys
 import asyncio
-import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from controller.project_controller import ensure_projects_table, router as project_router
-from controller.record_controller import ensure_record_schema
-from controller.simulation_controller import router as simulation_router
+from persistence.schema_bootstrap import ensure_projects_table, ensure_record_schema
+from simulator.services.project_migration import migrate_ophanim_projects
+from simulator.services.record_migration import migrate_ophanim_records
 
 app = FastAPI(title="OPHANIM API", version="0.1.0")
 
@@ -31,11 +30,10 @@ async def startup_init_db():
 
     for attempt in range(max_retries):
         try:
-            ensure_projects_table()
-            try:
-                await ensure_record_schema()
-            except Exception as rec_err:
-                print(f"Timescale schema init skipped: {rec_err}")
+            await asyncio.to_thread(ensure_projects_table)
+            await asyncio.to_thread(migrate_ophanim_projects)
+            await ensure_record_schema()
+            await asyncio.to_thread(migrate_ophanim_records)
             print("Database connected and initialized successfully")
             break
         except Exception as e:
@@ -52,6 +50,9 @@ def health_check():
     return {"ok": True}
 
 
-app.include_router(project_router, prefix="/api", tags=["projects"])
-app.include_router(simulation_router, prefix="/api/simulation", tags=["simulation"])
 
+
+# One API and lifecycle for every simulation strategy.
+from simulator.api import router as simulation_router, close_simulation_resources
+app.include_router(simulation_router)
+app.add_event_handler("shutdown", close_simulation_resources)

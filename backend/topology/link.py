@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from pydantic import BaseModel
 from topology.node import Node
-from controller.project_controller import ProjectBase
+from simulator.schemas.engine_config import EngineConfig
 from entity.sat import Satellite
 from entity.gs import GroundStation
 from entity.process import Process
@@ -45,7 +45,7 @@ class Link:
     """
 
     def __init__(self, src: Node, dst: Node):
-        self.id = f"({src.address},{dst.address})"
+        self.id = f"({src.addr},{dst.addr})"
         self.src = src
         self.dst = dst
         self.type = LinkType.ISL          # ISL, SGL, TL
@@ -70,9 +70,9 @@ class Link:
         # 模拟
         self.processes: List[Process] = []  # 当前链路上正在进行的传输过程列表
         
-    def setup(self, project: ProjectBase):
-        self.MAX_PLANE = int(project.maximumNumberOfPlane or 0)
-        self.MAX_CONCURRENT_TRANSMISSION = int(project.maximumConcurrentTransmission or 0)
+    def setup(self, project: EngineConfig):
+        self.MAX_PLANE = int(project.number_of_planes or 0)
+        self.MAX_CONCURRENT_TRANSMISSION = int(project.max_concurrent_transmissions or 0)
         
         # 根据链路类型选择合适的频率和带宽参数
         if isinstance(self.src, Satellite) and isinstance(self.dst, Satellite):
@@ -162,7 +162,7 @@ class Link:
         
         los = 0.0
         
-        if isinstance(self.src, Satellite) and \
+        if isinstance(self.src, Satellite) and\
         isinstance(self.dst, Satellite):
             
             s_alt = self.src.alt
@@ -287,8 +287,8 @@ class Link:
     def snapshot(self) -> LinkSnapshot:
         return LinkSnapshot(
             id=self.id,
-            src=self.src.address,
-            dst=self.dst.address,
+            src=self.src.addr,
+            dst=self.dst.addr,
             type=self.type.value,
             status=self.status,
             snr=self.snr,

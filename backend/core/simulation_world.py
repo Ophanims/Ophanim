@@ -1,11 +1,12 @@
 from typing import List
+from core.prediction_cache import PredictionCache
 
 import numpy as np
 
 from core.simulation_clock import CLOCK
 from entity.gs import GroundStation
 from entity.sat import Satellite
-from util.time_utils import skyfield_to_datetime
+from util.time_utils import skyfield_to_datetime, to_skyfield_time
 from status.mission_status import MissionPhase
 from entity.mission import Mission
 from topology.node import Node
@@ -15,7 +16,7 @@ from entity.sun import Sun
 from util.const import DEFAULT_ALTITUDE, DEFAULT_CONSTELLATION_SIZE, DEFAULT_INCLINATION, DEFAULT_PHASE_FACTOR, DEFAULT_PLANE_COUNT
 from util.gs_generator import generate_stations
 from util.sat_generator import generate_constellation
-from controller.project_controller import GroundStationBase, ProjectBase
+from simulator.schemas.engine_config import EngineStation, EngineConfig
 from entity.entity import Entity
 from skyfield.timelib import Time, timedelta
 
@@ -23,6 +24,7 @@ class SimulationWorld(Entity):
     def __init__(self):
         super().__init__(type="world")
         
+        self.prediction_cache = PredictionCache()
         self.SEED: int = 0
         
         # Environment Entities
@@ -39,17 +41,18 @@ class SimulationWorld(Entity):
         # Missions
         self.missions: List[Mission] = []
         
-    def setup(self, pjc_base: ProjectBase, gs_base: List[GroundStationBase]):
+    def setup(self, pjc_base: EngineConfig, gs_base: List[EngineStation], satellites=None):
         self.clear()  # 清空现有数据
         
         self.SEED = pjc_base.seed
+        self.rng = np.random.default_rng(self.SEED)
         
         # 根据项目数据创建实体
         ALT = pjc_base.altitude if pjc_base.altitude and pjc_base.altitude > 0 else DEFAULT_ALTITUDE
         INC = pjc_base.inclination if pjc_base.inclination and 0 <= pjc_base.inclination <= 180 else DEFAULT_INCLINATION
-        CON_SIZE = pjc_base.sizeOfConstellation if pjc_base.sizeOfConstellation else DEFAULT_CONSTELLATION_SIZE
-        P_NUM = pjc_base.maximumNumberOfPlane if pjc_base.maximumNumberOfPlane else DEFAULT_PLANE_COUNT
-        PF = pjc_base.phaseFactor if pjc_base.phaseFactor else DEFAULT_PHASE_FACTOR
+        CON_SIZE = pjc_base.satellite_count if pjc_base.satellite_count else DEFAULT_CONSTELLATION_SIZE
+        P_NUM = pjc_base.number_of_planes if pjc_base.number_of_planes else DEFAULT_PLANE_COUNT
+        PF = pjc_base.phase_factor if pjc_base.phase_factor else DEFAULT_PHASE_FACTOR
         
         sun = Sun()
         self.entities.append(sun)  # 添加太阳实体
@@ -57,7 +60,7 @@ class SimulationWorld(Entity):
         earth = Earth()
         self.entities.append(earth) # 添加地球实体
         
-        satellites = generate_constellation(alt=ALT, inc=INC, P=P_NUM, T=CON_SIZE, F=PF)
+        satellites = satellites if satellites is not None else generate_constellation(alt=ALT, inc=INC, P=P_NUM, T=CON_SIZE, F=PF)
         self.entities.extend(satellites)
         self.satellites.extend(satellites)
         self.nodes.extend(satellites)
@@ -123,7 +126,7 @@ class SimulationWorld(Entity):
     def generate_missions(self) -> list[Mission]:
         # 根据泊松分布和SEED生成新的Mission
         lam = 0.2 * CLOCK.SLOT
-        rng = np.random.default_rng(self.SEED)
+        rng = self.rng
         num_missions = rng.poisson(lam)
         random_missions = []
         
@@ -140,7 +143,7 @@ class SimulationWorld(Entity):
             random_pos = rng.choice(self.satellites)
             mission = Mission(
                 position=random_pos,
-                start_time=CLOCK.current_time + _dt,
+                start_time=to_skyfield_time(skyfield_to_datetime(CLOCK.current_time) + timedelta(seconds=float(_dt))),
                 start_slot=CLOCK.current_slot + _dt_st,
             )
             mission.create(
@@ -163,4 +166,4 @@ class SimulationWorld(Entity):
         self.missions.clear()
 
 
-WORLD = SimulationWorld()
+from core.session_context import WORLD

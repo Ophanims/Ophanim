@@ -52,7 +52,7 @@ class Earth(Entity):
 
     def snapshot(self) -> EarthSnapshot:
         return EarthSnapshot(
-            addr=self.address,
+            addr=self.addr,
             type=self.type,
             null_island_x=self.null_island_x,
             null_island_y=self.null_island_y,
