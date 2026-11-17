@@ -7,6 +7,7 @@ PowerIcon
 } from "@heroicons/react/24/outline";
 import { useEffect,useState } from "react";
 import { check_cache,get_cache_size } from "../../../communication/cache";
+import AlgorithmMenu from "./AlgorithmMenu";
 
 type MenuItem = {
   label: string;
@@ -16,6 +17,8 @@ type MenuItem = {
 type MenuBarProps = {
   className?: string;
   project: Project;
+  algorithm: NonNullable<Project["algorithm"]>;
+  on_algorithm_change: (algorithm: NonNullable<Project["algorithm"]>) => void;
   disabled: boolean;
   is_connected: boolean;
   is_running: boolean;
@@ -73,6 +76,7 @@ const child_button_base =
 const MenuBar = ({
   className = "",
   project,
+  algorithm, on_algorithm_change,
   disabled, is_connected, is_running,
   is_loading,
   on_menu_click,
@@ -154,6 +158,9 @@ const MenuBar = ({
             )}
           </div>
         ))}
+        <AlgorithmMenu algorithm={algorithm} on_algorithm_change={on_algorithm_change}
+          disabled={is_connected || is_loading} is_open={open_menu === menu_items.length}
+          on_open={() => set_open_menu(menu_items.length)} on_close={() => set_open_menu(null)} />
       </div>
       <div className="flex items-center">
         {is_connected && (

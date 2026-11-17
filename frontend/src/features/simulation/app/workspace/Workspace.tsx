@@ -205,20 +205,15 @@ export default function Workspace({ selected }: WorkspaceProps) {
         <h1 className="text-xl font-semibold text-white">
           {selected_project.title}
         </h1>
+        <span className="text-xs text-white/40">Latest 600 frames buffered</span>
       </div>
 
-      <div className="flex items-center gap-4 px-4 py-2 text-sm">
-        <label>Algorithm <select aria-label="Algorithm" disabled={is_connected || is_loading} value={algorithm}
-          onChange={(event) => { const algorithm = event.target.value as NonNullable<typeof selected_project.algorithm>; set_algorithm(algorithm); set_selected_project({ ...selected_project, algorithm }); }} className="bg-black border border-white/30 px-2">
-          <option value="ophanim">Ophanim Physics</option><option value="geometry">Geometry</option><option value="l2d2">L2D2</option>
-          <option value="phoenix">PHOENIX</option><option value="mhspo">MHSPO</option><option value="ppo">PPO</option>
-        </select></label>
-        <span>Latest 600 frames buffered</span>
-        {(error || operation_error) && <p role="alert" className="text-red-300">{error || operation_error}</p>}
-      </div>
+      {(error || operation_error) && <p role="alert" className="px-4 py-2 text-sm text-red-300">{error || operation_error}</p>}
       {job && <JobPanel job={job} on_change={set_job} />}
       {/* Menu Bar */}
       <MenuBar
+        algorithm={algorithm}
+        on_algorithm_change={(algorithm) => { set_algorithm(algorithm); set_selected_project({ ...selected_project, algorithm }); }}
         disabled={is_running}
         is_connected={is_connected}
         is_running={is_running}
