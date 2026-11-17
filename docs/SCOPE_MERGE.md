@@ -22,12 +22,12 @@ Universe、Geometry、Object、Map、参数与数据流视图、分屏、配置�
 
 ## 项目和记录
 
-- 原 MySQL 项目启动时自动迁入统一项目目录，数字 ID 保留为字符串，不创建另一份带前缀的项目副本。
+- 原 MySQL 项目通过离线命令迁入统一项目目录，数字 ID 保留为字符串，不创建另一份带前缀的项目副本。
 - SCOPE 已迁入的项目与原有项目并列显示。修改、删除和运行都通过同一个 API。
 - 旧名称只在有明确范围的 v0 数据适配器中接收，迁移后仅输出规范名称。GHz／MHz 转换成硬件契约的 Hz；物理引擎使用的派生单位具有明确后缀。
 - 原有处理器、电池、太阳能板与静态功率参数纳入共同的 `resources` 配置，地面站保留 `altitude_m`。
 - 新记录直接保存发送给页面的同一份快照，附带完整项目配置、算法、代码哈希和版本。历史回放无需依赖仍然存在的项目。
-- Timescale 历史记录启动时流式转换到同一个记录目录，使用 `timescale_{旧记录ID}`。旧数据没有保存代码哈希，明确标为 `unknown-v0`；旧记录没有保存当时的地面站配置时，只能使用当前项目中的地面站信息恢复标识。
+- Timescale 历史记录通过离线命令流式转换到同一个记录目录，使用 `timescale_{旧记录ID}`。旧数据没有保存代码哈希，明确标为 `unknown-v0`；旧记录没有保存当时的地面站配置时，只能使用当前项目中的地面站信息恢复标识。
 - `migrations.json` 记录已经处理的项目和记录，避免删除后重启又从旧库恢复。旧数据库内容与原 SCOPE 目录保留。
 
 本机已迁入 SCOPE 的 1 个项目及 14 个模型／归一化文件。迁移检查未发现当前 Timescale 库中已有历史记录，历史转换路径使用构造的 v0 数据进行回归验证。
@@ -82,42 +82,15 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 
 ## 本地启动
 
-Python 使用 3.12，Node 使用兼容当前 Next.js 的版本。
+运行不依赖 Docker 或数据库，项目和记录使用统一的本地文件目录。
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r backend/requirements-dev.txt
-.venv/bin/python -m pip install -r backend/requirements-ml.txt
-docker compose up -d db mysql
-.venv/bin/python scripts/run_backend.py --port 8001 --reload
+./setup.sh --ml
+./start.sh
+# 关闭：Ctrl+C 或另一个终端执行 ./stop.sh
 ```
 
-另一个终端：
-
-```bash
-cd frontend
-npm ci
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 npm run dev
-```
-
-打开 `http://localhost:3000/`。启动器从根目录 `.env` 读取数据库配置，不输出凭据。为避开本机已有的 PostgreSQL，Compose 将 Timescale 发布到 `DB_PORT`，默认 `15432`；容器间仍使用 `db:5432`。
-
-Docker 完整启动：
-
-```bash
-INSTALL_ML=true docker compose up -d --build
-```
-
-不安装机器学习依赖时，可使用物理和几何策略；基线、PPO、训练和自动评估需要可选依赖。PPO 检查点必须匹配星座和观测空间。
-
-| 环境配置 | 用途 |
-| --- | --- |
-| `NEXT_PUBLIC_API_URL` | 浏览器 WebSocket 和前端 HTTP 代理的后端地址 |
-| `SIMULATION_DATA_DIR` | 统一运行数据目录 |
-| `SIMULATION_EPHEMERIS_FILE` | 星历路径，默认现有 `backend/de421.bsp` |
-| `SIMULATION_TORCH_THREADS` | 推理 CPU 线程数，默认 1 |
-| `INSTALL_ML` | Docker 是否安装机器学习依赖 |
-| `DB_PORT` | 本机连接 Timescale 的端口，默认 15432 |
+脚本读取 `.env` 中的端口配置，统一前后端地址，按需要构建前端，并负责子进程退出与端口检查。具体命令和旧数据迁移方式见 [README](../README.md)。旧数据库初始化及导入只由 `scripts/migrate_legacy_data.py` 显式执行，应用启动不连接旧数据库。
 
 ## 验证
 

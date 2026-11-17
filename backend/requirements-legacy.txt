@@ -1,0 +1,4 @@
+-r requirements.txt
+PyMySQL==1.1.1
+cryptography==43.0.0
+psycopg[binary]==3.2.9
