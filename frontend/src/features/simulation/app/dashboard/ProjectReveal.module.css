@@ -1,0 +1,10 @@
+.ready {
+  animation: reveal-projects 240ms ease-in-out both;
+}
+@keyframes reveal-projects {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ready { animation: none; }
+}
