@@ -23,6 +23,7 @@ type MenuBarProps = {
   is_connected: boolean;
   is_running: boolean;
   is_loading: boolean;
+  on_open_parameters: () => void;
   on_menu_click?: (parent: string, child: string) => void;
   on_run_simulation?: () => void;
   on_pause_simulation?: () => void;
@@ -34,6 +35,7 @@ const menu_items: MenuItem[] = [
     label: "Project",
     children: ["Config", "Import", "Export", "Save", "Exit"],
   },
+  { label: "Parameters", children: [] },
   {
     label: "View",
     children: [
@@ -79,7 +81,7 @@ const MenuBar = ({
   algorithm, on_algorithm_change,
   disabled, is_connected, is_running,
   is_loading,
-  on_menu_click,
+  on_menu_click, on_open_parameters,
   on_run_simulation,
   on_pause_simulation,
   on_stop_simulation,
@@ -100,6 +102,10 @@ const MenuBar = ({
     ).catch(() => set_cache_integrity(false));
   }, [open_menu, project]);
 
+  const is_menu_disabled = (label: string) => label === "Parameters"
+    ? is_connected || is_loading
+    : disabled && label !== "Visualization" && label !== "Simulation";
+
   return (
     <div
       className={`flex items-center justify-between bg-gray-08 backdrop-blur-sm border-b border-white/10 px-2 space-x-6 text-sm font-medium z-10 relative ${className}`}
@@ -110,33 +116,30 @@ const MenuBar = ({
           <div key={menu.label} className="relative">
             <button
               className={`${button_base} ${
-                disabled &&
-                menu.label !== "Visualization" &&
-                menu.label !== "Simulation"
+                is_menu_disabled(menu.label)
                   ? button_disabled
                   : button_active
               }`}
               onMouseEnter={() => set_open_menu(idx)}
               onFocus={() => set_open_menu(idx)}
-              onClick={() => set_open_menu(idx)}
+              onClick={() => {
+                if (menu.label === "Parameters") { set_open_menu(null); on_open_parameters(); }
+                else set_open_menu(idx);
+              }}
               type="button"
               disabled={
-                disabled &&
-                menu.label !== "Visualization" &&
-                menu.label !== "Simulation"
+                is_menu_disabled(menu.label)
               }
             >
               {menu.label}
             </button>
-            {open_menu === idx && (
+            {open_menu === idx && menu.children.length > 0 && (
               <div className="absolute w-52 left-0 top-full bg-gray-08 z-20 animate-fade-in">
                 {menu.children.map((child) => (
                   <button
                     key={child}
                     className={`${child_button_base} ${
-                      (disabled &&
-                        menu.label !== "Visualization" &&
-                        menu.label !== "Simulation")
+                      (is_menu_disabled(menu.label))
                         ? button_disabled
                         : button_active
                     }`}
@@ -146,9 +149,7 @@ const MenuBar = ({
                       set_open_menu(null);
                     }}
                     disabled={
-                      (disabled &&
-                        menu.label !== "Visualization" &&
-                        menu.label !== "Simulation")
+                      (is_menu_disabled(menu.label))
                     }
                   >
                     {child}

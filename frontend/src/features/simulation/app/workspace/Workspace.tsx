@@ -17,7 +17,7 @@ import GeometryView from "../_geometry_view/GeometryView";
 import MapViewPage from "../_map_view/MapView";
 import ObjectView from "../_object_view/ObjectView";
 import ParameterPanel from "../_parameter_panel/ParameterPanel";
-import { ProjectConfig } from "../_project_config/ProjectConfig";
+import ProjectEditorDialog from "../_project_config/ProjectEditorDialog";
 import UniverseView from "../_universe_view/UniverseView";
 import Player from "./_sections/Controller";
 import { Inventory } from "./_sections/Inventory";
@@ -46,6 +46,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
     pause_simulation,
   } = useFrames();
 
+  const [is_parameters_open, set_is_parameters_open] = useState(false);
   const [show_sidebar, set_show_sidebar] = useState(true);
   const [show_terminal, set_show_terminal] = useState(false);
   const [show_player, set_show_player] = useState(false);
@@ -132,16 +133,8 @@ export default function Workspace({ selected }: WorkspaceProps) {
     }
     if (parent === "Project") {
       if (child === "Config") {
-        add_tab({
-          id: "pconfig",
-          title: "ProjectConfig",
-          content: (
-            <ProjectConfig
-              project={selected_project}
-              on_save={(new_project) => set_selected_project(new_project)}
-            />
-          ),
-        });
+        if (!is_connected && !is_loading) set_is_parameters_open(true);
+        else set_operation_error("Stop the simulation before editing project parameters.");
       }
       if (child === "Import") {
         try {
@@ -212,6 +205,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
       {job && <JobPanel job={job} on_change={set_job} />}
       {/* Menu Bar */}
       <MenuBar
+        on_open_parameters={() => set_is_parameters_open(true)}
         algorithm={algorithm}
         on_algorithm_change={(algorithm) => { set_algorithm(algorithm); set_selected_project({ ...selected_project, algorithm }); }}
         disabled={is_running}
@@ -251,6 +245,13 @@ export default function Workspace({ selected }: WorkspaceProps) {
           {show_player && <Player />}
         </main>
       </div>
+      {is_parameters_open && <ProjectEditorDialog project={selected_project}
+        on_close={() => set_is_parameters_open(false)}
+        on_save={(project) => {
+          set_selected_project(project);
+          set_algorithm(project.algorithm ?? algorithm);
+          set_is_parameters_open(false);
+        }} />}
     </div>
   );
 }
