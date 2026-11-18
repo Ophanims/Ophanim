@@ -6,11 +6,11 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { useMapEvents } from "react-leaflet"; // Static import for hook
 import { LatLon } from "../types";
+import LocationMarker from "./LocationMarker";
 
 // Dynamically import react-leaflet components to avoid SSR
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 
 // Component to handle map click events
 function MapClickHandler({ on_location_select }: { on_location_select: (latlon: LatLon) => void }) {
@@ -41,7 +41,7 @@ const MapPickerModal = ({ visible, on_confirm, on_cancel }: MapPickerModalProps)
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
       />
       <div className="fixed inset-0 flex justify-center items-center z-50 p-6">
-        <div className="bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 text-white shadow-lg border border-gray-700">
+        <div role="dialog" aria-modal="true" aria-label="Select location" className="bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 text-white shadow-lg border border-gray-700">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold text-white">Select Location</h3>
             <button onClick={on_cancel} title="Close" className="hover:text-gray-300">
@@ -58,11 +58,11 @@ const MapPickerModal = ({ visible, on_confirm, on_cancel }: MapPickerModalProps)
             >
               <TileLayer
                 url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <MapClickHandler on_location_select={set_selected_location} />
               {selected_location && (
-                <Marker position={[selected_location.lat, selected_location.lon]} />
+                <LocationMarker location={selected_location} />
               )}
             </MapContainer>
           </div>

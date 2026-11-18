@@ -3,9 +3,6 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import type { Project } from "../../contracts/generated";
 import schema from "../../contracts/schema.json";
 import { create_initial_project } from "../../lib/InitialForm";
-import { ExperimentDetails } from "./_sections/ExpDetails";
-import { GSDetails } from "./_sections/GSDetails";
-import { ROIDetails } from "./_sections/ROIDetails";
 import { FormSection, ProjectEditorField, FIELD_STYLE } from "./ProjectEditorFields";
 import { PROJECT_FORM_SECTIONS } from "./project_form_fields";
 import { useProjectConfig } from "./useProjectConfig";
@@ -19,8 +16,7 @@ interface ProjectEditorDialogProps {
 
 export default function ProjectEditorDialog({ project, on_close, on_save }: ProjectEditorDialogProps) {
   const [initial_project] = useState(() => project ?? create_initial_project());
-  const { form, loading, error, update_field, update_list_item, add_list_item, delete_list_item,
-    select_location, handle_submit } = useProjectConfig(initial_project, on_save);
+  const { form, loading, error, update_field, handle_submit } = useProjectConfig(initial_project, on_save);
   const panel_ref = useRef<HTMLDivElement>(null);
   const form_id = useId();
   const title_id = useId();
@@ -80,17 +76,6 @@ export default function ProjectEditorDialog({ project, on_close, on_save }: Proj
             </FormSection>)}
           </fieldset>
         </form>
-        <details className={`${styles.entities} border-t border-white/15 px-1 py-5 sm:px-4`}>
-          <summary className="cursor-pointer text-xs font-semibold tracking-widest text-white/80 uppercase">Ground Stations, ROI & Missions</summary>
-          <fieldset disabled={loading} className="mt-6 space-y-8">
-            <GSDetails ground_stations={form.ground_stations} update_list_item={update_list_item} add_list_item={add_list_item}
-              delete_list_item={delete_list_item} select_location={select_location} />
-            <ROIDetails rois={form.rois} update_list_item={update_list_item} add_list_item={add_list_item}
-              delete_list_item={delete_list_item} select_location={select_location} />
-            <ExperimentDetails show_time={false} experiment={form.experiment} ground_stations={form.ground_stations} rois={form.rois}
-              update_field={update_field} update_list_item={update_list_item} add_list_item={add_list_item} delete_list_item={delete_list_item} />
-          </fieldset>
-        </details>
       </div>
       <footer className="shrink-0 border-t border-white/15 bg-black/35 px-5 py-4 sm:px-7">
         {error && <p role="alert" className="mb-3 text-sm text-red-200">{error}</p>}

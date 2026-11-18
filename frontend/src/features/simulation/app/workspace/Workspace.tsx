@@ -223,18 +223,15 @@ export default function Workspace({ selected }: WorkspaceProps) {
       <div className="flex min-h-0 w-full flex-1 overflow-hidden">
         {/* Sidebar */}
         {show_sidebar && (
-          <aside className="w-1/5 bg-gray-08 backdrop-blur-sm border-r border-white/10 flex flex-col">
-            <Inventory project={selected_project} />
+          <aside className="w-72 shrink-0 bg-gray-08 backdrop-blur-sm border-r border-white/10 flex flex-col">
+            <Inventory project={selected_project} is_editable={!is_connected && !is_loading && !is_cache_loading}
+              on_project_change={set_selected_project} />
           </aside>
         )}
 
         {/* Main Tabs + Canvas */}
         <main
-          className={
-            show_sidebar
-              ? "flex w-4/5 h-full relative"
-              : "flex w-full h-full relative"
-          }
+          className="relative flex h-full min-w-0 flex-1"
         >
           <Suspense fallback={<p className="p-6">Loading view…</p>}><WindowTabs /></Suspense>
           {show_terminal && (

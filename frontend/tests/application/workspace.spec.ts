@@ -35,7 +35,7 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     await page.getByRole("button", { name: "Map View", exact: true }).click();
     await expect(page.locator(".leaflet-container")).toBeVisible();
     await page.screenshot({ path: "test-results/application-map.png" });
-    await page.getByRole("link", { name: "Records", exact: true }).click();
+    await page.goto("/records");
     // Record metadata exposes identifiers; select by the backend contract when rendering is concise.
     const records_response = await request.get(route_path("list_records"));
     const records = (await records_response.json()).data as Array<{ record_id: string; project_id: string }>;
@@ -51,10 +51,10 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     expect(errors).toEqual([]);
   } finally {
     await page.goto("/records").catch(() => undefined);
-    const response = await request.get(route_path("list_records"));
-    const records = (await response.json()).data as Array<{ record_id: string; project_id: string }>;
+    const response = await request.get(route_path("list_records")).catch(() => null);
+    const records = response?.ok() ? (await response.json()).data as Array<{ record_id: string; project_id: string }> : [];
     for (const record of records.filter((record) => record.project_id === project.project_id)) {
-      await request.delete(route_path("delete_record", { record_id: record.record_id }));
+      await request.delete(route_path("delete_record", { record_id: record.record_id })).catch(() => undefined);
     }
     await request.delete(route_path("delete_project", { project_id: project.project_id })).catch(() => undefined);
   }

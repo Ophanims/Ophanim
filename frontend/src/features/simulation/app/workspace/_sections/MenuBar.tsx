@@ -134,7 +134,7 @@ const MenuBar = ({
               {menu.label}
             </button>
             {open_menu === idx && menu.children.length > 0 && (
-              <div className="absolute w-52 left-0 top-full bg-gray-08 z-20 animate-fade-in">
+              <div className="absolute left-0 top-full z-20 w-52 rounded-md border border-white/25 bg-neutral-800 py-1 shadow-xl shadow-black/50 animate-fade-in">
                 {menu.children.map((child) => (
                   <button
                     key={child}

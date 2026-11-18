@@ -20,6 +20,8 @@ Universe、Geometry、Object、Map、参数与数据流视图、分屏、配置�
 
 首页与项目管理共用同一个地球场景。首次进入时先显示加载页，只有纹理加载并完成地球首帧渲染后才展示内容；点击 Get Started 原地展开项目管理，切换时不重建背景。背景加载失败时可重试，项目列表按需加载。
 
+工作区最左侧活动栏分为 Satellites、Ground Stations、Network、Tasks 四个面板。地面站的新增、查看、编辑、删除及地图选点集中在 Ground Stations，保存后更新同一份项目 JSON；Parameters 不再编辑地面站、ROI 或 Mission。仿真连接期间地面站配置只读。
+
 ## 项目和记录
 
 - 原 MySQL 项目通过离线命令迁入统一项目目录，数字 ID 保留为字符串，不创建另一份带前缀的项目副本。

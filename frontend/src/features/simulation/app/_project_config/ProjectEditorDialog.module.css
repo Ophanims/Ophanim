@@ -2,27 +2,3 @@
   color-scheme: dark;
   scrollbar-color: #555 transparent;
 }
-.entities {
-  filter: grayscale(1);
-}
-.entities :global(.mx-20) {
-  margin-inline: 0;
-}
-.entities input,
-.entities select,
-.entities textarea {
-  min-width: 0;
-  border: 1px solid rgb(255 255 255 / 25%);
-  border-radius: 6px;
-  background: rgb(0 0 0 / 20%);
-  padding: 8px 12px;
-}
-@media (max-width: 640px) {
-  .entities :global(.flex) {
-    flex-wrap: wrap;
-  }
-  .entities :global(.w-1\/2),
-  .entities :global(.w-1\/3) {
-    width: 100%;
-  }
-}

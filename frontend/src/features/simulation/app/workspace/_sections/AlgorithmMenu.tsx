@@ -30,7 +30,7 @@ export default function AlgorithmMenu({ algorithm, on_algorithm_change, disabled
       className="px-3 py-1 text-white/80 transition-colors hover:cursor-pointer hover:bg-white/10 disabled:cursor-default disabled:text-white/30">
       Algorithm
     </button>
-    {is_open && !disabled && <div id={menu_id} role="menu" aria-label="Algorithm" className="absolute left-0 top-full z-20 w-52 bg-gray-08 py-1">
+    {is_open && !disabled && <div id={menu_id} role="menu" aria-label="Algorithm" className="absolute left-0 top-full z-20 w-52 rounded-md border border-white/25 bg-neutral-800 py-1 shadow-xl shadow-black/50 animate-fade-in">
       {ALGORITHMS.map((option) => <button key={option.algorithm} type="button" role="menuitemradio"
         aria-checked={algorithm === option.algorithm}
         onClick={() => { on_algorithm_change(option.algorithm); on_close(); }}

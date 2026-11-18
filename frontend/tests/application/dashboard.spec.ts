@@ -53,12 +53,6 @@ test("original monochrome dashboard creates and edits a unified project, includi
     await expect(mobile.getByRole("button", { name: "Create Project", exact: true })).toBeVisible();
     expect(await mobile.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBeTruthy();
     await page.screenshot({ path: "test-results/project-editor-mobile.png" });
-    await mobile.getByText("Ground Stations, ROI & Missions", { exact: true }).click();
-    await mobile.getByRole("button", { name: "Add", exact: true }).first().click();
-    await mobile.getByRole("button", { name: "Pick location", exact: true }).first().click();
-    await expect(page.getByRole("heading", { name: "Select Location", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Cancel", exact: true }).last().click();
-    await expect(mobile).toBeVisible();
     await mobile.getByRole("button", { name: "Close", exact: true }).click();
     await page.getByRole("button", { name: "Create Project", exact: true }).click();
     await page.keyboard.press("Escape");

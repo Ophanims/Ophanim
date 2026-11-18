@@ -45,6 +45,7 @@ def assert_port_available(port):
     if not 1 <= port <= 65535:
         raise RuntimeError("Ports must be between 1 and 65535.")
     with socket.socket() as connection:
+        connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             connection.bind(("127.0.0.1", port))
         except OSError as error:
