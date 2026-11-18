@@ -35,7 +35,7 @@ def publish_checkpoint(project_id: str, model_path: str) -> None:
     directory = project_model_directory(project_id)
     if model_path.parent.parent != directory / "runs":
         raise ValueError("Checkpoint does not belong to this project")
-    for suffix in (".zip", ".vecnormalize"):
+    for suffix in (".zip", ".normalizer.json"):
         if not Path(str(model_path) + suffix).is_file():
             raise FileNotFoundError("Checkpoint and normalizer must both be saved before publishing")
     descriptor, temporary = tempfile.mkstemp(dir=directory, suffix=".tmp")

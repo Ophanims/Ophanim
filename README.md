@@ -9,7 +9,7 @@
 ```bash
 # 首次安装：API、物理与几何仿真
 ./setup.sh
-# 可选：基线算法、PPO、训练与评估
+# 可选：原生 PyTorch PPO、训练与评估
 ./setup.sh --ml
 ```
 
@@ -77,3 +77,5 @@ PYTHONPATH=backend MPLCONFIGDIR=/private/tmp/ophanim-mpl .venv/bin/python -m uni
 前端执行 `npm --prefix frontend run check:rules`、`npm --prefix frontend run build`。浏览器测试需要运行中的前后端与本机 Chrome。
 
 详细功能：[合并说明](docs/SCOPE_MERGE.md)。编码规范：[通用编码法则](CODING_RULES.md)。
+
+PPO 直接从 `Simulation` 采样和训练，不依赖 Gym 或环境包装器。旧 PPO 权重可直接读取；新训练使用张量检查点及 JSON 归一化统计。

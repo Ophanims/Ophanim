@@ -8,10 +8,10 @@ class PPOPolicy:
         from simulator.services.model_paths import model_path_for_project
         self.model, self.normalizer = load_model_and_normalizer(model_path_for_project(project.project_id))
         self.selection_reward = 0.0
-        from simulator.env.core.observation import get_obs_space_shape
-        expected = get_obs_space_shape(project.constellation.number_of_sat_per_planes,
+        from simulator.env.core.observation import observation_shapes
+        expected = observation_shapes(project.constellation.number_of_sat_per_planes,
                                        project.constellation.number_of_planes)
-        if self.model.observation_space != expected:
+        if self.model.observation_shapes != expected:
             raise ValueError("PPO checkpoint dimensions do not match this constellation; train a compatible model")
 
     def __deepcopy__(self, memo):
@@ -21,10 +21,10 @@ class PPOPolicy:
         return candidate
 
     def decide(self, view, context):
-        from simulator.env.core.observation import get_obs_space_shape
-        expected = get_obs_space_shape(view.entity_collection.number_of_sat_per_planes,
+        from simulator.env.core.observation import observation_shapes
+        expected = observation_shapes(view.entity_collection.number_of_sat_per_planes,
                                        view.entity_collection.number_of_planes)
-        if self.model.observation_space != expected:
+        if self.model.observation_shapes != expected:
             raise ValueError("PPO checkpoint dimensions do not match this constellation; train a compatible model")
         scheduler = DiscreteScheduler()
         scheduler.begin(view)
@@ -33,8 +33,8 @@ class PPOPolicy:
             observation = scheduler.observation()
             if self.normalizer is not None:
                 observation = self.normalizer.normalize_obs(observation)
-            action, _ = self.model.predict(observation, deterministic=True, action_masks=scheduler.action_masks())
-            self.selection_reward += scheduler.submit(action)
+            decision = self.model.choose_action(observation, scheduler.action_masks(), deterministic=True)
+            self.selection_reward += scheduler.submit(decision.action)
         return scheduler.actions()
 
     def evaluate(self, before, simulator, actions, context):

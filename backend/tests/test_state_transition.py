@@ -209,28 +209,32 @@ class StateTransitionTests(unittest.TestCase):
         task.transition(TaskAction("compute", nominal_slot_s=0.5), StepContext(environment.t_start, 0.2, 0))
         self.assertAlmostEqual(0.2 / LAYER_PROCESS_SECOND_COST_GPU[0], task.workload_percent)
 
-    @unittest.skipUnless(importlib.util.find_spec("sb3_contrib"), "optional ML dependencies unavailable")
+    @unittest.skipUnless(importlib.util.find_spec("torch"), "optional ML dependencies unavailable")
     def test_ppo_collects_all_actions_before_any_physical_state_changes(self):
-        from simulator.env.gym_adapter import SimulationGymAdapter
-        adapter = SimulationGymAdapter(project(period_s=0.5))
-        self.addCleanup(adapter.close)
-        adapter.reset(seed=31)
-        environment = adapter.simulator
-        src, other = environment.sat[:2]
-        environment.task_manager.tasks = [Task(id=i, plane_at=node.plane, order_at=node.order,
+        from simulator.core.simulation import Simulation
+        from simulator.policies.discrete_scheduler import DiscreteScheduler
+        from simulator.policies.view import PlanningView
+        from simulator.env.core.observation import observation_shapes, validate_observation
+        simulator = Simulation(project(period_s=0.5))
+        self.addCleanup(simulator.close)
+        simulator.reset(seed=31)
+        src, other = simulator.sat[:2]
+        simulator.task_manager.tasks = [Task(id=i, plane_at=node.plane, order_at=node.order,
                                                 t_start=0, t_end=0) for i, node in enumerate((src, other))]
-        adapter._begin_slot()
-        initial_tasks = [task.snapshot() for task in environment.task_manager.tasks]
-        initial_energy = [node.battery for node in environment.sat]
-        observation, _, terminated, truncated, _ = adapter.step(5)
-        self.assertFalse(terminated or truncated)
-        self.assertEqual(0, environment.frame_counter)
-        self.assertEqual(initial_tasks, [t.snapshot() for t in environment.task_manager.tasks])
-        self.assertEqual(initial_energy, [node.battery for node in environment.sat])
-        observation, _, _, _, _ = adapter.step(5)
-        self.assertEqual(1, environment.frame_counter)
-        self.assertTrue(all(t.workload_done > 0 for t in environment.task_manager.tasks))
-        self.assertTrue(adapter.observation_space.contains(observation))
+        scheduler = DiscreteScheduler()
+        scheduler.begin(PlanningView.from_simulator(simulator))
+        initial_tasks = [task.snapshot() for task in simulator.task_manager.tasks]
+        initial_energy = [node.battery for node in simulator.sat]
+        scheduler.submit(5)
+        self.assertEqual(0, simulator.frame_counter)
+        self.assertEqual(initial_tasks, [t.snapshot() for t in simulator.task_manager.tasks])
+        self.assertEqual(initial_energy, [node.battery for node in simulator.sat])
+        scheduler.submit(5)
+        self.assertEqual(0, simulator.frame_counter)
+        simulator.step(scheduler.actions())
+        self.assertEqual(1, simulator.frame_counter)
+        self.assertTrue(all(t.workload_done > 0 for t in simulator.task_manager.tasks))
+        validate_observation(scheduler.observation(), observation_shapes(o=3, p=2))
 
 
 if __name__ == "__main__":

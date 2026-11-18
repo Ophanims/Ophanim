@@ -7,7 +7,7 @@ from simulator.core.session import SimulationSession
 from simulator.services.project_service import detect_update
 from simulator.settings import SIMULATION_MODEL_DIR
 
-HAS_ML = importlib.util.find_spec("sb3_contrib") is not None
+HAS_ML = importlib.util.find_spec("torch") is not None
 
 
 class BaselineTests(unittest.TestCase):
@@ -34,28 +34,31 @@ class BaselineTests(unittest.TestCase):
                     second.close()
 
     @unittest.skipUnless(HAS_ML, "optional ML dependencies not installed")
-    def test_ppo_environment_accepts_seed_and_steps(self):
-        from simulator.env.gym_adapter import SimulationGymAdapter
-        environment = SimulationGymAdapter(self.project())
-        try:
-            observation, _ = environment.reset(seed=13)
-            self.assertTrue(environment.observation_space.contains(observation))
-            initial_tasks = [task.model_dump() for task in environment.simulator.task_manager.tasks]
-            for _ in range(3):
-                mask = environment.action_masks()
-                action = next(index for index, allowed in enumerate(mask) if allowed)
-                observation, reward, terminated, truncated, info = environment.step(action)
-                self.assertTrue(environment.observation_space.contains(observation))
-            environment.reset(seed=13)
-            self.assertEqual(initial_tasks, [task.model_dump() for task in environment.simulator.task_manager.tasks])
-        finally:
-            environment.close()
+    def test_native_policy_observations_accept_seed_and_steps(self):
+        from simulator.core.simulation import Simulation
+        from simulator.policies.discrete_scheduler import DiscreteScheduler
+        from simulator.policies.view import PlanningView
+        from simulator.env.core.observation import observation_shapes, validate_observation
+        simulator = Simulation(self.project())
+        self.addCleanup(simulator.close)
+        simulator.reset(seed=13)
+        initial_tasks = [task.model_dump() for task in simulator.task_manager.tasks]
+        shapes = observation_shapes(o=3, p=2)
+        for _ in range(3):
+            scheduler = DiscreteScheduler()
+            scheduler.begin(PlanningView.from_simulator(simulator))
+            validate_observation(scheduler.observation(), shapes)
+            while not scheduler.finished:
+                scheduler.submit(0)
+            simulator.step(scheduler.actions())
+        simulator.reset(seed=13)
+        self.assertEqual(initial_tasks, [task.model_dump() for task in simulator.task_manager.tasks])
 
     @unittest.skipUnless(HAS_ML and (SIMULATION_MODEL_DIR / "final_ppo_leoenv.zip").exists(), "optional PPO checkpoint unavailable")
     def test_imported_ppo_checkpoint_predicts_multiple_steps(self):
         from simulator.services.policy_loader import load_model_and_normalizer
         model, _ = load_model_and_normalizer()
-        number_of_planes, number_of_sat_per_planes = model.observation_space.spaces["energy"].shape
+        number_of_planes, number_of_sat_per_planes = model.observation_shapes["energy"]
         project = self.project()
         project.constellation.number_of_planes = number_of_planes
         project.constellation.number_of_sat_per_planes = number_of_sat_per_planes

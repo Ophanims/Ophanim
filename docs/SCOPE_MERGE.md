@@ -55,7 +55,8 @@ backend/simulator/
   entities/        # 实体及 Snapshot
   models/          # 轨道、相机与地理计算
   policies/        # 纯决策、策略记忆与只读输入视图
-  env/             # Gym 输入输出适配、训练与评估；不实现物理环境
+  env/             # 观测、训练入口与评估；直接使用 Simulation
+  learning/        # 原生 PyTorch 网络、PPO/GAE、采样与检查点
   services/        # 项目目录、模型、实时运行、记录、恢复、后台任务
   routers/         # 唯一 HTTP / WebSocket 边界
 backend/core/      # 历史类型依赖与预测缓存；旧世界循环已删除
@@ -98,7 +99,13 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 
 `SimulationSession` 只选择策略，不选择环境。执行前暂存模拟器和策略记忆，完整快照验证成功后一次提交；执行失败时旧时钟、RNG、任务和策略记忆不变。`Simulation.step(actions)` 也提供同样的原子提交语义，供训练适配器直接使用。几何输入与有限纯计算缓存共享，不复制 SGP4 或文件句柄。
 
-PPO 的 `SimulationGymAdapter` 只是 `Simulation` 的 Gym 输入输出适配器。它逐任务收集动作，然后调用同一个模拟器；没有自己的实体、计时、任务生成或物理规则。动作空间、特征公式、奖励函数、掩码规则和已有权重保留。PPO 推理也在同一帧状态下收集所有动作，并由共同环境统一执行。统一任务和时间步长会改变旧轨迹；长时间策略收敛需要另行评估。
+Gym 适配器和训练框架依赖已删除。PPO 推理与训练都直接使用模拟器：观测是具有固定字段和形状的 NumPy 数组字典，动作是统一的 `SchedulingActions`，环境仅由 `Simulation.step(actions)` 推进。
+
+`learning/rollout.py` 从模拟器直接采样。每个时隙先在同一 `s_t` 上收齐逐任务动作，再统一执行状态转移；网络权重只在完整时隙之间更新。样本保留原来的逐任务奖励和时隙末目标奖励，按种子分开计算 GAE，任务完成/电量耗尽切断回报，时间上限做价值自举。采样预算在完整时隙边界结束，实际决策数可能略超过指定预算。
+
+PPO 的网络结构、特征拼接顺序、六个动作、动作掩码、奖励函数和裁剪目标保留，使用 PyTorch 直接优化。默认参数保持学习率 `3e-4`、采样目标 `2048 × 种子数`、批量 `1024`、`10` 轮更新、`gamma=0.99`、`gae_lambda=0.95`、裁剪 `0.25`、目标 KL `0.03`、熵系数 `0.01`、价值系数 `0.5`、梯度上限 `0.5`。种子仍为项目种子的 `0/1/2/4` 偏移。原生采样顺序不同，不保证旧训练轨迹逐位一致；长时间收敛需另行评估。
+
+新训练版本保存张量检查点 `.zip` 和 JSON 归一化统计 `.normalizer.json`，附带 `training.json`、`training.csv`、`episodes.csv` 与 `ppo_training.png`；两份检查点文件完整且可加载后才切换项目指针。旧 `.zip` 权重和 `.vecnormalize` 统计只读兼容：直接读取张量和数值容器，不导入旧框架，不覆盖已有文件。已对比原检查点的归一化结果、动作概率和价值预测。
 
 自定义 Python 策略实现 `DecisionPolicy.decide(state, context) -> SchedulingActions`，通过 `SimulationSession(project, algorithm, policy=...)` 注入任意算法标签下的同一个环境。它接收脱离运行对象的快照，返回 `ComputeAction(task_id, node_id)`、`TransferAction(task_id, src, dst, kind, weight)`；持续动作也需包含在本时隙动作集合中。API 的策略列表保持现有六项。
 
@@ -137,4 +144,4 @@ npm run build
 npm run test:browser
 ```
 
-浏览器测试需要运行中的前后端及本机 Chrome。检查包含各策略共享同一环境、种子、任务与状态转移，训练适配器和直接调用的一致性、统一轨道与标识、独立会话、精确结束时间、JSON 项目保存与删除、快照隔离、API、控制命令、记录窗口、基线与已有 PPO 模型推理。长时间 PPO 收敛训练不属于本次合并验证。
+浏览器测试需要运行中的前后端及本机 Chrome。检查包含各策略共享同一环境、种子、任务与状态转移，原生训练采样和直接调用的一致性、统一轨道与标识、独立会话、精确结束时间、JSON 项目保存与删除、快照隔离、API、控制命令、记录窗口、基线与已有 PPO 模型推理。长时间 PPO 收敛训练不属于本次合并验证。

@@ -96,31 +96,37 @@ class SingleEnvironmentTests(unittest.TestCase):
         self.assertTrue(simulator.is_completed)
         self.assertEqual("satellite_energy_depleted", simulator.info.terminated_reason)
 
-    @unittest.skipUnless(importlib.util.find_spec("sb3_contrib"), "ML dependencies unavailable")
-    def test_gym_and_direct_calls_use_the_same_state_transition(self):
-        from simulator.env.gym_adapter import SimulationGymAdapter
-        adapter = SimulationGymAdapter(shared_project())
+    @unittest.skipUnless(importlib.util.find_spec("torch"), "ML dependencies unavailable")
+    def test_native_training_and_direct_calls_use_the_same_state_transition(self):
+        import torch
+        from simulator.learning.network import ActorCritic
+        from simulator.learning.normalization import Normalizer
+        from simulator.learning.rollout import RolloutCollector
+        collector = RolloutCollector(shared_project(), (31,))
         direct = Simulation(shared_project())
-        self.addCleanup(adapter.close)
+        self.addCleanup(collector.close)
         self.addCleanup(direct.close)
-        for simulator in (adapter.simulator, direct):
+        for simulator in (collector.simulators[0], direct):
             simulator.task_manager.tasks = [Task(id=index, plane_at=node.plane, order_at=node.order,
                 t_start=0, t_end=0) for index, node in enumerate(simulator.sat[:2])]
             simulator.match_tasks()
-        adapter._begin_slot()
-        adapter.step(5)
-        self.assertEqual(0, adapter.simulator.frame_counter)
-        adapter.step(5)
+        model = ActorCritic(2, 3)
+        with torch.no_grad():
+            model.action_net.weight.zero_()
+            model.action_net.bias.fill_(-100)
+            model.action_net.bias[5] = 100
+        rollout = collector.collect(model, Normalizer(model.observation_shapes), 1)
+        self.assertEqual(2, len(rollout))
         direct.step(SchedulingActions(compute=tuple(ComputeAction(index, node.id)
             for index, node in enumerate(direct.sat[:2]))))
-        self.assertEqual(direct.snapshot(), adapter.simulator.snapshot())
+        self.assertEqual(direct.snapshot(), collector.simulators[0].snapshot())
 
-    @unittest.skipUnless(importlib.util.find_spec("sb3_contrib"), "ML dependencies unavailable")
-    def test_ppo_initial_state_and_training_adapter_follow_the_shared_configuration(self):
+    @unittest.skipUnless(importlib.util.find_spec("torch"), "ML dependencies unavailable")
+    def test_ppo_initial_state_follows_the_shared_configuration(self):
         from simulator.services.policy_loader import load_model_and_normalizer
         model, _ = load_model_and_normalizer()
         project = shared_project()
-        planes, orders = model.observation_space.spaces["energy"].shape
+        planes, orders = model.observation_shapes["energy"]
         project.constellation.number_of_planes = planes
         project.constellation.number_of_sat_per_planes = orders
         project = detect_update(project)
@@ -129,11 +135,7 @@ class SingleEnvironmentTests(unittest.TestCase):
         self.addCleanup(ppo.close)
         self.addCleanup(other.close)
         self.assertEqual(other.snapshot(), ppo.snapshot())
-        from simulator.env.gym_adapter import SimulationGymAdapter
-        from stable_baselines3.common.env_checker import check_env
-        adapter = SimulationGymAdapter(shared_project())
-        self.addCleanup(adapter.close)
-        check_env(adapter, warn=False)
+
 
 
 if __name__ == "__main__":

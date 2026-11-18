@@ -5,7 +5,7 @@ from simulator.schemas.task import Task
 
 class DiscreteActions:
     def action_masks(self) -> np.ndarray:
-        """Return current action mask for sb3-contrib ActionMasker/MaskablePPO.
+        """Return the allowed actions for the current simulator task.
 
         - When there are tasks, use the mask for the currently selected task.
         - When there is no task, allow all 6 actions (the policy output is ignored anyway).

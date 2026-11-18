@@ -30,7 +30,7 @@ class BackgroundJobs:
 
     def start_job(self, project: Project, job_type: str) -> JobSnapshot:
         import importlib.util
-        if importlib.util.find_spec("sb3_contrib") is None:
+        if importlib.util.find_spec("torch") is None:
             raise ImportError("Install backend/requirements-ml.txt")
         if any(process.is_alive() for _, process in self._jobs.values()):
             raise ValueError("Another ML job is running; wait or cancel it first")
