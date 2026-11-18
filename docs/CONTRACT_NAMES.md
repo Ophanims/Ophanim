@@ -21,9 +21,9 @@
 | `pos` | 瞬时地心惯性坐标，米；轴顺序 `x`、`y`、`z` | 渲染缩放及轴变换只在视图边界执行 |
 | `time` | 当前仿真快照时刻，ISO 8601，包含时区；时序表中为同一时刻的 `TIMESTAMPTZ`，不使用实际写入时间代替 | 所有记录使用统一快照时间字段 |
 | `start_time` / `end_time` | 配置中的起止时刻，ISO 8601 | 不接收 `startTime`、`endTime` 别名 |
-| `time_slot` | 外层几何／物理时间步长，秒 | 不表示帧序号，也不表示算法内部动作序号 |
-| `frame_counter` | 会话快照的帧序号，从 0 开始 | 页面时钟组件也使用此名称 |
-| `period_counter` | 外层轨道采样位置序号 | 与帧序号可能因算法内部动作而不同 |
+| `time_slot` | 唯一模拟器的时间步长，秒，所有算法共用 | 不表示帧序号，也不表示算法内部动作序号 |
+| `frame_counter` | 已提交的完整仿真时隙序号，从 0 开始；PPO 逐任务输入不单独增加帧 | 页面时钟组件也使用此名称 |
+| `period_counter` | 已推进的采样周期序号；几何按实际时隙时间计算 | 与帧序号可能因算法步长而不同 |
 | `slot_counter` | 一个外层采样周期内的调度子步序号 | 不能与秒单位的 `time_slot` 混用 |
 | `battery_percent` | 电量百分数，0–100 | 不接收 `batteryLevel` 别名 |
 | `processor_clock_frequency_ghz` | 瞬时处理器频率，GHz | 不接收 `processorClockFrequency` 别名 |
@@ -35,12 +35,14 @@
 | `is_observing` / `is_processing` | 当前观测／计算状态 | 不接收旧状态字段别名 |
 | `is_communicating_sgl` / `is_communicating_isl` | 当前星地／星间通信状态 | 不接收旧状态字段别名 |
 | `is_charging` | 当前受光／充电状态 | 不接收 `onSUN` 别名 |
-| `tasks` | 基线和 PPO 环境中的推理任务快照 | 与物理内核的任务生命周期不同 |
-| `missions` | 物理内核任务快照 | 不把不同任务模型的字段强行视为同义 |
+| `tasks` | 所有策略共用的推理任务快照 | 运行对象为 `Task`，对外为 `TaskSnapshot` |
+| `workload_done` | 已完成计算的名义时隙数量；末尾部分时隙允许小数 | 旧整数 JSON 仍有效 |
+| `missions` | 旧记录中的物理任务快照；新运行统一使用 `tasks` | 不把不同任务模型的字段强行视为同义 |
 | `entity_type` | 分析数据类型：`satellites`、`stations`、`tasks`、`missions`、`links`、`network` | 与快照集合名一致 |
 | `created_at` | 记录元数据的实际创建时间，与仿真 `time` 分开 | 不作为回放时间 |
 | `average_battery_percent` | 当前快照中全部卫星的平均电量百分数；无卫星时为 0 | 从同一快照派生 |
 | `start_point` / `next_start_point` | 固定帧窗口内的分析点分页偏移／下一页偏移；下一页为空表示结束 | 与实体数可能大于帧数的分析查询配套 |
+| `dt_s` | 当前状态转移的实际时间长度，秒；显式包含在后端 `StepContext` 中 | 末尾和周期边界可能小于名义时隙 |
 
 频率、带宽在共同硬件配置中统一使用 `*_frequency_hz`、`*_bandwidth_hz`。物理公式确实需要 GHz／MHz 时，派生字段明确使用 `*_frequency_ghz`、`*_bandwidth_mhz`，转换集中在 `EngineConfig.from_project()`。
 

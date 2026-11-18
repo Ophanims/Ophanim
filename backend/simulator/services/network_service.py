@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from simulator.schemas.base import SnapshotModel
 from simulator.config import R_EARTH
 from simulator.schemas.base import XYZ, LatLon
+from simulator.core.model import SimulationModel, GeometryAction, StepContext
 
 class LinkSnapshot(SnapshotModel):
     type: str
@@ -17,7 +18,19 @@ class LinkSnapshot(SnapshotModel):
     snr: float
     rate: float
 
-class Network:
+class NetworkSnapshot(SnapshotModel):
+    links: tuple[LinkSnapshot, ...]
+
+
+class Network(SimulationModel):
+    def snapshot(self) -> NetworkSnapshot:
+        return NetworkSnapshot(links=tuple(self._all_links)).model_copy(deep=True)
+
+    def transition(self, action: GeometryAction, context: StepContext) -> NetworkSnapshot:
+        self.sample_index = action.period_counter
+        self._at(action.period_counter, action.slot_counter)
+        return self.snapshot()
+
     def __init__(self, number_of_planes: int, sat_datas: List[Dict[str, Any]], gs_datas: List[Dict[str, Any]], hardware: Hardware):
 
         self.hardware = hardware
@@ -80,6 +93,7 @@ class Network:
         return rate
 
     def compute_isl_links_at(self, period_counter: int, slot_counter: int) -> List[LinkSnapshot]:
+        period_counter = getattr(self, "sample_index", period_counter)
         links = set()
 
         for u in range(self.N):
@@ -151,6 +165,7 @@ class Network:
         return result
 
     def compute_sgl_links_at(self, period_counter: int, slot_counter: int) -> List[LinkSnapshot]:
+        period_counter = getattr(self, "sample_index", period_counter)
         """
         计算时刻t所有DL和UL链路（卫星<->地面站）。
         判断方法基于卫星相对于地面站的仰角，超过阈值即存在链路。

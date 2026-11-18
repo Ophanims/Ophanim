@@ -6,7 +6,7 @@ from simulator.entities.satellite_entity import SatelliteSnapshot
 from simulator.entities.station_entity import StationSnapshot
 from simulator.schemas.base import SnapshotModel
 from simulator.schemas.project import Project
-from simulator.schemas.task import Task
+from simulator.schemas.task import TaskSnapshot
 from simulator.services.network_service import LinkSnapshot
 from entity.mission import PhysicalMissionSnapshot
 
@@ -44,7 +44,7 @@ class AnalysisPoint(SnapshotModel):
     time: str
     frame_counter: int
     entity_type: EntityType
-    payload: SatelliteSnapshot | StationSnapshot | Task | PhysicalMissionSnapshot | LinkSnapshot | NetworkMetrics
+    payload: SatelliteSnapshot | StationSnapshot | TaskSnapshot | PhysicalMissionSnapshot | LinkSnapshot | NetworkMetrics
 
 
 class AnalysisWindow(SnapshotModel):

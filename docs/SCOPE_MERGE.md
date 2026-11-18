@@ -14,7 +14,7 @@ Ophanim 与 SCOPE 已合为一个 Next.js Webapp 和一个 FastAPI 服务。所�
 | HTTP API | `/api/projects`、`/api/jobs/*`、`/api/records` |
 | WebSocket | `/api/simulation/ws` |
 
-工作区选择运行方式：Ophanim Physics、Geometry、L2D2、PHOENIX、MHSPO、PPO。它们是同一会话服务中的策略，使用共同的 `Project` 输入与 `SimulationSnapshot` 输出。两种 PHOENIX 实现的调度模型不同：Ophanim Physics 保留原物理任务模型中的调度策略，PHOENIX 选项运行迁入的基线环境。
+工作区选择调度策略：Ophanim、Geometry、L2D2、PHOENIX、MHSPO、PPO。它们全部使用唯一的 `Simulation` 环境、共同的 `Project` 输入与 `SimulationSnapshot` 输出。Ophanim 保留原有调度公式，PHOENIX 保留迁入的基线调度公式；Geometry 提交空动作，环境仍按统一规则推进。
 
 Universe、Geometry、Object、Map、参数与数据流视图、分屏、配置、训练和评估都在统一工作区内。原来的仿真和记录 URL 重定向到此工作区。
 
@@ -51,13 +51,14 @@ output/            # 评估结果、日志、图表
 backend/simulator/
   schemas/         # 唯一项目配置契约
   contracts.py     # 状态、命令和 WebSocket 消息
-  core/            # 统一会话与各运行策略
+  core/            # 唯一 Simulation、状态转移与提交循环
   entities/        # 实体及 Snapshot
   models/          # 轨道、相机与地理计算
-  env/             # 基线、PPO、训练与评估
+  policies/        # 纯决策、策略记忆与只读输入视图
+  env/             # Gym 输入输出适配、训练与评估；不实现物理环境
   services/        # 项目目录、模型、实时运行、记录、恢复、后台任务
   routers/         # 唯一 HTTP / WebSocket 边界
-backend/core/      # 原物理内核，时钟、世界和预测缓存按会话隔离
+backend/core/      # 历史类型依赖与预测缓存；旧世界循环已删除
 backend/entity/    # 原物理任务模型与实体
 backend/persistence/ # TimescaleDB 记录与分析仓库
 frontend/src/features/simulation/
@@ -70,7 +71,38 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 
 字段含义与单位见 [共享概念名称表](CONTRACT_NAMES.md)。遵循 [CODING_RULES.md](../CODING_RULES.md)：手写文件不超过 500 行；领域对象与快照分离；JSON 由契约模型导出；共享字段采用 `snake_case`；通信集中管理；显示与记录同源；会话独立管理时间、随机数、身份及缓存。原有两套页面、Controller 和仿真通信入口已移除。
 
-原物理内核仍保留部分历史实现细节，例如实体内部的旧资源常量命名和算法对同一聚合内实体的引用；共享配置、公开接口、页面和记录契约已统一。规范检查不等同于对所有领域语义的形式化证明。
+旧实体类型仅保留历史记录契约等兼容依赖。运行时不再创建独立的物理世界、基线 env 或 PPO env。规范检查不等同于对所有领域语义的形式化证明。
+
+## 统一状态转移
+
+运行模型共同继承 `core/model.py` 的 `SimulationModel`，提供 `snapshot()` 和 `transition(action, context)`。卫星、基站、链路、任务、网络及几何实体保留各自的状态字段与物理方程；`StepContext` 显式携带当前仿真时间、`dt_s` 和帧号。项目配置模型与运行模型分开。
+
+每次 `SimulationSession.step()` 经过同一个 `SimulationKernel`：
+
+```text
+已提交状态 s_t
+  → 复制可变运行状态、队列、随机数与策略记忆
+  → 根据 s_t 收集整个时隙的动作 a_t
+  → 按模型执行 transition(a_t, Δt)
+  → 统一推进时钟、实时计算该时刻的轨道和链路
+  → 验证完整 SimulationSnapshot
+  → 一次性替换运行状态，得到 s_t+1
+  → 同一份快照写入 TimescaleDB，并供 WebSocket 展示
+```
+
+`Simulation(project)` 是唯一环境，负责实体创建、种子与任务生成、链路、能耗、任务进度、时钟及终止条件。所有策略都使用项目的 `experiment.time_slot`（秒，默认 30），取消各算法内原有的 10 秒、0.5 秒等独立步长；细粒度仿真和 PPO 训练可把同一项目参数设为 0.5。相同配置与种子的初始世界完全相同，相同动作的转移结果与算法名称无关。
+
+策略位于 `policies/`，只保留决策方法与策略记忆。基线的队列/预测和 Ophanim 的原调度方程保留；策略通过脱离模拟器的 `PlanningView` 读取任务、节点、链路与按需预测。原来的 `L2D2Env`、`PhoenixEnv`、`MHSPOEnv`、`PPOEnv`、`PhysicsEnvironment`、`LEOEnv` 及旧世界循环已删除。Ophanim 的旧式输入转换为观察对象，并将输出翻译为共同动作；观察对象不拥有任务生命周期，也不执行物理更新。原先未被触发的截止时间访问缺失方法已补全。
+
+算法决策阶段不更新模拟器的电量、任务进度或时钟。带宽分配、计算完成度、每颗卫星每时隙的一次能量结算，全部由 `core/world_transition.py` 和模型的 `transition()` 实现。相对带宽权重属于 `TransferAction.weight`，基线默认等权，PPO 继续按层输出量给出权重。不同算法不再选择不同的物理公式或完成度计算分支。活跃任务年龄每时隙增加一次；最后不足一整个时隙时使用实际 `dt_s`。
+
+`SimulationSession` 只选择策略，不选择环境。执行前暂存模拟器和策略记忆，完整快照验证成功后一次提交；执行失败时旧时钟、RNG、任务和策略记忆不变。`Simulation.step(actions)` 也提供同样的原子提交语义，供训练适配器直接使用。几何输入与有限纯计算缓存共享，不复制 SGP4 或文件句柄。
+
+PPO 的 `SimulationGymAdapter` 只是 `Simulation` 的 Gym 输入输出适配器。它逐任务收集动作，然后调用同一个模拟器；没有自己的实体、计时、任务生成或物理规则。动作空间、特征公式、奖励函数、掩码规则和已有权重保留。PPO 推理也在同一帧状态下收集所有动作，并由共同环境统一执行。统一任务和时间步长会改变旧轨迹；长时间策略收敛需要另行评估。
+
+自定义 Python 策略实现 `DecisionPolicy.decide(state, context) -> SchedulingActions`，通过 `SimulationSession(project, algorithm, policy=...)` 注入任意算法标签下的同一个环境。它接收脱离运行对象的快照，返回 `ComputeAction(task_id, node_id)`、`TransferAction(task_id, src, dst, kind, weight)`；持续动作也需包含在本时隙动作集合中。API 的策略列表保持现有六项。
+
+`Task` 是唯一运行任务对象，`TaskSnapshot` 是只读传输契约。新记录的全部算法都使用 `tasks`；`missions` 字段和历史任务类型仅保留旧记录读取兼容。`workload_done` 允许小数以表达部分时隙的计算进度。记录用于展示回放与分析，不包含 RNG、策略记忆等完整恢复信息。
 
 完整记录在 TimescaleDB 中按批次提交；前端仅缓冲最近 600 个接收帧，分页回放每次最多 600 帧。显示可以跳帧，完整记录不跳步。启动时只构造模型，轨道、地面站和 ROI 坐标按步计算；PHOENIX 需要的未来日照按请求窗口计算，算法决策代码不变。训练使用单独进程，支持查询和取消；应用关闭时回收。新训练版本保存完整后才切换项目模型指针，导入的检查点不会被覆盖。
 
@@ -105,4 +137,4 @@ npm run build
 npm run test:browser
 ```
 
-浏览器测试需要运行中的前后端及本机 Chrome。检查包含两个引擎的统一轨道与标识、独立会话、精确结束时间、JSON 项目保存与删除、快照隔离、API、控制命令、记录窗口、基线与已有 PPO 模型推理。长时间 PPO 收敛训练不属于本次合并验证。
+浏览器测试需要运行中的前后端及本机 Chrome。检查包含各策略共享同一环境、种子、任务与状态转移，训练适配器和直接调用的一致性、统一轨道与标识、独立会话、精确结束时间、JSON 项目保存与删除、快照隔离、API、控制命令、记录窗口、基线与已有 PPO 模型推理。长时间 PPO 收敛训练不属于本次合并验证。

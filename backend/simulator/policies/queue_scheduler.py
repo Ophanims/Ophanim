@@ -1,26 +1,9 @@
-from collections import defaultdict
-import logging
-import os
 import math
 from typing import Dict, List, Tuple
 import numpy as np
-from simulator.schemas.project import Project
-from datetime import datetime, timedelta, timezone
-from simulator.services.network_service import LinkSnapshot, Network
-from simulator.config import LAYER_OUTPUT_DATA_SIZE, LAYER_PROCESS_SECOND_COST_GPU, LOG_OUTPUT, MAX_NUM_LAYERS
-from simulator.entities.earth_entity import EarthEntity
-from simulator.entities.roi_entity import ROIEntity
+from simulator.config import LAYER_OUTPUT_DATA_SIZE, LAYER_PROCESS_SECOND_COST_GPU
 from simulator.entities.satellite_entity import SatelliteEntity
-from simulator.entities.station_entity import StationEntity
-from simulator.entities.sun_entity import SunEntity
-from simulator.env.core.entity_col import EntityCol
-from simulator.env.core.task_manager import TaskManager
-from simulator.env.io.decision_manager import DecisionManager
-from simulator.env.io.state_manager import StateManager
-from simulator.core.initialisation import build_static_objects, init_network, load_input_metadata
-from simulator.env.vars.request import CompReq, TransReq
 from simulator.schemas.task import Task
-from simulator.env.core.logger import SystemLogger
 
 
 class QueueScheduler:
@@ -174,4 +157,3 @@ class QueueScheduler:
             else:
                 beta[t.id] = best_node
         return alpha, beta
-

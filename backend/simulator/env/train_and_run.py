@@ -3,7 +3,7 @@ from simulator.settings import SIMULATION_MODEL_DIR
 from simulator.env.training_reports import _plot_combined_curve, _plot_policy_entropy, _plot_action_distribution, _plot_learning_curve, _compute_score_from_logs
 
 from simulator.schemas.project import Project
-from simulator.env.ppo.ppo_env import PPOEnv
+from simulator.env.gym_adapter import SimulationGymAdapter
 from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
@@ -26,7 +26,7 @@ from simulator.env.baselines.auto_testing import AutoTester
 
 # def make_env(input: Project, seed: int = 0, log_dir: str = LOG_DIR):
 #     def _init():
-#         env = PPOEnv(input)
+#         env = SimulationGymAdapter(input)
 #         try:
 #             env.reset(seed=seed)
 #         except TypeError:
@@ -44,12 +44,12 @@ LOG_DIR = str(SIMULATION_MODEL_DIR / "ppo_logs")
 
 
 def make_env(input: Project, seed: int = 0, log_dir: str = LOG_DIR):
-    """Create a single PPOEnv wrapped with action masking and Monitor logging."""
+    """Create a single SimulationGymAdapter wrapped with action masking and Monitor logging."""
 
     def _init():
-        env = PPOEnv(input)
+        env = SimulationGymAdapter(input)
         env.reset(seed=seed)
-        # Use canonical action_masks() API from PPOEnv for MaskablePPO
+        # Use canonical action_masks() API from SimulationGymAdapter for MaskablePPO
         env = ActionMasker(env, lambda e: e.action_masks())
 
         # Log per-episode reward/length for convergence curves
@@ -61,17 +61,17 @@ def make_env(input: Project, seed: int = 0, log_dir: str = LOG_DIR):
     return _init
 
 def make_env_with_lamda(input: Project, lamda: float, seed: int = 0, log_dir: str | None = None):
-    """Create a single PPOEnv for a given lamda, with action masking and Monitor logging.
+    """Create a single SimulationGymAdapter for a given lamda, with action masking and Monitor logging.
 
     ``log_dir`` can be used to separate logs for different lamda values.
     """
 
     def _init():
-        env = PPOEnv(input)
+        env = SimulationGymAdapter(input)
         env.lamda = lamda
         print(f"Environment lamda set to: {env.lamda}")
         env.reset(seed=seed)
-        # Use canonical action_masks() API from PPOEnv for MaskablePPO
+        # Use canonical action_masks() API from SimulationGymAdapter for MaskablePPO
         env_masked = ActionMasker(env, lambda e: e.action_masks())
 
         # Log per-episode reward/length for convergence curves

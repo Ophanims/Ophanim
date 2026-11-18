@@ -9,6 +9,8 @@ from simulator.services.network_service import LinkSnapshot
 from simulator.config import BATTERY_MAX, COMPUTE_ENERGY_COST, STATIC_ENERGY_COST, TRANSMIT_ISL_ENERGY_COST, TRANSMIT_SGL_ENERGY_COST
 from simulator.entities._satellite_modules.energy import equa_solar_income
 from simulator.schemas.task import Task
+from simulator.core.model import SampledModel, GeometryAction, StepContext
+from simulator.core.actions import SatelliteAction
 
 class SatelliteSnapshot(SnapshotModel):
     processor_clock_frequency_ghz: float | None = None
@@ -44,7 +46,7 @@ class SatelliteSnapshot(SnapshotModel):
     is_charging: bool
 
 
-class SatelliteEntity():
+class SatelliteEntity(SampledModel):
     def __init__(
         self,
         time_series: dict[str, Any],
@@ -101,6 +103,24 @@ class SatelliteEntity():
 
     def tick(self, period_counter: int, slot_counter: int) -> None:
         self._at(period_counter, slot_counter)
+
+    def transition(self, action: SatelliteAction | GeometryAction, context: StepContext) -> SatelliteSnapshot:
+        if isinstance(action, GeometryAction):
+            return super().transition(action, context)
+        self.is_processing = action.is_processing
+        self.is_communicating_isl = action.is_communicating_isl
+        self.is_communicating_sgl = action.is_communicating_sgl
+        if action.update_energy:
+            # Indicators describe activity during this interval, including work
+            # completed at its end; charge/draw happen exactly once per slot.
+            self.energy_step(context.dt_s)
+            self.is_processing = action.is_processing
+            self.is_communicating_isl = action.is_communicating_isl
+            self.is_communicating_sgl = action.is_communicating_sgl
+        if action.geometry is not None:
+            self._at(action.geometry.period_counter, action.geometry.slot_counter)
+            self.is_communicating_sgl = action.is_communicating_sgl
+        return self.snapshot()
 
     # def add_task_to_queue(self, task: Task) -> None:
     #     if self.task_queue < self.max_task_queue:
@@ -241,7 +261,7 @@ class SatelliteEntity():
             task_queue=self.task_queue,
             task_queue_percent=self.task_queue_percent,
             max_task_queue=self.max_task_queue,
-        )
+        ).model_copy(deep=True)
 
     def sunlit_ratio(self, start: int = 0, delta: int = 1, step: int = 1) -> float:
         """

@@ -9,7 +9,7 @@ from simulator.entities.roi_entity import ROISnapshot
 from simulator.entities.earth_entity import EarthSnapshot
 from simulator.entities.sun_entity import SunSnapshot
 from simulator.services.network_service import LinkSnapshot
-from simulator.schemas.task import Task
+from simulator.schemas.task import TaskSnapshot
 from entity.mission import PhysicalMissionSnapshot
 
 
@@ -42,7 +42,7 @@ class SimulationSnapshot(SnapshotModel):
     links: tuple[LinkSnapshot, ...]
     sun: SunSnapshot
     earth: EarthSnapshot
-    tasks: tuple[Task, ...] = ()
+    tasks: tuple[TaskSnapshot, ...] = ()
     missions: tuple[PhysicalMissionSnapshot, ...] = ()
     info: RunInfo = Field(default_factory=RunInfo)
 

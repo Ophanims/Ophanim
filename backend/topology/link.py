@@ -1,4 +1,5 @@
 import enum
+from simulator.core.model import SimulationModel, StepContext
 import math
 from typing import List
 import numpy as np
@@ -39,10 +40,14 @@ class LinkSnapshot(BaseModel):
     transmit_signal_power: float
 
 
-class Link:
+class Link(SimulationModel):
     """
     链路类：处理节点间的通信逻辑
     """
+
+    def transition(self, action, context: StepContext) -> LinkSnapshot:
+        self.refresh()
+        return self.snapshot()
 
     def __init__(self, src: Node, dst: Node):
         self.id = f"({src.addr},{dst.addr})"

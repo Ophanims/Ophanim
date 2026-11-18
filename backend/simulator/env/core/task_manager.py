@@ -1,3 +1,4 @@
+import math
 # TaskManager: 任务生成与管理
 import numpy as np
 from typing import List
@@ -45,7 +46,7 @@ class TaskManager:
                 workload_done=0,
                 data_sent=0,
                 is_done=False,
-                ddl = _t + 3 * total_proc_steps,
+                ddl = _t + math.ceil(3 * total_proc_steps),
             )
             self.tasks.append(task_obj)
             node_task_count[(_plane_at, _order_at)] += 1

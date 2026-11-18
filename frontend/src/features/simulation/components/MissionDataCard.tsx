@@ -1,13 +1,13 @@
 import ProcessBar from "@/features/simulation/components/ProcessBar";
-import { Task } from "@/features/simulation/types/simulation";
+import { TaskSnapshot } from "@/features/simulation/types/simulation";
 import React from "react";
 
 interface MissionDataCardProps {
-  mission: Task;
+  mission: TaskSnapshot;
 }
 
 const MissionDataCard: React.FC<MissionDataCardProps> = ({ mission }) => {
-  const get_status = (mission: Task): string => {
+  const get_status = (mission: TaskSnapshot): string => {
     if (mission.is_done) {
       return "done";
     } else if (

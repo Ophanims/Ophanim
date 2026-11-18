@@ -200,14 +200,13 @@ class Satellite(EarthSatellite, Node):
         self.power_of_solar_panel = self.AREA_OF_SOLAR_PANEL * self.EFFICIENCY_OF_SOLAR_PANEL * 1361  # 太阳常数约为 1361 W/m^2
 
     def tick(self):
-        # 1. 更新状态
+        # Geometry advances independently of policy observation/decision.
         self.move()
-        # 2. 进行观测
-        state = self.observe()
-        # 3. 制定策略
-        action = self.decide(state)
-        # 4. 执行决策
+
+    def transition(self, action, context):
+        self.move()
         self.act(action)
+        return self.snapshot()
        
     
     def move(self):

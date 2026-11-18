@@ -10,14 +10,16 @@ from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple
 
 from algorithm.algo import Algorithm
 from core.simulation_clock import CLOCK
-from entity.mission import Mission
-from core.simulation_world import WORLD
+from core.session_context import WORLD
 from status.mission_status import MissionPhase, MissionStatus
-from topology.link import Link
 from util.time_utils import to_skyfield_time
+from simulator.core.model import StepContext
+from simulator.core.actions import MissionAction
 
 
 if TYPE_CHECKING:
+   from entity.mission import Mission
+   from topology.link import Link
    from entity.sat import Satellite
 
 
@@ -28,34 +30,36 @@ class PhoenixAlgorithm(Algorithm):
    3) Processing Arrangement
    """
 
-   def __init__(self):
-       self.prediction_cache = WORLD.prediction_cache
+   def __init__(self, world=None, clock=None):
+       self.world = world if world is not None else WORLD
+       self.clock = clock if clock is not None else CLOCK
+       self.prediction_cache = self.world.prediction_cache
 
    def observe(self, satellite: "Satellite") -> Dict[str, Any]:
        pending_tasks = [
            m
-           for m in WORLD.missions
+           for m in self.world.missions
            if m.position.addr == satellite.addr
            and m.status == MissionStatus.IDLE
            and m.phase == MissionPhase.UPLOADING
-           and m.start_slot >= CLOCK.current_slot
+           and m.start_slot >= self.clock.current_slot
        ]
 
 
        all_active_tasks = [
-           m for m in WORLD.missions
+           m for m in self.world.missions
            if m.status not in {MissionStatus.COMPLETED, MissionStatus.FAILED}
        ]
 
 
-       alt_set = self._sunlight_aware_orbit_assignment(WORLD.satellites, all_active_tasks)
+       alt_set = self._sunlight_aware_orbit_assignment(self.world.satellites, all_active_tasks)
 
 
        return {
            "pending_tasks": pending_tasks,
            "all_active_tasks": all_active_tasks,
            "alt_set": alt_set,
-           "current_slot": CLOCK.current_slot,
+           "current_slot": self.clock.current_slot,
        }
 
 
@@ -103,19 +107,17 @@ class PhoenixAlgorithm(Algorithm):
                return
 
 
-           mission = next((m for m in WORLD.missions if m.id == task_id), None)
+           mission = next((m for m in self.world.missions if m.id == task_id), None)
            if mission is None:
                return
 
 
            if dst_addr == satellite.addr:
-               mission.phase = MissionPhase.COMPUTING
-               mission.status = MissionStatus.PROCESSING
+               mission.transition(MissionAction(True), StepContext(self.clock.current_datetime, self.clock.SLOT, self.clock.current_slot))
                return
 
 
-           mission.phase = MissionPhase.DOWNLOADING
-           mission.status = MissionStatus.TRANSMITTING
+           mission.transition(MissionAction(False), StepContext(self.clock.current_datetime, self.clock.SLOT, self.clock.current_slot))
 
 
    # ---------------------------
@@ -140,7 +142,7 @@ class PhoenixAlgorithm(Algorithm):
 
 
        orbit_ids = sorted(orbits.keys())
-       t0 = CLOCK.current_slot
+       t0 = self.clock.current_slot
 
 
        arrivals: Dict[str, List[Mission]] = {}
@@ -225,7 +227,7 @@ class PhoenixAlgorithm(Algorithm):
            local_tasks.append(new_task)
 
 
-       x_hat, flag_sun = self._processing_arrangement(src_sat, CLOCK.current_slot, local_tasks)
+       x_hat, flag_sun = self._processing_arrangement(src_sat, self.clock.current_slot, local_tasks)
        if flag_sun == 1:
            return src_sat.addr, x_hat
 
@@ -236,7 +238,7 @@ class PhoenixAlgorithm(Algorithm):
        orbit_load: Dict[int, int] = {}
        orbit_sun: Dict[int, int] = {}
        for oid in candidate_orbits:
-           sats_in_orbit = [s for s in WORLD.satellites if int(s.plane) == int(oid)]
+           sats_in_orbit = [s for s in self.world.satellites if int(s.plane) == int(oid)]
            orbit_load[oid] = 0
            for s in sats_in_orbit:
                for m in all_active_tasks:
@@ -245,7 +247,7 @@ class PhoenixAlgorithm(Algorithm):
            orbit_sun[oid] = max(
                1,
                sum(
-                   self._sunlit_slots_for_sat(s, CLOCK.current_slot, max(1, self._task_processing_slots(s, new_task)))
+                   self._sunlit_slots_for_sat(s, self.clock.current_slot, max(1, self._task_processing_slots(s, new_task)))
                    for s in sats_in_orbit
                ),
            )
@@ -254,7 +256,7 @@ class PhoenixAlgorithm(Algorithm):
        best_orbit = min(candidate_orbits, key=lambda oid: orbit_load.get(oid, 0) / max(1, orbit_sun.get(oid, 1)))
 
 
-       sats_in_best_orbit = [s for s in WORLD.satellites if int(s.plane) == int(best_orbit)]
+       sats_in_best_orbit = [s for s in self.world.satellites if int(s.plane) == int(best_orbit)]
        if not sats_in_best_orbit:
            return src_sat.addr, x_hat
 
@@ -319,7 +321,7 @@ class PhoenixAlgorithm(Algorithm):
    # Helpers
    # ---------------------------
    def _ensure_cache_epoch(self) -> None:
-       current_slot = int(CLOCK.current_slot or 0)
+       current_slot = int(self.clock.current_slot or 0)
        if self.prediction_cache.slot_anchor != current_slot:
            self.prediction_cache.slot_anchor = current_slot
            self.prediction_cache.slot_times.clear()
@@ -333,10 +335,10 @@ class PhoenixAlgorithm(Algorithm):
        if cached is not None:
            return cached
 
-       if CLOCK.current_datetime is None:
-           return CLOCK.current_time
-       delta_slots = max(0, int(slot) - int(CLOCK.current_slot))
-       dt = CLOCK.current_datetime + timedelta(seconds=delta_slots * CLOCK.SLOT)
+       if self.clock.current_datetime is None:
+           return self.clock.current_time
+       delta_slots = max(0, int(slot) - int(self.clock.current_slot))
+       dt = self.clock.current_datetime + timedelta(seconds=delta_slots * self.clock.SLOT)
        t = to_skyfield_time(dt)
        self.prediction_cache.slot_times[slot_i] = t
        return t
@@ -363,17 +365,22 @@ class PhoenixAlgorithm(Algorithm):
        slots = range(start_slot, start_slot + slots_num)
        if all((sat.addr, slot) in self.prediction_cache.sunlit for slot in slots):
            return sum(self.prediction_cache.sunlit[(sat.addr, slot)] for slot in slots)
-       offsets = np.maximum(0, np.arange(start_slot, start_slot + slots_num) - CLOCK.current_slot)
-       times = CLOCK.current_time.ts.tt_jd(CLOCK.current_time.tt + offsets * CLOCK.SLOT / 86400)
+       offsets = np.maximum(0, np.arange(start_slot, start_slot + slots_num) - self.clock.current_slot)
+       times = self.clock.current_time.ts.tt_jd(self.clock.current_time.tt + offsets * self.clock.SLOT / 86400)
        values = sat.at(times).is_sunlit(EPHEMERIS)
        self.prediction_cache.sunlit.update({(sat.addr, slot): bool(value) for slot, value in zip(slots, values)})
        return int(np.count_nonzero(values))
 
 
+   @staticmethod
+   def _deadline_slot(task) -> int:
+       return int(task.deadline_slot)
+
+
    def _task_processing_slots(self, sat: "Satellite", task: Mission) -> int:
        freq = sat.processor_clock_frequency_ghz
        workload = task.calc_total_workload()
-       slots = math.ceil(workload / (freq * 1e9 * max(CLOCK.SLOT, 1)))
+       slots = math.ceil(workload / (freq * 1e9 * max(self.clock.SLOT, 1)))
        return max(slots, 1)
 
 
@@ -410,7 +417,7 @@ class PhoenixAlgorithm(Algorithm):
            l for l in sat.connections if l.status and getattr(l.dst, "type", None) == "ground_station"
        ]
        if not dl_links:
-           return None, CLOCK.current_slot
+           return None, self.clock.current_slot
 
 
        best = min(dl_links, key=self._gs_available_slot)
@@ -419,13 +426,13 @@ class PhoenixAlgorithm(Algorithm):
 
    def _gs_available_slot(self, dl: Link) -> int:
        if not dl.processes:
-           return CLOCK.current_slot
+           return self.clock.current_slot
 
 
        remaining = [p.time_cost() for p in dl.processes if p.status and p.time_cost() is not None]
        if not remaining:
-           return CLOCK.current_slot
-       return CLOCK.current_slot + min(remaining)
+           return self.clock.current_slot
+       return self.clock.current_slot + min(remaining)
 
 
    def _query_energy(self, sat: "Satellite") -> float:
@@ -439,21 +446,21 @@ class PhoenixAlgorithm(Algorithm):
        cyc_slots = max(int(cyc_slots or 0), 1)
       
        # 未来一个周期的总日照 slot 数
-       sun_slots = self._sunlit_slots_for_sat(sat, CLOCK.current_slot, cyc_slots)
+       sun_slots = self._sunlit_slots_for_sat(sat, self.clock.current_slot, cyc_slots)
       
        # 预估未来能量收入 (功率 * 日照时间)
-       expected_income = p_solar * sun_slots * CLOCK.SLOT
+       expected_income = p_solar * sun_slots * self.clock.SLOT
       
        # 3. 统计当前负载的预期能耗 (债务支出)
        # 遍历所有分配给该卫星且尚未完成的任务
        current_load_slots = 0
-       for m in WORLD.missions:
+       for m in self.world.missions:
            # 只有已经在该卫星上排队（COMPUTING阶段）或确定要发往该卫星的任务才计入
            if m.position.addr == sat.addr\
               and m.status not in {MissionStatus.COMPLETED, MissionStatus.FAILED}:
                current_load_slots += self._task_processing_slots(sat, m)
       
-       energy_expense = p_compute * current_load_slots * CLOCK.SLOT
+       energy_expense = p_compute * current_load_slots * self.clock.SLOT
       
        # 4. 最终评估结果：预期剩余能量
        return battery + expected_income - energy_expense

@@ -34,7 +34,7 @@ docker compose -f compose.records.yml stop
 所有新记录写入 TimescaleDB：`ophanim.records` 保存项目、算法、随机种子所在的完整配置、代码哈希与状态；`simulation_frames` 保存与实时展示同源的完整快照。分析表按类型共享，通过 `record_id`、`id` 和仿真 `time` 区分每次运行与具体实体：
 
 - `satellite_states`、`station_states`：卫星与基站状态。
-- `task_states`、`mission_states`：保留两种任务模型的原始语义。
+- `task_states`：所有算法共用的任务状态；`mission_states` 保留历史记录读取兼容。
 - `link_states`：按 `type`、`src`、`dst` 区分链路。
 - `network_metrics`：节点数、链路数、任务数、奖励与平均电量。
 

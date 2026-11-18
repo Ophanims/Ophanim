@@ -2,6 +2,7 @@ import itertools
 from typing import Any
 from pydantic import BaseModel
 from simulator.schemas.engine_config import EngineConfig
+from simulator.core.model import SimulationModel, StepContext
 
 class EntityType:
     SAT = "earth_satellite"
@@ -10,7 +11,7 @@ class EntityType:
     SUN = "the_sun"
     ETH = "the_earth"
 
-class Entity:
+class Entity(SimulationModel):
     """所有仿真逻辑（如轨道、能量、计算任务）必须继承此类"""
 
 
@@ -31,6 +32,9 @@ class Entity:
         """Entities without configurable resources need no initialization."""
     def tick(self):
         raise NotImplementedError("Entity.tick must be implemented")
+    def transition(self, action, context: StepContext):
+        self.tick()
+        return self.snapshot()
     def snapshot(self) -> BaseModel:
         raise NotImplementedError("Entity.snapshot must be implemented")
     def serialize(self) -> dict[str, Any]:

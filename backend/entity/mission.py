@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from topology.node import Node
 
 from simulator.schemas.base import SnapshotModel
+from simulator.core.model import SimulationModel, StepContext
+from simulator.core.actions import MissionAction
 
 class PhysicalMissionSnapshot(SnapshotModel):
     id: int
@@ -27,7 +29,15 @@ class PhysicalMissionSnapshot(SnapshotModel):
     end_time: str
     deadline: str
 
-class Mission():
+class Mission(SimulationModel):
+
+    def transition(self, action: MissionAction | None, context: StepContext) -> PhysicalMissionSnapshot:
+        if action is not None:
+            self.phase = MissionPhase.COMPUTING if action.is_local else MissionPhase.DOWNLOADING
+            self.status = MissionStatus.PROCESSING if action.is_local else MissionStatus.TRANSMITTING
+        else:
+            self.tick()
+        return self.snapshot()
 
     def __init__(self, position: "Node", start_time: Time, start_slot: int):
         self.id = self._next_unique_id()

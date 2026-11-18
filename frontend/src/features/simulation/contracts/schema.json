@@ -1286,7 +1286,7 @@
         "tasks": {
           "default": [],
           "items": {
-            "$ref": "#/$defs/Task"
+            "$ref": "#/$defs/TaskSnapshot"
           },
           "title": "Tasks",
           "type": "array"
@@ -1374,7 +1374,7 @@
       "title": "SunSnapshot",
       "type": "object"
     },
-    "Task": {
+    "TaskSnapshot": {
       "properties": {
         "id": {
           "title": "Id",
@@ -1414,7 +1414,7 @@
         "workload_done": {
           "default": 0,
           "title": "Workload Done",
-          "type": "integer"
+          "type": "number"
         },
         "workload_percent": {
           "default": 0.0,
@@ -1458,7 +1458,7 @@
         "is_done",
         "ddl"
       ],
-      "title": "Task",
+      "title": "TaskSnapshot",
       "type": "object"
     },
     "XYZ": {
@@ -1717,7 +1717,7 @@
               "$ref": "#/$defs/StationSnapshot"
             },
             {
-              "$ref": "#/$defs/Task"
+              "$ref": "#/$defs/TaskSnapshot"
             },
             {
               "$ref": "#/$defs/PhysicalMissionSnapshot"

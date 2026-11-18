@@ -3,7 +3,7 @@ import type { Project } from "../../../contracts/generated";
 
 type Algorithm = NonNullable<Project["algorithm"]>;
 const ALGORITHMS: Array<{ algorithm: Algorithm; label: string }> = [
-  { algorithm: "ophanim", label: "Ophanim Physics" },
+  { algorithm: "ophanim", label: "Ophanim" },
   { algorithm: "geometry", label: "Geometry" },
   { algorithm: "l2d2", label: "L2D2" },
   { algorithm: "phoenix", label: "PHOENIX" },

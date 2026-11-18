@@ -68,7 +68,9 @@ class SatelliteSamples:
         lat, lon = subpoint.latitude.degrees, subpoint.longitude.degrees
         # Preserve the previous implementation's forward difference and its
         # backward difference at the clipped final sample (including azimuth).
-        neighbor_index = index + 1 if index + 1 < len(self.timeline) else index - 1
+        neighbor_index = index + 1
+        if neighbor_index >= len(self.timeline) or self.timeline[neighbor_index] <= self.timeline[index]:
+            neighbor_index = max(0, index - 1)
         neighbor = self.position_at(neighbor_index)
         neighbor_subpoint = neighbor.subpoint()
         if neighbor_index > index:

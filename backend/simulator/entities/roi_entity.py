@@ -1,3 +1,4 @@
+from simulator.core.model import SampledModel
 from datetime import datetime
 from typing import List
 import numpy as np
@@ -13,7 +14,7 @@ class ROISnapshot(SnapshotModel):
     centre_pos: XYZ
     centre_loc: LatLon
 
-class ROIEntity:
+class ROIEntity(SampledModel):
     def __init__(self, time_series: dict[str, Any], ):
         self.time_series: dict[str, Any] = time_series
         self.id: str = time_series['id']

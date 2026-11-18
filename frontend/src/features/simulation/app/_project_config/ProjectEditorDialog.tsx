@@ -63,7 +63,7 @@ export default function ProjectEditorDialog({ project, on_close, on_save }: Proj
               <label className="flex flex-col gap-1.5 text-xs text-white/75">Algorithm
                 <select name="algorithm" value={form.algorithm} onChange={(event) => update_field(["algorithm"], event.target.value)} className={FIELD_STYLE}>
                   {schema.$defs.Project.properties.algorithm.enum.map((algorithm) =>
-                    <option key={algorithm} value={algorithm}>{algorithm === "ophanim" ? "Ophanim Physics" : algorithm.toUpperCase()}</option>)}
+                    <option key={algorithm} value={algorithm}>{algorithm === "ophanim" ? "Ophanim" : algorithm.toUpperCase()}</option>)}
                 </select>
               </label>
               <label className="flex flex-col gap-1.5 text-xs text-white/75">Description

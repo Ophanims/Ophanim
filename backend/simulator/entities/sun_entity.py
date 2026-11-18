@@ -1,3 +1,4 @@
+from simulator.core.model import SampledModel
 from datetime import datetime
 import numpy as np
 from pydantic import BaseModel
@@ -9,7 +10,7 @@ class SunSnapshot(SnapshotModel):
     id: str
     pos: XYZ
 
-class SunEntity:
+class SunEntity(SampledModel):
     def __init__(self, time_series: dict[str, Any], ):
         self.time_series: dict[str, Any] = time_series  # 卫星
         self.id: str = time_series['id']

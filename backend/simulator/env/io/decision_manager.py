@@ -15,7 +15,6 @@ class DecisionManager:
     """
 
     def __init__(self, p_max: int, o_max: int):
-        self._alpha: Dict[int, Dict[str, dict]] = {}
 
         # retained for reference/documentation
         self.P_MAX = p_max
@@ -28,7 +27,6 @@ class DecisionManager:
 
     def report(self, step: int) -> Dict[str, dict]:
         alpha_t = self._to_alpha()
-        self._alpha[step] = alpha_t
         return alpha_t
 
     def reset(self):

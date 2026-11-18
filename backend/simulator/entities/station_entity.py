@@ -6,6 +6,8 @@ from simulator.schemas.base import SnapshotModel
 import numpy as np
 from simulator.schemas.base import XYZ, LatLon
 from simulator.services.network_service import LinkSnapshot
+from simulator.core.model import SampledModel, GeometryAction, StepContext
+from simulator.core.actions import StationAction
 
 class StationSnapshot(SnapshotModel):
     id: str
@@ -14,7 +16,7 @@ class StationSnapshot(SnapshotModel):
     on_upload: bool
     on_download: bool
 
-class StationEntity:
+class StationEntity(SampledModel):
     def __init__(
         self,
         time_series: dict[str, Any],
@@ -51,6 +53,14 @@ class StationEntity:
         lat, lon = self.time_series["latlon"]
         self.loc = LatLon(lat=lat, lon=lon)
 
+    def transition(self, action: StationAction | GeometryAction, context: StepContext) -> StationSnapshot:
+        if isinstance(action, GeometryAction):
+            return super().transition(action, context)
+        if action.geometry is not None:
+            self._at(action.geometry.period_counter, action.geometry.slot_counter)
+        self.on_download, self.on_upload = action.on_download, action.on_upload
+        return self.snapshot()
+
     def snapshot(self) -> StationSnapshot:
         return StationSnapshot(
             id=self.id,
@@ -58,7 +68,7 @@ class StationEntity:
             loc=self.loc,
             on_upload=self.on_upload,
             on_download=self.on_download
-        )
+        ).model_copy(deep=True)
 
     def serialize(self) -> dict:
         return self.snapshot().model_copy(deep=True).model_dump(mode="json")

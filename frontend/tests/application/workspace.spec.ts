@@ -5,7 +5,7 @@ import type { Project } from "../../src/features/simulation/contracts/generated"
 import { validate_contract } from "../../src/features/simulation/communication/contract_validation";
 import { route_path } from "../../src/features/simulation/communication/config";
 
-for (const algorithm of ["ophanim", "geometry"] as const) {
+for (const algorithm of ["ophanim", "geometry", "phoenix"] as const) {
 test(`${algorithm}: project workspace initializes, plays, changes views and replays its record`, async ({ page, request }) => {
   const project = validate_contract<Project>(structuredClone(template), "Project");
   project.project_id = `browser_${randomUUID().replaceAll("-", "")}`;
@@ -13,7 +13,9 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
   project.title = "Browser integration check";
   project.constellation.number_of_planes = 2;
   project.constellation.number_of_sat_per_planes = 3;
-  project.experiment.end_time = "2025-12-01T00:01:05+00:00";
+  project.experiment.time_slot = algorithm === "phoenix" ? 0.5 : 30;
+  project.experiment.end_time = algorithm === "phoenix"
+    ? "2025-12-01T00:00:01.300000+00:00" : "2025-12-01T00:01:05+00:00";
   project.ground_stations = [{ id: "station", project_id: project.project_id, name: "Station", altitude_m: 0, location: { lat: 0, lon: 0 } }];
   project.rois = [{ id: "region", project_id: project.project_id, name: "ROI", length: 1000, width: 500, location: { lat: 0, lon: 0 } }];
   const response = await request.post(route_path("save_project"), { data: project });
@@ -34,7 +36,7 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     await page.getByRole("button", { name: "Launch Simulation", exact: true }).click();
     await expect(page.getByRole("button", { name: "Play simulation", exact: true })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Play simulation", exact: true }).click();
-    await expect(page.getByText("2025-12-01T00:01:05+00:00", { exact: false })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(project.experiment.end_time, { exact: false })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Visualization", exact: true }).click();
     await page.getByRole("button", { name: "Geometry View", exact: true }).click();
     await expect(page.locator("main canvas")).toBeVisible();

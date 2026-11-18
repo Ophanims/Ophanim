@@ -35,21 +35,20 @@ class BaselineTests(unittest.TestCase):
 
     @unittest.skipUnless(HAS_ML, "optional ML dependencies not installed")
     def test_ppo_environment_accepts_seed_and_steps(self):
-        from simulator.env.ppo.ppo_env import PPOEnv
-        environment = PPOEnv(self.project())
+        from simulator.env.gym_adapter import SimulationGymAdapter
+        environment = SimulationGymAdapter(self.project())
         try:
             observation, _ = environment.reset(seed=13)
             self.assertTrue(environment.observation_space.contains(observation))
-            initial_tasks = [task.model_dump() for task in environment.task_manager.tasks]
+            initial_tasks = [task.model_dump() for task in environment.simulator.task_manager.tasks]
             for _ in range(3):
                 mask = environment.action_masks()
                 action = next(index for index, allowed in enumerate(mask) if allowed)
                 observation, reward, terminated, truncated, info = environment.step(action)
                 self.assertTrue(environment.observation_space.contains(observation))
             environment.reset(seed=13)
-            self.assertEqual(initial_tasks, [task.model_dump() for task in environment.task_manager.tasks])
+            self.assertEqual(initial_tasks, [task.model_dump() for task in environment.simulator.task_manager.tasks])
         finally:
-            environment.logger.close()
             environment.close()
 
     @unittest.skipUnless(HAS_ML and (SIMULATION_MODEL_DIR / "final_ppo_leoenv.zip").exists(), "optional PPO checkpoint unavailable")

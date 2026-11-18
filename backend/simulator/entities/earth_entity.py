@@ -1,3 +1,4 @@
+from simulator.core.model import SampledModel
 from datetime import datetime
 import numpy as np
 from pydantic import BaseModel
@@ -10,7 +11,7 @@ class EarthSnapshot(SnapshotModel):
     pos: XYZ
     rotation: float
 
-class EarthEntity:
+class EarthEntity(SampledModel):
     def __init__(self, time_series: dict[str, Any], ):
         self.time_series: dict[str, Any] = time_series  # 卫星
         self.id: str = time_series['id']

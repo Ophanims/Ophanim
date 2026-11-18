@@ -12,8 +12,6 @@ class StateManager:
     def __init__(self, p_max: int, o_max: int):
         # active task count
         self.task_id_list: List[int] = []
-        # history buffer for snapshots
-        self._beta: Dict[int, Dict[str, np.ndarray]] = {}
 
         # size limits
         self.P_MAX = p_max
@@ -107,6 +105,7 @@ class StateManager:
             self.sunlight[(pp, oo)] = int(n.is_charging)
             self.queue[(pp, oo)] = float(n.task_queue_percent)
 
+        self.comm.clear()
         for e in all_edges:
             # defensive: map ids -> nodes (may be None if link is to GS etc)
             u = next((n for n in all_nodes if n.id == e.src), None)
@@ -124,7 +123,6 @@ class StateManager:
 
     def report(self, step: int) -> Dict[str, np.ndarray]:
         beta_t = self._to_beta()
-        self._beta[step] = beta_t
         return beta_t
 
     def reset(self):
@@ -262,44 +260,6 @@ class StateManager:
         }
 
         return beta_t
-
-    def sum_size_before(self, m: int, n: int, T: int) -> float:
-        """
-        获取t时间之前所有size[m, n]历史值，返回float字典。
-        """
-        result = 0.0
-        # Sum historical snapshots strictly before T (per-task vectors)
-        for t in range(T):
-            beta = self._beta.get(t)
-            if beta is None:
-                continue
-            arr = beta.get("size")
-            if arr is None:
-                continue
-            if getattr(arr, 'ndim', 0) == 1 and 0 <= m < arr.shape[0]:
-                result += float(arr[m])
-        # include current in-memory buffer for step T (ignore n)
-        result += float(self.size.get(int(m), 0.0))
-        return result
-
-    def sum_workload_before(self, m: int, n: int, T: int) -> int:
-        """
-        获取t时间之前所有workload[m, n]历史值，返回int字典。
-        """
-        result = 0.0
-        # Sum historical snapshots strictly before T (per-task vectors)
-        for t in range(T):
-            beta = self._beta.get(t)
-            if beta is None:
-                continue
-            arr = beta.get("workload")
-            if arr is None:
-                continue
-            if getattr(arr, 'ndim', 0) == 1 and 0 <= m < arr.shape[0]:
-                result += float(arr[m])
-        # include current in-memory buffer for step T (ignore n)
-        result += float(self.workload.get(int(m), 0.0))
-        return int(result)
 
     def is_empty(self) -> bool:
         """

@@ -5,7 +5,7 @@ import {
 LinkSnapshot,
 SatelliteSnapshot,
 StationSnapshot,
-Task,
+TaskSnapshot,
 } from "@/features/simulation/types/simulation";
 import { Html,OrbitControls } from "@react-three/drei";
 import { Canvas,useFrame } from "@react-three/fiber";
@@ -58,7 +58,7 @@ function SatDataNode({ sat }: { sat: SatelliteSnapshot }) {
     </mesh>
   );
 }
-function TaskDataNode({ sat, task }: { sat: SatelliteSnapshot; task: Task }) {
+function TaskDataNode({ sat, task }: { sat: SatelliteSnapshot; task: TaskSnapshot }) {
   const mesh_ref = useRef<THREE.Mesh>(null!);
   const ratio = 1 - task.completion;
 
@@ -152,7 +152,7 @@ function DataFlowScene({
   satellites: SatelliteSnapshot[];
   stations: StationSnapshot[];
   links: LinkSnapshot[];
-  tasks: Task[];
+  tasks: TaskSnapshot[];
 }) {
   return (
     <Canvas
