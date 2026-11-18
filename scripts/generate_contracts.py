@@ -9,7 +9,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 from simulator.schemas.project import Project
 from simulator.contracts import ControlMessage, StateMessage, StatusMessage, ErrorMessage
 from simulator.services.background_jobs import JobSnapshot
-from simulator.services.session_records import RecordWindow
+from simulator.services.record_contracts import RecordWindow, AnalysisWindow
 
 
 def ts_type(schema: dict) -> str:
@@ -47,7 +47,7 @@ def write_artifact(path: Path, content: str, check: bool) -> None:
 
 def generate_contracts(check: bool = False) -> None:
     definitions = {}
-    for model in [Project, ControlMessage, StateMessage, StatusMessage, ErrorMessage, JobSnapshot, RecordWindow]:
+    for model in [Project, ControlMessage, StateMessage, StatusMessage, ErrorMessage, JobSnapshot, RecordWindow, AnalysisWindow]:
         schema = model.model_json_schema(mode="serialization")
         definitions.update(schema.pop("$defs", {}))
         definitions[model.__name__] = schema

@@ -1,10 +1,12 @@
 """Shared construction for visualization, baselines and reinforcement learning."""
-import math
 from datetime import datetime, timedelta, timezone
+from collections.abc import Sequence
 from simulator.entities.functions.prepare import (
     preparation_of_earth, preparation_of_roi, preparation_of_satellite,
-    preparation_of_station, preparation_of_sun, to_times,
+    preparation_of_station, preparation_of_sun,
 )
+from simulator.core.timeline import SimulationTimeline
+from simulator.models.realtime_ephemeris import EphemerisSamples
 from simulator.schemas.project import Project
 from simulator.services.network_service import Network
 
@@ -26,18 +28,17 @@ def load_input_metadata(input: Project, max_simulation_period):
     period = timedelta(seconds=input.experiment.time_slot or 30)
     if period.total_seconds() <= 0:
         raise ValueError("time_slot must be positive")
-    # Include the endpoint and at least two samples for motion/rotation calculations.
-    max_period_numbers = max(2, math.ceil((t_end - t_start) / period) + 1)
-    if max_period_numbers * max(1, len(input.satellites)) > 500_000:
-        raise ValueError("Timeline exceeds 500000 satellite samples; increase time_slot")
-    datetime_list = [min(t_start + index * period, t_end) for index in range(max_period_numbers)]
+    datetime_list = SimulationTimeline(t_start, t_end, period)
+    max_period_numbers = len(datetime_list)
     return {"t_start": t_start, "t_end": t_end, "time_recorder": t_start,
             "period": period, "max_period_numbers": max_period_numbers,
             "datetime_list": datetime_list}
 
 
-def build_static_objects(input: Project, period: timedelta, max_period_numbers: int, datetime_list: list[datetime]):
-    times = to_times(datetime_list)
+def build_static_objects(input: Project, period: timedelta, max_period_numbers: int, datetime_list: Sequence[datetime]):
+    # Preserve the construction interface used by all algorithms; evaluate
+    # samples only when requested, sharing bounded ephemeris data per session.
+    times = EphemerisSamples(datetime_list)
     sat, sat_datas = preparation_of_satellite(input, max_period_numbers, times, datetime_list)
     gs, gs_datas = preparation_of_station(input, times, datetime_list)
     roi, roi_datas = preparation_of_roi(input, max_period_numbers, times, datetime_list)

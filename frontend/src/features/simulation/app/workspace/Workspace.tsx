@@ -1,5 +1,5 @@
 "use client";
-import { clear_cache,initial_cache,start_job } from "../../communication/cache";
+import { start_job } from "../../communication/jobs";
 import { save_project } from "../../communication/projects";
 import JobPanel from "../../components/JobPanel";
 import type { JobSnapshot } from "../../contracts/generated";
@@ -50,7 +50,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
   const [show_sidebar, set_show_sidebar] = useState(true);
   const [show_terminal, set_show_terminal] = useState(false);
   const [show_player, set_show_player] = useState(false);
-  const [is_cache_loading, set_is_cache_loading] = useState(false);
+  const [is_job_loading, set_is_job_loading] = useState(false);
 
   const router = useRouter();
   const [job, set_job] = useState<JobSnapshot | null>(null);
@@ -109,27 +109,20 @@ export default function Workspace({ selected }: WorkspaceProps) {
         set_show_player(true);
       }
       if (child === "Shutdown") stop_simulation();
-      if (child === "Initialization") {
-        set_is_cache_loading(true);
-        initial_cache(selected_project).then(() => {
-          set_is_cache_loading(false);
-        }).catch((error: Error) => { set_operation_error(error.message); set_is_cache_loading(false); });
-      }
       if (child === "Train Model") {
-        set_is_cache_loading(true);
+        set_is_job_loading(true);
         start_job(selected_project, "train").then((job) => {
           set_job(job);
-          set_is_cache_loading(false);
-        }).catch((error: Error) => { set_operation_error(error.message); set_is_cache_loading(false); });
+          set_is_job_loading(false);
+        }).catch((error: Error) => { set_operation_error(error.message); set_is_job_loading(false); });
       }
       if (child === "Auto Testing") {
-        set_is_cache_loading(true);
+        set_is_job_loading(true);
         start_job(selected_project, "auto_test").then((job) => {
           set_job(job);
-          set_is_cache_loading(false);
-        }).catch((error: Error) => { set_operation_error(error.message); set_is_cache_loading(false); });
+          set_is_job_loading(false);
+        }).catch((error: Error) => { set_operation_error(error.message); set_is_job_loading(false); });
       }
-      if (child === "Clear Datasets") void clear_cache().catch((error: Error) => set_operation_error(error.message));
     }
     if (parent === "Project") {
       if (child === "Config") {
@@ -211,7 +204,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
         disabled={is_running}
         is_connected={is_connected}
         is_running={is_running}
-        is_loading={is_cache_loading || is_loading}
+        is_loading={is_job_loading || is_loading}
         project={selected_project}
         on_menu_click={handle_menu_click}
         on_run_simulation={run_simulation}
@@ -224,7 +217,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
         {/* Sidebar */}
         {show_sidebar && (
           <aside className="w-72 shrink-0 bg-gray-08 backdrop-blur-sm border-r border-white/10 flex flex-col">
-            <Inventory project={selected_project} is_editable={!is_connected && !is_loading && !is_cache_loading}
+            <Inventory project={selected_project} is_editable={!is_connected && !is_loading && !is_job_loading}
               on_project_change={set_selected_project} />
           </aside>
         )}

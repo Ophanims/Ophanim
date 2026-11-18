@@ -24,6 +24,8 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     await page.goto(`/workspace/${project.project_id}`);
     await expect(page.getByRole("heading", { name: project.title })).toBeVisible();
     await page.getByRole("button", { name: "Simulation", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Initialization", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Clear Datasets", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Launch Simulation", exact: true }).click();
     await expect(page.getByRole("button", { name: "Play simulation", exact: true })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Play simulation", exact: true }).click();

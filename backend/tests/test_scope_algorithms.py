@@ -1,9 +1,6 @@
 """Optional algorithm checks use this repository's dependencies and checkpoints."""
 import importlib.util
-import tempfile
 import unittest
-from pathlib import Path
-from unittest.mock import patch
 
 from simulator.defaults import default_project
 from simulator.core.session import SimulationSession
@@ -14,13 +11,6 @@ HAS_ML = importlib.util.find_spec("sb3_contrib") is not None
 
 
 class BaselineTests(unittest.TestCase):
-    def setUp(self):
-        self.directory = tempfile.TemporaryDirectory()
-        self.addCleanup(self.directory.cleanup)
-        patcher = patch("simulator.services.cache_paths.SIMULATION_CACHE_DIR", Path(self.directory.name))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
     def project(self):
         project = default_project()
         project.project_id = "algorithm_test"

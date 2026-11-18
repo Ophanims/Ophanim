@@ -1,5 +1,5 @@
 import { useEffect,useState } from "react";
-import { cancel_job,get_job } from "../communication/cache";
+import { cancel_job,get_job } from "../communication/jobs";
 import type { JobSnapshot } from "../contracts/generated";
 
 export default function JobPanel({ job, on_change }: { job: JobSnapshot; on_change: (job: JobSnapshot) => void }) {

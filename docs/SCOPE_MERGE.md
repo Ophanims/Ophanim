@@ -11,7 +11,7 @@ Ophanim 与 SCOPE 已合为一个 Next.js Webapp 和一个 FastAPI 服务。所�
 | 项目工作区 | `/workspace/{project_id}` |
 | 记录列表、下载、删除 | `/records` |
 | 记录回放 | `/workspace/{project_id}?record_id={record_id}` |
-| HTTP API | `/api/projects`、`/api/cache/*`、`/api/jobs/*`、`/api/records` |
+| HTTP API | `/api/projects`、`/api/jobs/*`、`/api/records` |
 | WebSocket | `/api/simulation/ws` |
 
 工作区选择运行方式：Ophanim Physics、Geometry、L2D2、PHOENIX、MHSPO、PPO。它们是同一会话服务中的策略，使用共同的 `Project` 输入与 `SimulationSnapshot` 输出。两种 PHOENIX 实现的调度模型不同：Ophanim Physics 保留原物理任务模型中的调度策略，PHOENIX 选项运行迁入的基线环境。
@@ -28,7 +28,7 @@ Universe、Geometry、Object、Map、参数与数据流视图、分屏、配置�
 - SCOPE 已迁入的项目与原有项目并列显示。修改、删除和运行都通过同一个 API。
 - 旧名称只在有明确范围的 v0 数据适配器中接收，迁移后仅输出规范名称。GHz／MHz 转换成硬件契约的 Hz；物理引擎使用的派生单位具有明确后缀。
 - 原有处理器、电池、太阳能板与静态功率参数纳入共同的 `resources` 配置，地面站保留 `altitude_m`。
-- 新记录直接保存发送给页面的同一份快照，附带完整项目配置、算法、代码哈希和版本。历史回放无需依赖仍然存在的项目。
+- 新记录在 TimescaleDB 的独立 `ophanim` schema 中保存与实时展示同源的完整快照及按领域分类的分析点，附带完整项目配置、算法、代码哈希和版本。历史回放无需依赖仍然存在的项目。
 - Timescale 历史记录通过离线命令流式转换到同一个记录目录，使用 `timescale_{旧记录ID}`。旧数据没有保存代码哈希，明确标为 `unknown-v0`；旧记录没有保存当时的地面站配置时，只能使用当前项目中的地面站信息恢复标识。
 - `migrations.json` 记录已经处理的项目和记录，避免删除后重启又从旧库恢复。旧数据库内容与原 SCOPE 目录保留。
 
@@ -38,14 +38,14 @@ Universe、Geometry、Object、Map、参数与数据流视图、分屏、配置�
 
 ```text
 projects/          # 唯一项目目录，类型化 JSON
-records/           # 统一记录元数据与完整 Snapshot NDJSON
+records/           # 保留的旧文件记录，可显式导入数据库
+record_recovery/   # 未完成数据库提交的恢复日志，成功提交后移除
 models/            # 导入检查点、按项目保存的训练版本
-cache/             # 可重新计算的派生数据
 output/            # 评估结果、日志、图表
 migrations.json    # 一次性迁移完成标记
 ```
 
-运行数据不提交到 Git；迁移到其他机器时应单独备份此目录。离线迁移 SCOPE 项目与权重：
+项目文件不提交到 Git；迁移时应备份此目录，并单独备份 TimescaleDB（本机默认位于 `data/timescale/`）。离线迁移 SCOPE 项目与权重：
 
 ```bash
 .venv/bin/python scripts/import_scope_data.py /path/to/SCOPE --models
@@ -63,11 +63,11 @@ backend/simulator/
   entities/        # 实体及 Snapshot
   models/          # 轨道、相机与地理计算
   env/             # 基线、PPO、训练与评估
-  services/        # 项目目录、缓存、模型、记录、迁移、后台任务
+  services/        # 项目目录、模型、实时运行、记录、迁移、后台任务
   routers/         # 唯一 HTTP / WebSocket 边界
 backend/core/      # 原物理内核，时钟、世界和预测缓存按会话隔离
 backend/entity/    # 原物理任务模型与实体
-backend/persistence/ # 数据库连接与旧数据初始化边界
+backend/persistence/ # TimescaleDB 记录/分析仓库与旧数据迁移边界
 frontend/src/features/simulation/
   contracts/       # 从后端生成的 TypeScript、JSON Schema、默认配置和路由
   communication/   # 所有请求、边界验证和 WebSocket 生命周期
@@ -80,11 +80,11 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 
 原物理内核仍保留部分历史实现细节，例如实体内部的旧资源常量命名和算法对同一聚合内实体的引用；共享配置、公开接口、页面和记录契约已统一。规范检查不等同于对所有领域语义的形式化证明。
 
-完整记录保存在磁盘；前端仅缓冲最近 600 帧，分页回放每次最多 600 帧。训练使用单独进程，支持查询和取消；应用关闭时回收。新训练版本保存完整后才切换项目模型指针，导入的检查点不会被覆盖。
+完整记录在 TimescaleDB 中按批次提交；前端仅缓冲最近 600 个接收帧，分页回放每次最多 600 帧。显示可以跳帧，完整记录不跳步。启动时只构造模型，轨道、地面站和 ROI 坐标按步计算；PHOENIX 需要的未来日照按请求窗口计算，算法决策代码不变。训练使用单独进程，支持查询和取消；应用关闭时回收。新训练版本保存完整后才切换项目模型指针，导入的检查点不会被覆盖。
 
 ## 本地启动
 
-运行不依赖 Docker 或数据库，项目和记录使用统一的本地文件目录。
+项目仍使用本地文件目录；回放和分析记录使用 TimescaleDB。已有 `DATABASE_URL` 时直接连接，否则使用 `.env` 的 `DB_USER`、`DB_PASSWORD`、`DB_NAME` 启动专用本机数据库。
 
 ```bash
 ./setup.sh --ml
@@ -92,7 +92,7 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 # 关闭：Ctrl+C 或另一个终端执行 ./stop.sh
 ```
 
-脚本读取 `.env` 中的端口配置，统一前后端地址，按需要构建前端，并负责子进程退出与端口检查。具体命令和旧数据迁移方式见 [README](../README.md)。旧数据库初始化及导入只由 `scripts/migrate_legacy_data.py` 显式执行，应用启动不连接旧数据库。
+脚本读取 `.env` 中的端口配置，统一前后端地址，按需要构建前端，并负责子进程退出与端口检查。具体命令、数据库备份和旧记录导入方式见 [README](../README.md)。旧数据库初始化及导入只由 `scripts/migrate_legacy_data.py` 显式执行；新记录使用单独的 schema 和本机数据目录。停止应用不会停止或删除数据库。
 
 ## 验证
 
@@ -102,6 +102,7 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 .venv/bin/python scripts/generate_contracts.py --check
 .venv/bin/python scripts/check_coding_rules.py
 PYTHONPATH=backend MPLCONFIGDIR=/private/tmp/ophanim-mpl .venv/bin/python -m unittest discover -s backend/tests -v
+.venv/bin/python scripts/test_record_database.py
 ```
 
 前端目录：

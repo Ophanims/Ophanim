@@ -5,8 +5,7 @@ ArrowPathIcon,
 PlayIcon,
 PowerIcon
 } from "@heroicons/react/24/outline";
-import { useEffect,useState } from "react";
-import { check_cache,get_cache_size } from "../../../communication/cache";
+import { useState } from "react";
 import AlgorithmMenu from "./AlgorithmMenu";
 
 type MenuItem = {
@@ -58,12 +57,10 @@ const menu_items: MenuItem[] = [
   {
     label: "Simulation",
     children: [
-      "Initialization",
       "Train Model",
       "Launch Simulation",
       "Shutdown",
       "Auto Testing",
-      "Clear Datasets",
     ],
   },
 ];
@@ -77,7 +74,6 @@ const child_button_base =
 
 const MenuBar = ({
   className = "",
-  project,
   algorithm, on_algorithm_change,
   disabled, is_connected, is_running,
   is_loading,
@@ -88,19 +84,6 @@ const MenuBar = ({
 }: MenuBarProps) => {
   const [open_menu, set_open_menu] = useState<number | null>(null);
 
-
-  const [cache_size, set_cache_size] = useState<number>(0);
-  const [cache_integrity, set_cache_integrity] = useState<boolean>(false);
-
-  useEffect(() => {
-    get_cache_size().then((size) => set_cache_size(size / (1024 * 1024))).catch(() => set_cache_size(0));
-  }, [open_menu]);
-
-  useEffect(() => {
-    check_cache_integrity(project).then((integrity) =>
-      set_cache_integrity(integrity)
-    ).catch(() => set_cache_integrity(false));
-  }, [open_menu, project]);
 
   const is_menu_disabled = (label: string) => label === "Parameters"
     ? is_connected || is_loading
@@ -168,7 +151,7 @@ const MenuBar = ({
           <>
             <div className="flex items-center mr-3">
               <span className="px-3 py-1 text-xs text-white rounded-full bg-gray-07">
-                Simulation Web Socket | Cache {cache_integrity ? "ready" : "cold"} | Size: {cache_size.toFixed(2)} MB
+                Live simulation
               </span>
               <button aria-label={is_running ? "Pause simulation" : "Play simulation"}
                 className="px-3 py-1 flex items-center hover:cursor-pointer"
@@ -195,7 +178,7 @@ const MenuBar = ({
         )}
         {is_loading && (
           <div className="flex px-3 items-center justify-center text-white/70 animate-pulse">
-            <span className="mr-2">Initializing Datasets...</span>
+            <span className="mr-2">Starting...</span>
             <SpinnerWidget className={"w-4 h-4 border-2 border-white"} />{" "}
           </div>
         )}
@@ -205,8 +188,3 @@ const MenuBar = ({
 };
 
 export default MenuBar;
-
-async function check_cache_integrity(project: Project) {
-  const result = await check_cache(project);
-  return Object.values(result).every(Boolean);
-}

@@ -1,4 +1,4 @@
-"""Run the file-backed API locally; legacy database credentials are unnecessary."""
+"""Run the API locally with the configured TimescaleDB record store."""
 import argparse
 import os
 import sys
@@ -21,6 +21,8 @@ def load_environment() -> None:
 
 if __name__ == "__main__":
     load_environment()
+    from record_database import configure_record_database
+    configure_record_database()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=int(os.environ.get("BACKEND_PORT", "8000")))
     parser.add_argument("--reload", action="store_true")

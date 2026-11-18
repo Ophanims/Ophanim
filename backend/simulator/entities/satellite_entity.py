@@ -254,11 +254,7 @@ class SatelliteEntity():
             return 0.0
 
         import numpy as np
-        arr = np.asarray(sun_series, dtype=bool)
-        if arr.size == 0:
-            return 0.0
-
-        n = arr.shape[0]
+        n = len(sun_series)
         s = max(0, start)
         e = n if end is None else max(0, min(end, n))
         if step <= 0 or s >= e:
@@ -266,7 +262,7 @@ class SatelliteEntity():
 
         # 采样统计
         total = ((e - s) + (step - 1)) // step  # 采样点数量
-        sun = arr[s:e:step].sum()
+        sun = np.asarray(sun_series[s:e:step], dtype=bool).sum()
         return (float(sun) / float(total)) if total > 0 else 0.0
 
     def serialize(self) -> dict:

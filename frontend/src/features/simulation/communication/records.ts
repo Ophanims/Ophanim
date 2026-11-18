@@ -1,10 +1,12 @@
-import type { RecordSnapshot,RecordWindow } from "../contracts/generated";
+import type { AnalysisPoint,AnalysisWindow,RecordSnapshot,RecordWindow } from "../contracts/generated";
 import { request } from "./client";
 import { route_path } from "./config";
 import { validate_contract } from "./contract_validation";
 
-export async function list_records(signal?: AbortSignal): Promise<RecordSnapshot[]> {
-  const records = await request<unknown>(route_path("list_records"), { signal });
+export async function list_records(signal?: AbortSignal, project_id?: string): Promise<RecordSnapshot[]> {
+  const parameters = new URLSearchParams();
+  if (project_id !== undefined) { parameters.set("project_id", project_id); parameters.set("limit", "200"); }
+  const records = await request<unknown>(`${route_path("list_records")}${parameters.size ? `?${parameters}` : ""}`, { signal });
   if (!Array.isArray(records)) throw new Error("Expected record list");
   return records.map((record) => validate_contract<RecordSnapshot>(record, "RecordSnapshot"));
 }
@@ -17,4 +19,11 @@ export function get_download_url(record_id: string): string {
 
 export function delete_record(record_id: string): Promise<string> {
   return request(route_path("delete_record", { record_id }), { method: "DELETE" });
+}
+
+export async function get_record_analysis(record_id: string, entity_type: AnalysisPoint["entity_type"],
+  start_frame = 0, id?: string, start_point = 0, signal?: AbortSignal): Promise<AnalysisWindow> {
+  const parameters = new URLSearchParams({ entity_type, start_frame: String(start_frame), start_point: String(start_point) });
+  if (id !== undefined) parameters.set("id", id);
+  return validate_contract<AnalysisWindow>(await request(`${route_path("get_record_analysis", { record_id })}?${parameters}`, { signal }), "AnalysisWindow");
 }

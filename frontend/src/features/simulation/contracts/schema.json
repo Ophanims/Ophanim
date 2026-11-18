@@ -1612,6 +1612,7 @@
           "type": "integer"
         },
         "record_id": {
+          "pattern": "^(?:[0-9a-f]{32}|timescale_[1-9][0-9]*)$",
           "title": "Record Id",
           "type": "string"
         },
@@ -1682,6 +1683,140 @@
         "has_more"
       ],
       "title": "RecordWindow",
+      "type": "object"
+    },
+    "AnalysisPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "time": {
+          "title": "Time",
+          "type": "string"
+        },
+        "frame_counter": {
+          "title": "Frame Counter",
+          "type": "integer"
+        },
+        "entity_type": {
+          "enum": [
+            "satellites",
+            "stations",
+            "tasks",
+            "missions",
+            "links",
+            "network"
+          ],
+          "title": "Entity Type",
+          "type": "string"
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SatelliteSnapshot"
+            },
+            {
+              "$ref": "#/$defs/StationSnapshot"
+            },
+            {
+              "$ref": "#/$defs/Task"
+            },
+            {
+              "$ref": "#/$defs/PhysicalMissionSnapshot"
+            },
+            {
+              "$ref": "#/$defs/LinkSnapshot"
+            },
+            {
+              "$ref": "#/$defs/NetworkMetrics"
+            }
+          ],
+          "title": "Payload"
+        }
+      },
+      "required": [
+        "time",
+        "frame_counter",
+        "entity_type",
+        "payload"
+      ],
+      "title": "AnalysisPoint",
+      "type": "object"
+    },
+    "NetworkMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "num_nodes": {
+          "title": "Num Nodes",
+          "type": "integer"
+        },
+        "num_edges": {
+          "title": "Num Edges",
+          "type": "integer"
+        },
+        "num_tasks": {
+          "title": "Num Tasks",
+          "type": "integer"
+        },
+        "reward": {
+          "title": "Reward",
+          "type": "number"
+        },
+        "average_battery_percent": {
+          "title": "Average Battery Percent",
+          "type": "number"
+        }
+      },
+      "required": [
+        "num_nodes",
+        "num_edges",
+        "num_tasks",
+        "reward",
+        "average_battery_percent"
+      ],
+      "title": "NetworkMetrics",
+      "type": "object"
+    },
+    "AnalysisWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/AnalysisPoint"
+          },
+          "title": "Points",
+          "type": "array"
+        },
+        "has_more": {
+          "title": "Has More",
+          "type": "boolean"
+        },
+        "start_point": {
+          "title": "Start Point",
+          "type": "integer"
+        },
+        "next_start_point": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Start Point"
+        }
+      },
+      "required": [
+        "record_id",
+        "points",
+        "has_more",
+        "start_point",
+        "next_start_point"
+      ],
+      "title": "AnalysisWindow",
       "type": "object"
     }
   }

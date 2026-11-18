@@ -1,4 +1,4 @@
-"""Own both local server processes and stop them together; no containers or databases."""
+"""Own both local servers and connect to TimescaleDB for simulation records."""
 import argparse
 import hashlib
 import json
@@ -13,6 +13,7 @@ import threading
 import time
 from http.client import HTTPConnection, HTTPException
 from run_backend import ROOT, load_environment
+from record_database import configure_record_database, start_record_database
 
 RUNTIME_DIR = ROOT / "data" / "runtime"
 PID_FILE = RUNTIME_DIR / "app.json"
@@ -183,6 +184,8 @@ def main():
         if pid:
             raise RuntimeError(f"Already running (PID {pid}). Use ./stop.sh first.")
         PID_FILE.unlink(missing_ok=True)
+        managed = configure_record_database()
+        start_record_database(managed)
         LocalApplication(arguments.backend_port, arguments.frontend_port).run()
 
 

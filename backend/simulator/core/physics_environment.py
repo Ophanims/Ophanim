@@ -9,7 +9,7 @@ from entity.sat import Satellite
 from simulator.schemas.engine_config import EngineConfig, EngineStation
 from simulator.schemas.project import Project
 from simulator.core.initialisation import load_input_metadata
-from simulator.entities.functions.prepare import preparation_of_roi, to_times
+from simulator.entities.functions.prepare import preparation_of_roi
 from simulator.contracts import SimulationSnapshot, RunInfo
 from simulator.entities.satellite_entity import SatelliteSnapshot
 from simulator.entities.station_entity import StationSnapshot
@@ -56,7 +56,7 @@ class PhysicsEnvironment:
         self.t_end = self.clock.END_DATETIME
         self.max_period_numbers = self.clock.END_SLOT + 1
         self.roi, _ = preparation_of_roi(self.project, metadata["max_period_numbers"],
-                                         to_times(metadata["datetime_list"]), metadata["datetime_list"])
+                                         None, metadata["datetime_list"])
         for roi in self.roi:
             roi.tick(0, 0)
         return None

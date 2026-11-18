@@ -11,6 +11,7 @@ from simulator.services.project_repository import ProjectRepository
 from simulator.services.project_migration import migrate_ophanim_projects
 from simulator.services.migration_journal import MigrationJournal
 from simulator.services import session_records
+from record_test_support import MemoryRecordRepository
 
 
 def short_project(seed=0):
@@ -97,7 +98,8 @@ class UnifiedApplicationTests(unittest.TestCase):
         project = short_project()
         state = migrate_snapshot({"clock": {"current_datetime": project.experiment.start_time,
             "slot_count": 0, "maximum_slot": 3}, "entities": [], "links": [], "missions": []}, project)
-        with tempfile.TemporaryDirectory() as directory, patch.object(session_records, "SIMULATION_RECORD_DIR", Path(directory)):
+        with tempfile.TemporaryDirectory() as directory, patch.object(session_records, "SIMULATION_RECORD_DIR", Path(directory)), \
+             patch.object(session_records, "RecordRepository", return_value=MemoryRecordRepository()):
             record_id = "timescale_7"
             metadata = session_records.RecordSnapshot(record_id=record_id, project_id=project.project_id,
                 project=project, algorithm="ophanim", code_hash="unknown-v0", status="completed", frame_count=1)

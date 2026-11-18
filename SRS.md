@@ -109,7 +109,7 @@
 
 ### 4.2 软件接口 (Software Interfaces)
 
-* **数据库接口**: 使用 SQLAlchemy (ORM) 读写 PostgreSQL。
+* **数据库接口**: 使用 psycopg 参数化 SQL 读写 PostgreSQL + TimescaleDB；完整快照用于回放，同源实体数据用于分析。项目配置继续使用本地 JSON。
 * **算法 SDK**: 提供 Python Client (`pip install satedge-sim`)，封装 HTTP/WebSocket 通信细节。
 
 ### 4.3 通信接口 (Communication Interfaces)

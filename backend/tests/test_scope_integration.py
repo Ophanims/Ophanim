@@ -16,7 +16,8 @@ from simulator.core.session import SimulationSession
 from simulator.defaults import default_project
 from simulator.schemas.project import Project
 from simulator.routers import project as project_router
-from simulator.services.cache_paths import cache_path_for
+from simulator.core.timeline import SimulationTimeline
+from record_test_support import MemoryRecordRepository
 from simulator.services.legacy_project_adapter import import_ophanim_project
 from simulator.services.project_repository import ProjectRepository
 from simulator.services.project_service import detect_update
@@ -38,9 +39,11 @@ class ScopeIntegrationTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
         self.repository = ProjectRepository(self.root / "projects")
+        self.records = MemoryRecordRepository()
         for location, value in [
-            ("simulator.services.cache_paths.SIMULATION_CACHE_DIR", self.root / "cache"),
             ("simulator.services.session_records.SIMULATION_RECORD_DIR", self.root / "records"),
+            ("simulator.services.session_records.SIMULATION_RECOVERY_DIR", self.root / "recovery"),
+            ("simulator.services.session_records.RecordRepository", lambda: self.records),
             ("simulator.routers.project.repository", self.repository),
         ]:
             patcher = patch(location, value)
@@ -74,14 +77,12 @@ class ScopeIntegrationTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             self.repository.get_project(project.project_id)
 
-    def test_cache_key_changes_with_configuration_and_timeline(self):
+    def test_timeline_is_lazy_and_includes_clipped_endpoint(self):
         project = test_project()
         metadata = load_input_metadata(project, 7200)
-        before = cache_path_for("satellites", metadata["datetime_list"], project)
-        project.hardware.width_px += 1
-        self.assertNotEqual(before, cache_path_for("satellites", metadata["datetime_list"], project))
-        shifted = [value + timedelta(days=1) for value in metadata["datetime_list"]]
-        self.assertNotEqual(cache_path_for("earth", metadata["datetime_list"]), cache_path_for("earth", shifted))
+        self.assertIsInstance(metadata["datetime_list"], SimulationTimeline)
+        self.assertEqual(normalize_time(project.experiment.end_time), metadata["datetime_list"][-1])
+        self.assertEqual(4, len(metadata["datetime_list"]))
 
     def test_geometry_snapshot_isolation_and_exact_end_time(self):
         project = test_project()
@@ -116,6 +117,10 @@ class ScopeIntegrationTests(unittest.TestCase):
         final = get_record_window(record.record_id, 2, 2)
         self.assertFalse(final.has_more)
         self.assertEqual(3, final.record.frame_count)
+
+        download = self.client.get(f"/api/records/{record.record_id}/download")
+        self.assertEqual(200, download.status_code, download.text)
+        self.assertEqual([state.model_dump_json() for state in expected], download.text.splitlines())
 
     def test_project_http_crud_and_validation(self):
         response = self.client.post("/api/projects", json=test_project().serialize())
