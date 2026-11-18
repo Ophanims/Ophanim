@@ -1,0 +1,31 @@
+.scroll_area {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 16%) transparent;
+}
+
+.scroll_area:hover,
+.scroll_area:focus-within {
+  scrollbar-color: rgb(255 255 255 / 30%) transparent;
+}
+
+.scroll_area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll_area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll_area::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(255 255 255 / 16%);
+}
+
+.scroll_area:hover::-webkit-scrollbar-thumb,
+.scroll_area:focus-within::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 30%);
+}
+
+.scroll_area::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 42%);
+}

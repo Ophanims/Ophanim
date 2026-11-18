@@ -6,6 +6,7 @@ import SatellitePanel from "./SatellitePanel";
 import GroundStationPanel from "./GroundStationPanel";
 import NetworkPanel from "./NetworkPanel";
 import TasksPanel from "./TasksPanel";
+import styles from "./Inventory.module.css";
 
 const TABS = [
   { id: "satellites", label: "Satellites", icon: CubeIcon },
@@ -53,7 +54,7 @@ export const Inventory = ({ project, is_editable, on_project_change }: {
           placeholder="Search…" className="w-full rounded border border-white/15 bg-transparent py-1.5 pr-7 pl-2 text-xs outline-none focus:border-white/50" />
         <MagnifyingGlassIcon className="pointer-events-none absolute top-2 right-2 h-3.5 w-3.5 text-white/35" />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 text-xs text-white/80">
+      <div className={`${styles.scroll_area} min-h-0 flex-1 overflow-y-auto px-3 pb-3 text-xs text-white/80`}>
         {tab === "satellites" && <SatellitePanel title={project.constellation.name || "Satellites"}
           satellites={project.satellites.filter((satellite) => `${satellite.id} ${satellite.name}`.toLowerCase().includes(search_content.toLowerCase()))} sat_states={frame?.satellites ?? []} />}
         {tab === "ground_stations" && <GroundStationPanel project={project} station_states={frame?.stations ?? []}
