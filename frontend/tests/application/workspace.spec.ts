@@ -57,10 +57,22 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     await expect(picker.locator("tbody tr")).toHaveCount(1);
     await expect(picker.getByText(record!.record_id, { exact: true })).toBeVisible();
     await page.screenshot({ path: `test-results/workspace-record-picker-${algorithm}.png` });
+    await page.locator(".leaflet-container").evaluate((element) => element.setAttribute("data-replay-view", "preserved"));
+    await page.route(`**/api/records/${record!.record_id}?*`, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await route.continue();
+    });
     await picker.getByRole("button", { name: "Replay", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`record_id=${record!.record_id}`));
+    await expect(page.getByRole("status").filter({ hasText: "Loading recording" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: project.title, includeHidden: true })).toBeVisible();
+    await expect(page.locator('[data-replay-view="preserved"]')).toBeVisible();
     await expect(page.getByText(`Replay: ${record!.record_id}`, { exact: false })).toBeVisible();
+    await expect(page.locator('[data-replay-view="preserved"]')).toBeVisible();
+    await expect(page.getByRole("region", { name: "Record playback", exact: true })).toHaveCSS("background-color", "rgb(13, 13, 13)");
     await expect(page.getByRole("button", { name: "Play playback", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Play playback", exact: true })).toBeInViewport();
+    await page.screenshot({ path: `test-results/workspace-record-replay-${algorithm}.png` });
     const slider = page.getByRole("slider", { name: "Frame", exact: true });
     await expect(slider).toHaveAttribute("max", "3");
     await slider.press("End");

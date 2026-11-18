@@ -3,7 +3,8 @@ import { start_job } from "../../communication/jobs";
 import { save_project } from "../../communication/projects";
 import JobPanel from "../../components/JobPanel";
 import RecordPicker from "../../components/RecordPicker";
-import type { JobSnapshot } from "../../contracts/generated";
+import RecordPlayback from "../../components/RecordPlayback";
+import type { JobSnapshot,RecordWindow } from "../../contracts/generated";
 import { export_project,select_project_file } from "../../lib/project_files";
 
 
@@ -28,9 +29,11 @@ import { useSelectedProject } from "./useSelectedProject";
 interface WorkspaceProps {
   selected: Project | null;
   is_replay?: boolean;
+  record_window?: RecordWindow | null;
+  is_loading_session?: boolean;
 }
 
-export default function Workspace({ selected, is_replay = false }: WorkspaceProps) {
+export default function Workspace({ selected, is_replay = false, record_window, is_loading_session = false }: WorkspaceProps) {
   const { selected_project, set_selected_project } = useSelectedProject(selected);
   const add_tab = useWindowTabsStore((s) => s.add_tab);
   useEffect(() => {
@@ -188,7 +191,7 @@ export default function Workspace({ selected, is_replay = false }: WorkspaceProp
   }
 
   return (
-    <div className="h-full w-full text-gray-300 font-sans flex flex-col overflow-hidden">
+    <div className="h-full w-full bg-black text-gray-300 font-sans flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gray-08 backdrop-blur-sm border-b border-white/10 px-4 py-3 flex justify-between items-center z-10">
         <h1 className="text-xl font-semibold text-white">
@@ -209,13 +212,15 @@ export default function Workspace({ selected, is_replay = false }: WorkspaceProp
         disabled={is_running}
         is_connected={is_connected}
         is_running={is_running}
-        is_loading={is_job_loading || is_loading}
+        is_loading={is_loading_session || is_job_loading || is_loading}
         project={selected_project}
         on_menu_click={handle_menu_click}
         on_run_simulation={run_simulation}
         on_pause_simulation={pause_simulation}
         on_stop_simulation={stop_simulation}
       />
+      {record_window && <RecordPlayback key={record_window.record.record_id}
+        record_id={record_window.record.record_id} initial_window={record_window} />}
 
       {/* Main */}
       <div className="flex min-h-0 w-full flex-1 overflow-hidden">
@@ -229,7 +234,7 @@ export default function Workspace({ selected, is_replay = false }: WorkspaceProp
 
         {/* Main Tabs + Canvas */}
         <main
-          className="relative flex h-full min-w-0 flex-1"
+          className="relative flex h-full min-h-0 min-w-0 flex-1"
         >
           <Suspense fallback={<p className="p-6">Loading view…</p>}><WindowTabs /></Suspense>
           {show_terminal && (
@@ -237,7 +242,7 @@ export default function Workspace({ selected, is_replay = false }: WorkspaceProp
               <div className="bg-black">terminal</div>
             </div>
           )}
-          {show_player && <Player is_replay={is_replay} />}
+          {(is_replay || show_player) && <Player is_replay={is_replay} />}
         </main>
       </div>
       {is_records_open && <RecordPicker project_id={selected_project.project_id}

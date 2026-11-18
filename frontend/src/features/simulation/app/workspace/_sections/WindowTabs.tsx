@@ -106,7 +106,7 @@ export default function WindowTabs() {
 
       {/* 内容区域 */}
       <div
-        className="w-full h-full flex-1 bg-black relative flex"
+        className="relative z-0 flex h-full w-full flex-1 bg-black"
         onDragOver={handle_main_drag_over}
         onDrop={handle_main_drop}
       >

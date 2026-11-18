@@ -4,8 +4,8 @@ import type { ControlMessage,Project,SimulationSnapshot } from "../../contracts/
 
 const MAX_BUFFERED_FRAMES = 600;
 
-export function useRealtimeFrames(initial_algorithm: Project["algorithm"]) {
-  const [buffer, set_buffer] = useState<{ frames: SimulationSnapshot[]; selected_frame_index: number; follow_live: boolean }>({ frames: [], selected_frame_index: 0, follow_live: true });
+export function useRealtimeFrames(initial_algorithm: Project["algorithm"], initial_frames?: SimulationSnapshot[]) {
+  const [buffer, set_buffer] = useState<{ frames: SimulationSnapshot[]; selected_frame_index: number; follow_live: boolean }>({ frames: initial_frames ?? [], selected_frame_index: 0, follow_live: initial_frames === undefined });
   const { frames, selected_frame_index, follow_live } = buffer;
   const set_selected_frame_index = useCallback((update: SetStateAction<number>) => set_buffer((previous) => ({
     ...previous, selected_frame_index: Math.max(0, Math.min(typeof update === "function" ? update(previous.selected_frame_index) : update, previous.frames.length - 1)),
@@ -50,11 +50,17 @@ export function useRealtimeFrames(initial_algorithm: Project["algorithm"]) {
     disconnect();
     set_buffer({ frames, selected_frame_index: 0, follow_live: false });
   }, [disconnect]);
+  const reset_session = useCallback((initial_algorithm: Project["algorithm"], initial_frames?: SimulationSnapshot[]) => {
+    disconnect();
+    set_error(null);
+    set_algorithm(initial_algorithm ?? "geometry");
+    set_buffer({ frames: initial_frames ?? [], selected_frame_index: 0, follow_live: initial_frames === undefined });
+  }, [disconnect]);
   const send_command = (action: "play" | "pause" | "stop") => {
     try { socket_ref.current?.send_command({ action }); }
     catch (error) { set_error(error instanceof Error ? error.message : "Command failed"); }
   };
-  return { load_record_frames, frames, selected_frame_index, follow_live, set_follow_live, set_selected_frame_index, error, is_loading, is_connected, is_running,
+  return { load_record_frames, reset_session, frames, selected_frame_index, follow_live, set_follow_live, set_selected_frame_index, error, is_loading, is_connected, is_running,
     algorithm, set_algorithm, connect, disconnect,
     run_simulation: () => send_command("play"), pause_simulation: () => send_command("pause"), stop_simulation: () => is_loading && !is_connected ? disconnect() : send_command("stop") };
 }

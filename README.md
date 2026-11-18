@@ -42,6 +42,8 @@ docker compose -f compose.records.yml stop
 
 工作区导航栏的 **Record** 打开当前项目的记录列表；选择 **Replay** 直接读取历史快照，并显示播放、暂停和进度拖动控制。回放采用记录中的项目配置；**Return to live workspace** 返回当前项目。记录列表接口支持 `project_id` 筛选。
 
+加载记录时保留当前视图和标签，并显示可取消的加载提示；读取失败可重试或保留当前工作区。回放工具栏使用独立的深色背景，切换记录无需重建整个工作区。
+
 回放仍使用 `/api/records/{record_id}?start_frame=0&frame_limit=600`。下载接口流式导出 NDJSON。分类分析示例：
 
 ```text
