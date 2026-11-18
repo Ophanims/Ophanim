@@ -40,6 +40,8 @@ docker compose -f compose.records.yml stop
 
 后台有界队列批量提交，每一步都记录，展示允许跳帧。结束状态在最终批次提交后发送。`data/ophanim/record_recovery/` 中的临时 NDJSON 日志在成功提交后移除，写入失败时保留，以便恢复。仿真时间用于回放与分析；实际创建时间独立保存在记录元数据中。没有默认删除历史的保留策略。
 
+工作区导航栏的 **Record** 打开当前项目的记录列表；选择 **Replay** 直接读取历史快照，并显示播放、暂停和进度拖动控制。回放采用记录中的项目配置；**Return to live workspace** 返回当前项目。记录列表接口支持 `project_id` 筛选。
+
 回放仍使用 `/api/records/{record_id}?start_frame=0&frame_limit=600`。下载接口流式导出 NDJSON。分类分析示例：
 
 ```text

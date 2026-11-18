@@ -122,6 +122,10 @@ class ScopeIntegrationTests(unittest.TestCase):
         self.assertEqual(200, download.status_code, download.text)
         self.assertEqual([state.model_dump_json() for state in expected], download.text.splitlines())
 
+        selected = self.client.get("/api/records", params={"project_id": project.project_id, "limit": 1})
+        self.assertEqual([record.record_id], [row["record_id"] for row in selected.json()["data"]])
+        self.assertEqual([], self.client.get("/api/records", params={"project_id": "another_project"}).json()["data"])
+
     def test_project_http_crud_and_validation(self):
         response = self.client.post("/api/projects", json=test_project().serialize())
         self.assertEqual(200, response.status_code, response.text)

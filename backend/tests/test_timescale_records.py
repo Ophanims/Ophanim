@@ -85,6 +85,16 @@ class TimescaleRecordTests(unittest.TestCase):
             value = connection.execute("SELECT avg(battery_percent) FROM satellite_states WHERE record_id=%s AND id=%s", (record_id, satellite.id)).fetchone()[0]
         self.assertAlmostEqual(sum(state.satellites[0].battery_percent for state in self.states) / 3, value)
 
+    def test_project_filter_is_applied_before_list_limit(self):
+        record_id = self.create_record()
+        other = self.project.snapshot()
+        other.project_id = "other_project"
+        self.repository.create_record(RecordSnapshot(record_id=uuid4().hex, project_id=other.project_id,
+            project=other, code_hash="test", algorithm="geometry", status="completed"))
+        selected = self.repository.list_records(1, self.project.project_id)
+        self.assertEqual([record_id], [record.record_id for record in selected])
+        self.assertEqual([], self.repository.list_records(1, "missing_project"))
+
     def test_http_playback_streaming_download_and_analysis(self):
         with tempfile.TemporaryDirectory() as directory, \
              patch("simulator.services.session_records.RecordRepository", return_value=self.repository), \

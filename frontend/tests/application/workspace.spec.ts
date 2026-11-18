@@ -23,6 +23,11 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
   try {
     await page.goto(`/workspace/${project.project_id}`);
     await expect(page.getByRole("heading", { name: project.title })).toBeVisible();
+    await page.getByRole("button", { name: "Record", exact: true }).click();
+    const picker = page.getByRole("dialog", { name: "Record", exact: true });
+    await expect(picker.getByText("No records for this project yet.", { exact: false })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(picker).not.toBeVisible();
     await page.getByRole("button", { name: "Simulation", exact: true }).click();
     await expect(page.getByRole("button", { name: "Initialization", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Clear Datasets", exact: true })).toHaveCount(0);
@@ -37,7 +42,6 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     await page.getByRole("button", { name: "Map View", exact: true }).click();
     await expect(page.locator(".leaflet-container")).toBeVisible();
     await page.screenshot({ path: "test-results/application-map.png" });
-    await page.goto("/records");
     // Record metadata exposes identifiers; select by the backend contract when rendering is concise.
     const records_response = await request.get(route_path("list_records"));
     const records = (await records_response.json()).data as Array<{ record_id: string; project_id: string }>;
@@ -48,8 +52,28 @@ test(`${algorithm}: project workspace initializes, plays, changes views and repl
     expect(record_window.record.status).toBe("completed");
     expect(record_window.record.frame_count).toBe(4);
     expect(record_window.record.algorithm).toBe(algorithm);
-    await page.goto(`/workspace/${project.project_id}?record_id=${record!.record_id}`);
+    await page.getByRole("button", { name: "Record", exact: true }).click();
+    await expect(picker).toBeVisible();
+    await expect(picker.locator("tbody tr")).toHaveCount(1);
+    await expect(picker.getByText(record!.record_id, { exact: true })).toBeVisible();
+    await page.screenshot({ path: `test-results/workspace-record-picker-${algorithm}.png` });
+    await picker.getByRole("button", { name: "Replay", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`record_id=${record!.record_id}`));
     await expect(page.getByText(`Replay: ${record!.record_id}`, { exact: false })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Play playback", exact: true })).toBeVisible();
+    const slider = page.getByRole("slider", { name: "Frame", exact: true });
+    await expect(slider).toHaveAttribute("max", "3");
+    await slider.press("End");
+    await slider.press("ArrowLeft");
+    await expect(slider).toHaveValue("2");
+    await page.getByRole("button", { name: "Play playback", exact: true }).click();
+    await expect(slider).toHaveValue("3");
+    await expect(page.getByRole("button", { name: "Play playback", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Parameters", exact: true })).toBeDisabled();
+    await page.getByRole("link", { name: "Return to live workspace", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/workspace/${project.project_id}$`));
+    await expect(page.getByText("Record playback", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Parameters", exact: true })).toBeEnabled();
     expect(errors).toEqual([]);
   } finally {
     await page.goto("/records").catch(() => undefined);

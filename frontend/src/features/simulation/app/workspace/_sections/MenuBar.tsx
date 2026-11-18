@@ -22,7 +22,9 @@ type MenuBarProps = {
   is_connected: boolean;
   is_running: boolean;
   is_loading: boolean;
+  is_replay: boolean;
   on_open_parameters: () => void;
+  on_open_records: () => void;
   on_menu_click?: (parent: string, child: string) => void;
   on_run_simulation?: () => void;
   on_pause_simulation?: () => void;
@@ -35,6 +37,7 @@ const menu_items: MenuItem[] = [
     children: ["Config", "Import", "Export", "Save", "Exit"],
   },
   { label: "Parameters", children: [] },
+  { label: "Record", children: [] },
   {
     label: "View",
     children: [
@@ -76,8 +79,8 @@ const MenuBar = ({
   className = "",
   algorithm, on_algorithm_change,
   disabled, is_connected, is_running,
-  is_loading,
-  on_menu_click, on_open_parameters,
+  is_loading, is_replay,
+  on_menu_click, on_open_parameters, on_open_records,
   on_run_simulation,
   on_pause_simulation,
   on_stop_simulation,
@@ -85,9 +88,12 @@ const MenuBar = ({
   const [open_menu, set_open_menu] = useState<number | null>(null);
 
 
-  const is_menu_disabled = (label: string) => label === "Parameters"
-    ? is_connected || is_loading
-    : disabled && label !== "Visualization" && label !== "Simulation";
+  const is_menu_disabled = (label: string) => {
+    if (is_replay && ["Project", "Parameters", "Simulation"].includes(label)) return true;
+    if (label === "Parameters") return is_connected || is_loading;
+    if (label === "Record") return is_running || is_loading;
+    return disabled && label !== "Visualization" && label !== "Simulation";
+  };
 
   return (
     <div
@@ -107,6 +113,7 @@ const MenuBar = ({
               onFocus={() => set_open_menu(idx)}
               onClick={() => {
                 if (menu.label === "Parameters") { set_open_menu(null); on_open_parameters(); }
+                else if (menu.label === "Record") { set_open_menu(null); on_open_records(); }
                 else set_open_menu(idx);
               }}
               type="button"
@@ -143,7 +150,7 @@ const MenuBar = ({
           </div>
         ))}
         <AlgorithmMenu algorithm={algorithm} on_algorithm_change={on_algorithm_change}
-          disabled={is_connected || is_loading} is_open={open_menu === menu_items.length}
+          disabled={is_replay || is_connected || is_loading} is_open={open_menu === menu_items.length}
           on_open={() => set_open_menu(menu_items.length)} on_close={() => set_open_menu(null)} />
       </div>
       <div className="flex items-center">

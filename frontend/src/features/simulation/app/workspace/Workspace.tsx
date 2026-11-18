@@ -2,6 +2,7 @@
 import { start_job } from "../../communication/jobs";
 import { save_project } from "../../communication/projects";
 import JobPanel from "../../components/JobPanel";
+import RecordPicker from "../../components/RecordPicker";
 import type { JobSnapshot } from "../../contracts/generated";
 import { export_project,select_project_file } from "../../lib/project_files";
 
@@ -26,9 +27,10 @@ import { useSelectedProject } from "./useSelectedProject";
 
 interface WorkspaceProps {
   selected: Project | null;
+  is_replay?: boolean;
 }
 
-export default function Workspace({ selected }: WorkspaceProps) {
+export default function Workspace({ selected, is_replay = false }: WorkspaceProps) {
   const { selected_project, set_selected_project } = useSelectedProject(selected);
   const add_tab = useWindowTabsStore((s) => s.add_tab);
   useEffect(() => {
@@ -47,9 +49,10 @@ export default function Workspace({ selected }: WorkspaceProps) {
   } = useFrames();
 
   const [is_parameters_open, set_is_parameters_open] = useState(false);
+  const [is_records_open, set_is_records_open] = useState(false);
   const [show_sidebar, set_show_sidebar] = useState(true);
   const [show_terminal, set_show_terminal] = useState(false);
-  const [show_player, set_show_player] = useState(false);
+  const [show_player, set_show_player] = useState(is_replay);
   const [is_job_loading, set_is_job_loading] = useState(false);
 
   const router = useRouter();
@@ -191,7 +194,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
         <h1 className="text-xl font-semibold text-white">
           {selected_project.title}
         </h1>
-        <span className="text-xs text-white/40">Latest 600 frames buffered</span>
+        <span className="text-xs text-white/40">{is_replay ? "Record playback" : "Latest 600 frames buffered"}</span>
       </div>
 
       {(error || operation_error) && <p role="alert" className="px-4 py-2 text-sm text-red-300">{error || operation_error}</p>}
@@ -199,6 +202,8 @@ export default function Workspace({ selected }: WorkspaceProps) {
       {/* Menu Bar */}
       <MenuBar
         on_open_parameters={() => set_is_parameters_open(true)}
+        on_open_records={() => set_is_records_open(true)}
+        is_replay={is_replay}
         algorithm={algorithm}
         on_algorithm_change={(algorithm) => { set_algorithm(algorithm); set_selected_project({ ...selected_project, algorithm }); }}
         disabled={is_running}
@@ -217,7 +222,7 @@ export default function Workspace({ selected }: WorkspaceProps) {
         {/* Sidebar */}
         {show_sidebar && (
           <aside className="w-72 shrink-0 bg-gray-08 backdrop-blur-sm border-r border-white/10 flex flex-col">
-            <Inventory project={selected_project} is_editable={!is_connected && !is_loading && !is_job_loading}
+            <Inventory project={selected_project} is_editable={!is_replay && !is_connected && !is_loading && !is_job_loading}
               on_project_change={set_selected_project} />
           </aside>
         )}
@@ -232,9 +237,15 @@ export default function Workspace({ selected }: WorkspaceProps) {
               <div className="bg-black">terminal</div>
             </div>
           )}
-          {show_player && <Player />}
+          {show_player && <Player is_replay={is_replay} />}
         </main>
       </div>
+      {is_records_open && <RecordPicker project_id={selected_project.project_id}
+        on_close={() => set_is_records_open(false)}
+        on_select={(record) => {
+          set_is_records_open(false);
+          router.push(`/workspace/${encodeURIComponent(record.project_id)}?record_id=${encodeURIComponent(record.record_id)}`);
+        }} />}
       {is_parameters_open && <ProjectEditorDialog project={selected_project}
         on_close={() => set_is_parameters_open(false)}
         on_save={(project) => {
