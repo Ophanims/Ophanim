@@ -18,7 +18,6 @@ from simulator.schemas.project import Project
 from simulator.routers import project as project_router
 from simulator.core.timeline import SimulationTimeline
 from record_test_support import MemoryRecordRepository
-from simulator.services.legacy_project_adapter import import_ophanim_project
 from simulator.services.project_repository import ProjectRepository
 from simulator.services.project_service import detect_update
 from simulator.services.session_records import SessionRecord, get_record_window
@@ -166,18 +165,6 @@ class ScopeIntegrationTests(unittest.TestCase):
         records = self.client.get("/api/records").json()["data"]
         self.assertEqual(1, len(records))
         self.assertEqual("completed", records[0]["status"])
-
-    def test_legacy_import_converts_units_and_identifiers(self):
-        project = import_ophanim_project(7, {
-            "name": "Legacy", "sizeOfConstellation": 6, "maximumNumberOfPlane": 2,
-            "carrierFrequencyOfIslGhz": 26, "bandwidthOfIslMhz": 20,
-        }, [{"id": 3, "name": "Station", "latitude": 20, "longitude": 100}])
-        self.assertEqual("7", project.project_id)
-        self.assertEqual(26e9, project.hardware.isl_frequency_hz)
-        self.assertEqual(20e6, project.hardware.isl_bandwidth_hz)
-        self.assertEqual(3, project.constellation.number_of_sat_per_planes)
-        self.assertEqual("7", project.ground_stations[0].project_id)
-
 
 if __name__ == "__main__":
     unittest.main()

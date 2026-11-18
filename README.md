@@ -1,6 +1,6 @@
 # Ophanim
 
-本地运行的卫星仿真 Webapp。Python + Skyfield 按仿真步实时计算，通过 WebSocket 展示；完整回放和分类分析数据保存到 PostgreSQL + TimescaleDB。项目与模型保存在 `data/ophanim/`。不需要整段预加载，也不启动 MySQL。
+本地运行的卫星仿真 Webapp。Python + Skyfield 按仿真步实时计算，通过 WebSocket 展示；完整回放和分类分析数据保存到 PostgreSQL + TimescaleDB。项目与模型保存在 `data/ophanim/`，项目参数使用 JSON。启动后按需计算轨道与状态。
 
 ## 安装与运行
 
@@ -19,7 +19,7 @@
 ./start.sh
 ```
 
-脚本先连接数据库；本机数据库未运行时通过 `compose.records.yml` 启动专用 TimescaleDB，再构建并启动前后端。后端会初始化独立的 `ophanim` schema，保留旧库表。数据库不可用时明确失败，不会悄悄改用文件记录。
+脚本先连接数据库；本机数据库未运行时通过 `compose.records.yml` 启动专用 TimescaleDB，再构建并启动前后端。后端会初始化独立的 `ophanim` schema。数据库不可用时明确失败，不会悄悄改用文件记录。
 
 打开脚本打印的首页地址，默认前端端口 3000。按 **Ctrl+C** 或执行 `./stop.sh` 停止前后端。数据库保持运行；需要停止它时执行：
 
@@ -60,19 +60,9 @@ docker compose -f compose.records.yml stop
 .venv/bin/python scripts/import_record_files.py --recovery
 ```
 
-## 数据备份与旧库
+## 数据备份
 
-数据库默认保存在 `data/timescale/`，应使用 PostgreSQL 的备份方式；复制数据库目录前应先正常停止数据库。同时备份 `data/ophanim/` 可保留项目、模型、旧文件记录和恢复日志。原 `data/mysql/`、`data/postgres/`、旧轨道缓存目录保留，运行时不再读取轨道缓存。
-
-旧 MySQL/Timescale v0 数据迁移仍由显式命令执行；完成后可通过上面的文件导入命令写入新记录库：
-
-```bash
-.venv/bin/python -m pip install -r backend/requirements-legacy.txt
-.venv/bin/python scripts/migrate_legacy_data.py
-.venv/bin/python scripts/import_record_files.py
-```
-
-原 Docker 配置归档于 `docs/legacy-docker/`，新运行方式只启动 `compose.records.yml` 中的记录数据库。
+数据库默认保存在 `data/timescale/`，应使用 PostgreSQL 的备份方式；复制数据库目录前应先正常停止数据库。同时备份 `data/ophanim/` 可保留项目 JSON、模型、文件记录和恢复日志。`compose.records.yml` 是唯一的数据库启动配置。
 
 ## 验证
 

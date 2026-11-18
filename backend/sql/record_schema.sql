@@ -1,4 +1,4 @@
--- New records use a separate schema; the v0 Timescale tables remain untouched.
+-- Canonical simulation records and analysis tables in the ophanim schema.
 CREATE EXTENSION IF NOT EXISTS timescaledb WITH SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS records (

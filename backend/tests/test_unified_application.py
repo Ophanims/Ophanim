@@ -2,14 +2,12 @@
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+from uuid import uuid4
 from simulator.defaults import default_project
 from simulator.services.project_service import detect_update
 from simulator.core.session import SimulationSession
-from simulator.services.legacy_snapshot_adapter import migrate_snapshot
 from simulator.services.project_repository import ProjectRepository
-from simulator.services.project_migration import migrate_ophanim_projects
-from simulator.services.migration_journal import MigrationJournal
 from simulator.services import session_records
 from record_test_support import MemoryRecordRepository
 
@@ -75,34 +73,30 @@ class UnifiedApplicationTests(unittest.TestCase):
 
     def test_existing_project_keeps_id_and_deletion_survives_restart(self):
         with tempfile.TemporaryDirectory() as directory:
-            repository = ProjectRepository(Path(directory) / "projects")
-            cursor = MagicMock()
-            cursor.fetchall.side_effect = [[{"id": 7}], [], [{"id": 7}]]
-            cursor.fetchone.return_value = {"name": "Existing project", "maximumNumberOfPlane": 1,
-                "sizeOfConstellation": 1, "startTime": "2025-12-01T00:00:00+00:00",
-                "endTime": "2025-12-01T00:01:05+00:00", "batteryCapacityWh": 80}
-            connection = MagicMock()
-            connection.__enter__.return_value.cursor.return_value.__enter__.return_value = cursor
-            with patch("simulator.services.project_migration.get_mysql_conn", return_value=connection), \
-                 patch("simulator.services.project_migration.ProjectRepository", return_value=repository), \
-                 patch("simulator.services.migration_journal.SIMULATION_DATA_DIR", Path(directory)):
-                self.assertEqual(1, migrate_ophanim_projects())
-                self.assertEqual("ophanim", repository.get_project("7").algorithm)
-                self.assertEqual(80, repository.get_project("7").resources.battery_capacity_wh)
-                repository.delete_project("7")
-                self.assertEqual(0, migrate_ophanim_projects())
-                self.assertEqual([], repository.list_projects())
-                self.assertEqual(["7"], MigrationJournal.load().project_ids)
+            project_dir = Path(directory) / "projects"
+            repository = ProjectRepository(project_dir)
+            project = short_project()
+            project.project_id = "7"
+            project.resources.battery_capacity_wh = 80
+            repository.save_project(project)
+            restarted = ProjectRepository(project_dir)
+            self.assertEqual("7", restarted.get_project("7").project_id)
+            self.assertEqual(80, restarted.get_project("7").resources.battery_capacity_wh)
+            restarted.delete_project("7")
+            self.assertEqual([], ProjectRepository(project_dir).list_projects())
+            with self.assertRaises(FileNotFoundError):
+                ProjectRepository(project_dir).get_project("7")
 
-    def test_v0_history_uses_the_same_record_window_contract(self):
+    def test_file_history_uses_the_same_record_window_contract(self):
         project = short_project()
-        state = migrate_snapshot({"clock": {"current_datetime": project.experiment.start_time,
-            "slot_count": 0, "maximum_slot": 3}, "entities": [], "links": [], "missions": []}, project)
+        session = SimulationSession(project, "geometry")
+        self.addCleanup(session.close)
+        state = session.snapshot()
         with tempfile.TemporaryDirectory() as directory, patch.object(session_records, "SIMULATION_RECORD_DIR", Path(directory)), \
              patch.object(session_records, "RecordRepository", return_value=MemoryRecordRepository()):
-            record_id = "timescale_7"
+            record_id = uuid4().hex
             metadata = session_records.RecordSnapshot(record_id=record_id, project_id=project.project_id,
-                project=project, algorithm="ophanim", code_hash="unknown-v0", status="completed", frame_count=1)
+                project=project, algorithm="geometry", code_hash="test", status="completed", frame_count=1)
             session_records.record_path(record_id, "json").write_text(metadata.model_dump_json())
             session_records.record_path(record_id, "ndjson").write_text(state.model_dump_json() + "\n")
             window = session_records.get_record_window(record_id, 0, 600)

@@ -2,7 +2,7 @@
 
 ## 最终使用方式
 
-Ophanim 与 SCOPE 已合为一个 Next.js Webapp 和一个 FastAPI 服务。所有项目进入同一个列表，使用同一份配置、同一个工作区、同一套运行控制与记录回放。原 SCOPE 目录只作为迁移来源，运行时不依赖它。
+Ophanim 与 SCOPE 已合为一个 Next.js Webapp 和一个 FastAPI 服务。所有项目进入同一个列表，使用同一份配置、同一个工作区、同一套运行控制与记录回放。旧项目与模型已完成导入，一次性迁移代码已移除。
 
 | 功能 | 统一入口 |
 | --- | --- |
@@ -24,15 +24,14 @@ Universe、Geometry、Object、Map、参数与数据流视图、分屏、配置�
 
 ## 项目和记录
 
-- 原 MySQL 项目通过离线命令迁入统一项目目录，数字 ID 保留为字符串，不创建另一份带前缀的项目副本。
+- 所有项目使用统一的 JSON 项目目录，数字 ID 保留为字符串。
 - SCOPE 已迁入的项目与原有项目并列显示。修改、删除和运行都通过同一个 API。
-- 旧名称只在有明确范围的 v0 数据适配器中接收，迁移后仅输出规范名称。GHz／MHz 转换成硬件契约的 Hz；物理引擎使用的派生单位具有明确后缀。
+- 配置与接口只接收规范名称和版本化契约。共同硬件配置使用 Hz；物理引擎使用的派生单位具有明确后缀。
 - 原有处理器、电池、太阳能板与静态功率参数纳入共同的 `resources` 配置，地面站保留 `altitude_m`。
 - 新记录在 TimescaleDB 的独立 `ophanim` schema 中保存与实时展示同源的完整快照及按领域分类的分析点，附带完整项目配置、算法、代码哈希和版本。历史回放无需依赖仍然存在的项目。
-- Timescale 历史记录通过离线命令流式转换到同一个记录目录，使用 `timescale_{旧记录ID}`。旧数据没有保存代码哈希，明确标为 `unknown-v0`；旧记录没有保存当时的地面站配置时，只能使用当前项目中的地面站信息恢复标识。
-- `migrations.json` 记录已经处理的项目和记录，避免删除后重启又从旧库恢复。旧数据库内容与原 SCOPE 目录保留。
+- 文件记录和失败恢复日志可通过 `scripts/import_record_files.py` 幂等导入当前 TimescaleDB；导入保留源文件。
 
-本机已迁入 SCOPE 的 1 个项目及 14 个模型／归一化文件。迁移检查未发现当前 Timescale 库中已有历史记录，历史转换路径使用构造的 v0 数据进行回归验证。
+本机已迁入 SCOPE 的项目、模型与归一化文件，运行时直接读取统一目录。
 
 默认运行数据位于 `data/ophanim/`：
 
@@ -42,16 +41,9 @@ records/           # 保留的旧文件记录，可显式导入数据库
 record_recovery/   # 未完成数据库提交的恢复日志，成功提交后移除
 models/            # 导入检查点、按项目保存的训练版本
 output/            # 评估结果、日志、图表
-migrations.json    # 一次性迁移完成标记
 ```
 
-项目文件不提交到 Git；迁移时应备份此目录，并单独备份 TimescaleDB（本机默认位于 `data/timescale/`）。离线迁移 SCOPE 项目与权重：
-
-```bash
-.venv/bin/python scripts/import_scope_data.py /path/to/SCOPE --models
-```
-
-迁移工具只读取来源，拒绝覆盖内容不同的同名项目和模型。HTTP 接口不接收 pickle。
+项目文件不提交到 Git；迁移到其他机器时应备份此目录，并单独备份 TimescaleDB（本机默认位于 `data/timescale/`）。HTTP 接口不接收 pickle。
 
 ## 代码组织和编码规则
 
@@ -63,11 +55,11 @@ backend/simulator/
   entities/        # 实体及 Snapshot
   models/          # 轨道、相机与地理计算
   env/             # 基线、PPO、训练与评估
-  services/        # 项目目录、模型、实时运行、记录、迁移、后台任务
+  services/        # 项目目录、模型、实时运行、记录、恢复、后台任务
   routers/         # 唯一 HTTP / WebSocket 边界
 backend/core/      # 原物理内核，时钟、世界和预测缓存按会话隔离
 backend/entity/    # 原物理任务模型与实体
-backend/persistence/ # TimescaleDB 记录/分析仓库与旧数据迁移边界
+backend/persistence/ # TimescaleDB 记录与分析仓库
 frontend/src/features/simulation/
   contracts/       # 从后端生成的 TypeScript、JSON Schema、默认配置和路由
   communication/   # 所有请求、边界验证和 WebSocket 生命周期
@@ -92,7 +84,7 @@ frontend/src/app/   # 单一应用的页面和同源 API 代理
 # 关闭：Ctrl+C 或另一个终端执行 ./stop.sh
 ```
 
-脚本读取 `.env` 中的端口配置，统一前后端地址，按需要构建前端，并负责子进程退出与端口检查。具体命令、数据库备份和旧记录导入方式见 [README](../README.md)。旧数据库初始化及导入只由 `scripts/migrate_legacy_data.py` 显式执行；新记录使用单独的 schema 和本机数据目录。停止应用不会停止或删除数据库。
+脚本读取 `.env` 中的端口配置，统一前后端地址，按需要构建前端，并负责子进程退出与端口检查。具体命令、数据库备份和文件记录导入方式见 [README](../README.md)。唯一数据库为 TimescaleDB，使用 `ophanim` schema 和本机 `data/timescale/` 目录。停止应用不会停止或删除数据库。
 
 ## 验证
 
@@ -113,4 +105,4 @@ npm run build
 npm run test:browser
 ```
 
-浏览器测试需要运行中的前后端及本机 Chrome。检查包含两个引擎的统一轨道与标识、独立会话、精确结束时间、项目迁移与删除、快照隔离、API、控制命令、记录窗口、基线与已有 PPO 模型推理。长时间 PPO 收敛训练不属于本次合并验证。
+浏览器测试需要运行中的前后端及本机 Chrome。检查包含两个引擎的统一轨道与标识、独立会话、精确结束时间、JSON 项目保存与删除、快照隔离、API、控制命令、记录窗口、基线与已有 PPO 模型推理。长时间 PPO 收敛训练不属于本次合并验证。
